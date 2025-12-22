@@ -1,0 +1,78 @@
+# BMAD Configuration for The Bearing
+
+project:
+  name: The Bearing
+  version: 1.0.0-mvp
+  owner: Ryan Balungeli
+  start_date: 2025-12-21
+
+phases:
+  phase-1-planning:
+    status: completed
+    weeks: 1-3
+    deliverables:
+      - system-brief.md
+      - prd.md
+      - architecture.md
+      - VALIDATION-CHECKLIST.md
+  
+  phase-2-setup:
+    status: in-progress
+    weeks: 4
+    deliverables:
+      - Git repo initialized
+      - Environment configured
+      - Story files generated
+  
+  phase-3-build:
+    status: pending
+    weeks: 5-16
+    epics:
+      epic-1:
+        name: Foundation & Auth
+        status: pending
+        stories: [1.1, 1.2, 1.3, 1.4]
+        duration_weeks: 4
+        estimated_cost_usd: 0
+      
+      epic-2:
+        name: Manuscript Editor & Llama AI
+        status: pending
+        stories: [2.1, 2.2, 2.3]
+        duration_weeks: 4
+        estimated_cost_usd: 15.50
+      
+      epic-3:
+        name: Consistency Engine
+        status: pending
+        stories: [3.1, 3.2, 3.3]
+        duration_weeks: 4
+        estimated_cost_usd: 8
+      
+      epic-4:
+        name: Support & Admin
+        status: pending
+        stories: [4.1, 4.2]
+        duration_weeks: 3
+        estimated_cost_usd: 0
+  
+  phase-4-stabilize:
+    status: pending
+    weeks: 17-18
+    activities:
+      - Integration testing
+      - Security audit
+      - Performance testing
+      - Canary deployment
+
+cost_baseline:
+  mvp_at_10_authors: 50-70 USD/month
+  scaling_at_100_authors: 250-300 USD/month
+  scaling_at_1000_authors: 2000-2500 USD/month
+
+success_metrics:
+  latency_editor_suggestions: "< 2s P95"
+  latency_consistency_checks: "< 15s"
+  hallucination_rate: "< 5%"
+  uptime: "99.5%+"
+  encryption: "AES-256 at rest, TLS in transit"
