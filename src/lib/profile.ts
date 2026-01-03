@@ -247,7 +247,7 @@ async function createProfileWithAccount(
   });
 
   if (profileError) {
-    console.error("Profile creation error:", profileError);
+    console.error("Profile creation error:", JSON.stringify(profileError, null, 2));
     return {
       profile: null,
       account: null,
@@ -276,7 +276,7 @@ async function createProfileWithAccount(
   });
 
   if (accountError) {
-    console.error("Account creation error:", accountError);
+    console.error("Account creation error:", JSON.stringify(accountError, null, 2));
     // Try to clean up the user we created
     await supabase.from("users").delete().eq("id", newProfile.id);
     return {
@@ -307,7 +307,7 @@ async function createProfileWithAccount(
   });
 
   if (memberError) {
-    console.error("Membership creation error:", memberError);
+    console.error("Membership creation error:", JSON.stringify(memberError, null, 2));
     // Try to clean up
     await supabase.from("accounts").delete().eq("id", newAccount.id);
     await supabase.from("users").delete().eq("id", newProfile.id);
@@ -363,7 +363,7 @@ async function createAccountOnly(
     .single();
   
   if (accountError) {
-    console.error("Account creation error:", accountError);
+    console.error("Account creation error:", JSON.stringify(accountError, null, 2));
     return {
       account: null,
       error: "Failed to create account. Please try again.",
@@ -385,7 +385,7 @@ async function createAccountOnly(
     });
   
   if (memberError) {
-    console.error("Membership creation error:", memberError);
+    console.error("Membership creation error:", JSON.stringify(memberError, null, 2));
     // Try to clean up
     await supabase.from("accounts").delete().eq("id", newAccount.id);
     return {

@@ -373,8 +373,17 @@ create trigger trg_audit_no_delete before delete on audit_logs
 for each row execute function prevent_audit_mutation();
 ```
 
-### 3.3 RLS policy outline
-Implement RLS in Supabase for:
+### 3.3 RLS Policy Outline
+Implement RLS in Supabase with the following STRICT implementation patterns:
+
+- **Consolidation:** Combine multiple permissions for the same action into single policies using `OR` logic to avoid "Multiple Permissive Policies" performance penalties.
+- **Performance:** Wrap `auth.uid()` calls in `(select auth.uid())` within all helper functions to force query plan caching.
+- **Security:**
+  - All views must set `security_invoker = true` to respect RLS.
+  - All functions/triggers must explicitly set `search_path = public`.
+  - Service role keys never exposed to client.
+
+**Scope:**
 - accounts: members can read
 - account_members: members can read, admins can manage
 - manuscripts: only account members can read, only owner or account admin can write
