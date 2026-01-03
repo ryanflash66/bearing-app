@@ -12,6 +12,11 @@ const customJestConfig = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  testPathIgnorePatterns: [
+    "\\\\node_modules\\\\",
+    "\\\\.next\\\\",
+    "tests/e2e/", // Playwright tests - run separately with `npx playwright test`
+  ],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

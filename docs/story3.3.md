@@ -44,12 +44,12 @@ As the platform, every AI request (Llama and Gemini) must be metered with estima
 
 ## Implementation Tasks (for Dev Agent)
 
-- [ ] Implement token estimation helpers (shared across AI services)
-- [ ] Implement `ai_usage_events` append-only logging
-- [ ] Enforce hard caps pre-execution for all AI calls
-- [ ] Implement billing cycle open/close logic
-- [ ] Add aggregation queries for dashboard usage
-- [ ] Write immutability tests (updates/deletes denied)
+- [x] Implement token estimation helpers (shared across AI services)
+- [x] Implement `ai_usage_events` append-only logging
+- [x] Enforce hard caps pre-execution for all AI calls
+- [x] Implement billing cycle open/close logic
+- [x] Add aggregation queries for dashboard usage
+- [x] Write immutability tests (updates/deletes denied)
 
 ## Cost Estimate
 

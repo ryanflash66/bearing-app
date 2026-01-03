@@ -43,12 +43,12 @@ As an author, I can review consistency check results in a structured report grou
 
 ## Implementation Tasks (for Dev Agent)
 
-- [ ] Design report viewer UI grouped by issue type
-- [ ] Implement jump-to-location logic in editor
-- [ ] Add pagination or virtual list for large reports
-- [ ] Implement JSON export (direct)
-- [ ] Implement PDF summary export
-- [ ] Add UI and export regression tests
+- [x] Design report viewer UI grouped by issue type
+- [x] Implement jump-to-location logic in editor
+- [x] Add pagination or virtual list for large reports
+- [x] Implement JSON export (direct)
+- [x] Implement PDF summary export
+- [x] Add UI and export regression tests
 
 ## Cost Estimate
 

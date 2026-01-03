@@ -20,8 +20,64 @@
     "afterFiles": [],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/api/manuscripts/[id]/consistency-check",
+      "regex": "^/api/manuscripts/([^/]+?)/consistency\\-check(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/manuscripts/(?<nxtPid>[^/]+?)/consistency\\-check(?:/)?$"
+    },
+    {
+      "page": "/api/manuscripts/[id]/consistency-check/[jobId]/export",
+      "regex": "^/api/manuscripts/([^/]+?)/consistency\\-check/([^/]+?)/export(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid",
+        "nxtPjobId": "nxtPjobId"
+      },
+      "namedRegex": "^/api/manuscripts/(?<nxtPid>[^/]+?)/consistency\\-check/(?<nxtPjobId>[^/]+?)/export(?:/)?$"
+    },
+    {
+      "page": "/api/manuscripts/[id]/export/docx",
+      "regex": "^/api/manuscripts/([^/]+?)/export/docx(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/manuscripts/(?<nxtPid>[^/]+?)/export/docx(?:/)?$"
+    },
+    {
+      "page": "/api/manuscripts/[id]/export/pdf",
+      "regex": "^/api/manuscripts/([^/]+?)/export/pdf(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/manuscripts/(?<nxtPid>[^/]+?)/export/pdf(?:/)?$"
+    },
+    {
+      "page": "/api/manuscripts/[id]/suggest",
+      "regex": "^/api/manuscripts/([^/]+?)/suggest(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/manuscripts/(?<nxtPid>[^/]+?)/suggest(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manuscripts/[id]",
+      "regex": "^/dashboard/manuscripts/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/manuscripts/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
   "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
     {
       "page": "/_global-error",
       "regex": "^/_global\\-error(?:/)?$",
@@ -35,10 +91,34 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/manuscripts/cleanup",
+      "regex": "^/api/manuscripts/cleanup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/manuscripts/cleanup(?:/)?$"
+    },
+    {
+      "page": "/api/manuscripts/upload",
+      "regex": "^/api/manuscripts/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/manuscripts/upload(?:/)?$"
+    },
+    {
       "page": "/auth/callback",
       "regex": "^/auth/callback(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/auth/callback(?:/)?$"
+    },
+    {
+      "page": "/auth/signout",
+      "regex": "^/auth/signout(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/signout(?:/)?$"
+    },
+    {
+      "page": "/auth/update-password",
+      "regex": "^/auth/update\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/update\\-password(?:/)?$"
     },
     {
       "page": "/dashboard",
@@ -47,10 +127,52 @@
       "namedRegex": "^/dashboard(?:/)?$"
     },
     {
+      "page": "/dashboard/admin",
+      "regex": "^/dashboard/admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/audit",
+      "regex": "^/dashboard/admin/audit(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/audit(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/members",
+      "regex": "^/dashboard/admin/members(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/members(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manuscripts",
+      "regex": "^/dashboard/manuscripts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manuscripts(?:/)?$"
+    },
+    {
+      "page": "/dashboard/manuscripts/new",
+      "regex": "^/dashboard/manuscripts/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/manuscripts/new(?:/)?$"
+    },
+    {
+      "page": "/dashboard/settings",
+      "regex": "^/dashboard/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/settings(?:/)?$"
+    },
+    {
       "page": "/login",
       "regex": "^/login(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/login/forgot-password",
+      "regex": "^/login/forgot\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login/forgot\\-password(?:/)?$"
     },
     {
       "page": "/signup",

@@ -1,6 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+// Routes that don't require authentication
+const publicRoutes = ["/", "/login", "/signup", "/auth"];
+
+// Routes that require authentication
+const protectedRoutes = ["/dashboard"];
+
+// Routes that require admin role (subset of protected routes)
+const adminRoutes = ["/dashboard/admin"];
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -17,7 +26,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
           response = NextResponse.next({
@@ -37,20 +46,53 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially redirect to login
-    // For now we allow open access but specific pages will protect themselves
-    // or we can enforce here:
-    // const url = request.nextUrl.clone()
-    // url.pathname = '/login'
-    // return NextResponse.redirect(url)
+  const pathname = request.nextUrl.pathname;
+
+  // Check if path matches protected routes
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  // Check if path matches public routes
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  // Handle unauthenticated access to protected routes
+  if (isProtectedRoute && !user) {
+    const loginUrl = new URL("/login", request.url);
+    
+    // Add return URL so user can be redirected back after login
+    loginUrl.searchParams.set("returnUrl", pathname);
+    
+    // If there was an auth error (expired session), add message
+    if (authError) {
+      loginUrl.searchParams.set("message", "session_expired");
+    }
+    
+    // Clear any stale session cookies
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    
+    // Clear auth cookies on redirect
+    const cookieNames = request.cookies.getAll().map((c) => c.name);
+    cookieNames
+      .filter((name) => name.startsWith("sb-"))
+      .forEach((name) => {
+        redirectResponse.cookies.delete(name);
+      });
+    
+    return redirectResponse;
+  }
+
+  // Redirect authenticated users away from login/signup
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    // Check for returnUrl in query params
+    const returnUrl = request.nextUrl.searchParams.get("returnUrl");
+    const redirectTo = returnUrl || "/dashboard";
+    return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
   return response;

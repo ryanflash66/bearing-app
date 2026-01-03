@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Bearing App',
@@ -11,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }} suppressHydrationWarning>{children}</body>
     </html>
   );

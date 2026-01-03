@@ -1,0 +1,272 @@
+# Workflow Status - BMad Method Tracking
+# Generated: 2024-12-24 (Updated by Analyst)
+# Project: bearing-app
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2024-12-24"
+project: "bearing-app"
+project_type: "AI-powered self-publishing platform"
+selected_track: "bmad-method"
+field_type: "brownfield"
+workflow_path: "method-brownfield"
+
+workflow_status:
+  # Phase 0: Discovery (Optional)
+  - phase: 0
+    name: "Discovery"
+    workflows:
+      - id: "brainstorm-project"
+        status: "optional"
+        agent: "analyst"
+        command: "brainstorming"
+        
+      - id: "research"
+        status: "optional"
+        agent: "analyst"
+        command: "research"
+        
+      - id: "product-brief"
+        status: "docs/system-brief.md"
+        agent: "analyst"
+        command: "create-product-brief"
+        completed: "2024-12-22"
+        note: "Found existing system brief"
+
+  # Phase 1: Planning
+  - phase: 1
+    name: "Planning"
+    workflows:
+      - id: "prd"
+        status: "docs/prd.md"
+        agent: "pm"
+        command: "create-prd"
+        completed: "2024-12-22"
+        note: "Found existing PRD with 4 epic PRDs"
+        
+      - id: "create-ux-design"
+        status: "_bmad-output/ux-design-specification.md"
+        agent: "ux-designer"
+        command: "create-ux-design"
+        completed: "2025-12-29"
+        note: "Comprehensive UX design specification complete with visual and interaction design"
+
+  # Phase 2: Solutioning
+  - phase: 2
+    name: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "docs/architecture.md"
+        agent: "architect"
+        command: "create-architecture"
+        completed: "2024-12-22"
+        note: "Found comprehensive architecture with 6 domain files"
+        
+      - id: "create-epics-and-stories"
+        status: "docs/epic-files-index.md"
+        agent: "pm"
+        command: "create-epics-and-stories"
+        completed: "2024-12-22"
+        note: "Found 4 epics with 13 stories total"
+        
+      - id: "test-design"
+        status: "recommended"
+        agent: "tea"
+        command: "testarch-test-design"
+        note: "System-level testability review - recommended before implementation"
+        
+      - id: "validate-architecture"
+        status: "optional"
+        agent: "architect"
+        command: "validate-architecture"
+        
+      - id: "implementation-readiness"
+        status: "_bmad-output/implementation-readiness-report-2025-12-29.md"
+        agent: "architect"
+        command: "check-implementation-readiness"
+        completed: "2025-12-29"
+        note: "Refactored Epic 2/3 to resolve forward dependencies. Status: READY."
+
+  # Phase 3: Implementation
+  - phase: 3
+    name: "Implementation"
+    workflows:
+      - id: "sprint-1"
+        status: "in_progress"
+        agent: "dev"
+        command: "dev-story"
+        started: "2024-12-22"
+        note: "Epic 3 - Consistency Engine"
+        stories:
+          - id: "story-1.1"
+            name: "Email + MFA Authentication"
+            status: "completed"
+            completed: "2024-12-22"
+            qa_passed: true
+            notes: "QA Passed (report found)"
+          - id: "story-1.2"
+            name: "Author Dashboard Skeleton"
+            status: "completed"
+            completed: "2024-12-22"
+            qa_passed: true
+            notes: "QA Passed (report found)"
+          - id: "story-1.3"
+            name: "Role-Based Access Control"
+            status: "completed"
+            completed: "2024-12-22"
+            notes: "Dev Agent Record confirms completion"
+          - id: "story-1.4"
+            name: "Row-Level Security"
+            status: "completed"
+            completed: "2024-12-22"
+            notes: "QA Record confirms completion"
+          - id: "story-2.1"
+            name: "Manuscript CRUD + Autosave"
+            status: "completed"
+            completed: "2024-12-23"
+            qa_passed: true
+            notes: "QA Passed - UX Rework COMPLETE: AC 2.1.6 Zen Mode toggle implemented. Hardening COMPLETE (2025-12-29): Infinite loop fix, Silent Resolution, and Smart Merging active."
+            ux_update: "2025-12-29"
+          - id: "story-2.2"
+            name: "Rich Text Editor Integration"
+            status: "completed"
+            completed: "2024-12-23"
+            qa_passed: true
+            notes: "QA Passed - Hardening COMPLETE (2025-12-29): Fixed Snapshot Identity bug, Premium Restore Modal implemented, and instant Tiptap sync enabled."
+          - id: "story-2.3"
+            name: "Real-Time Llama AI Suggestions"
+            status: "completed"
+            completed: "2024-12-24"
+            qa_passed: true
+            notes: "QA Passed - UX Rework COMPLETE: AC 2.3.6 Ghost text pattern implemented 2025-12-29"
+            ux_update: "2025-12-29"
+          - id: "story-2.4"
+            name: "Editor Conflict Resolution"
+            status: "completed"
+            completed: "2024-12-24"
+            qa_passed: true
+            notes: "QA Report found"
+          - id: "story-3.1"
+            name: "Manual Gemini Consistency Check"
+            status: "completed"
+            qa_passed: true
+            notes: "QA Report found"
+          - id: "story-3.2"
+            name: "Structured Consistency Reports"
+            status: "completed"
+            completed: "2024-12-26"
+            qa_passed: true
+            notes: "QA Approved"
+          - id: "story-2.5"
+            name: "AI Usage Metering & Hard Caps"
+            status: "completed"
+            completed: "2024-12-27"
+            qa_passed: true
+            notes: "QA Approved. Moved from Epic 3 to Epic 2."
+          - id: "story-3.4"
+            name: "Migrate AI Service to OpenRouter"
+            status: "completed"
+            completed: "2024-12-28"
+            qa_passed: true
+            notes: "Done and verified"
+          - id: "story-2.6"
+            name: "Magic Ingest (Document Import)"
+            status: "completed"
+            completed: "2025-12-29"
+            notes: "Implemented file ingestion (DOCX, PDF, MD) with typewriter animation and manual fallback."
+          - id: "story-3.5"
+            name: "Consistency Badges in Binder"
+            status: "completed"
+            completed: "2026-01-01"
+            notes: "Implemented Consistency Badges with real-time updates and interactive filtering."
+
+# Story Progress Summary
+story_progress:
+  total: 21
+  completed: 14
+  ux_rework: 0
+  ready: 1
+  pending: 7
+  
+epic_progress:
+  - epic: 1
+    name: "Foundation & Auth"
+    stories: 4
+    completed: 4
+    status: "completed"
+  - epic: 2
+    name: "Editor & Llama AI"
+    stories: 6
+    completed: 6
+    ux_rework: 0
+    status: "completed"
+    notes: "UX Rework complete. AI Usage Metering (2.5) and Magic Ingest (2.6) completed."
+    story_list:
+      - id: "story-2.1"
+        name: "Manuscript CRUD + Autosave"
+        status: "completed"
+      - id: "story-2.5"
+        name: "AI Usage Metering & Hard Caps"
+        status: "completed"
+      - id: "story-2.6"
+        name: "Magic Ingest (Document Import)"
+        status: "completed"
+        notes: "From UX spec - Magic Ingest flow"
+  - epic: 3
+    name: "Consistency Engine"
+    stories: 4
+    completed: 4
+    status: "completed"
+    notes: "Story 3.5 added for Consistency Badges. All stories complete."
+    story_list:
+      - id: "story-3.5"
+        name: "Consistency Badges in Binder"
+        status: "completed"
+        notes: "From UX spec - Visual feedback"
+  - epic: 4
+    name: "Support & Admin"
+    stories: 3
+    completed: 0
+    status: "pending"
+  - epic: 5
+    name: "UX Enhancements"
+    stories: 4
+    completed: 0
+    status: "backlog"
+    notes: "Derived from UX Design Specification"
+    story_list:
+      - id: "story-5.1"
+        name: "Integrate Custom Fine-Tuned Models"
+        status: "backlog"
+      - id: "story-5.2"
+        name: "Cmd+K Commander Pattern"
+        status: "backlog"
+        notes: "From UX spec - Novel UX Patterns"
+      - id: "story-5.3"
+        name: "Voice-to-Text Dictation"
+        status: "backlog"
+        notes: "From UX spec - Accessibility"
+      - id: "story-5.4"
+        name: "Mobile Responsive Layout"
+        status: "backlog"
+        notes: "From UX spec - Review-on-Mobile"
+
+# Next Action
+next_workflow:
+  id: "story-5.2"
+  name: "Story 5.2: Cmd+K Commander Pattern"
+  agent: "dev"
+  command: "/dev-story story5.2"
+  description: "Implement global command palette"
+  priority: "medium"
+  reason: "Next UX feature"

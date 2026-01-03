@@ -1,5 +1,5 @@
 describe("Sanity Check", () => {
-  it("works", () => {
-    expect(1 + 1).toBe(2);
+  it("should pass", () => {
+    expect(true).toBe(true);
   });
 });

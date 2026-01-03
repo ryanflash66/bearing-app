@@ -1,5 +1,21 @@
 {
-  "node": {},
+  "node": {
+    "40ed51c616b24fc025a7dcb6b60cd86a67267dffe7": {
+      "workers": {
+        "app/dashboard/admin/members/page": {
+          "moduleId": 17368,
+          "async": false,
+          "exportedName": "changeRole",
+          "filename": "src/app/dashboard/admin/actions.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/admin/members/page": "action-browser"
+      },
+      "filename": "src/app/dashboard/admin/actions.ts",
+      "exportedName": "changeRole"
+    }
+  },
   "edge": {},
-  "encryptionKey": "UwEtx8IDIxTwx6Tr1ytXNjhJRqtVRsV+ozFkNTgF3IA="
+  "encryptionKey": "c1u+Q1rSaTMmc/J2MfbwcRyOfdZ0qPA8jZc3V5dJ1Vs="
 }
