@@ -23,6 +23,7 @@ All production environment variables must be manually mirrored in the Vercel Das
 
 ## 📁 Critical Files
 - `supabase/migrations/`: Database schema source of truth.
+- `src/proxy.ts`: Next.js Middleware (renamed from `middleware.ts` in Next.js 16+).
 - `_bmad-output/bmm-workflow-status.yaml`: Current project progress.
 
 ## ⚠️ Known Warnings
