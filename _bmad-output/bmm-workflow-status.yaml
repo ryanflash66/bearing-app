@@ -189,14 +189,34 @@ workflow_status:
             status: "completed"
             completed: "2026-01-01"
             notes: "Implemented Consistency Badges with real-time updates and interactive filtering."
+          - id: "story-4.0"
+            name: "Magic Ingest Stability (Retry/Error logic)"
+            status: "completed"
+            completed: "2026-01-02"
+            notes: "Technical debt repayment for import resilience."
+          - id: "story-4.1"
+            name: "Usage Guardrails & Upsell Workflow"
+            status: "completed"
+            completed: "2026-01-03"
+            notes: "Usage status enums, billing cycle triggers, and upsell banners."
+          - id: "story-4.2"
+            name: "Admin Dashboard & Overrides"
+            status: "completed"
+            completed: "2026-01-03"
+            notes: "Admin dashboard with usage table, filters, overrides, and audit logs."
+          - id: "story-4.3"
+            name: "In-App Support Messaging"
+            status: "_bmad-output/implementation-artifacts/story4.3.md"
+            completed: "2026-01-03"
+            notes: "Secure support ticket system with author and admin flows."
 
 # Story Progress Summary
 story_progress:
   total: 21
-  completed: 14
+  completed: 18
   ux_rework: 0
   ready: 1
-  pending: 7
+  pending: 3
   
 epic_progress:
   - epic: 1
@@ -235,9 +255,10 @@ epic_progress:
         notes: "From UX spec - Visual feedback"
   - epic: 4
     name: "Support & Admin"
-    stories: 3
-    completed: 0
-    status: "pending"
+    stories: 4
+    completed: 4
+    status: "completed"
+    notes: "All stories (4.0-4.3) completed."
   - epic: 5
     name: "UX Enhancements"
     stories: 4
@@ -263,10 +284,11 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-5.2"
-  name: "Story 5.2: Cmd+K Commander Pattern"
+  id: "story-5.1"
+  name: "Story 5.1: Integrate Custom Fine-Tuned Models"
   agent: "dev"
-  command: "/dev-story story5.2"
-  description: "Implement global command palette"
+  command: "/dev-story story5.1"
+  description: "Allow workspace-level control over which OpenRouter model is used for suggests/consistency"
   priority: "medium"
-  reason: "Next UX feature"
+  reason: "Begins the Intelligence Upgrade epic"
+

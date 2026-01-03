@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { updateMemberRoleWithGuardrails, removeMemberWithGuardrails } from "@/lib/admin";
+import { isAccountAdmin } from "@/lib/account";
+import { toggleUserAiStatus, resetAccountLimits, updateMemberNote } from "@/lib/usage-admin";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -80,3 +82,152 @@ export async function removeMember(params: {
   }
 }
 
+
+export async function toggleAiStatus(params: {
+  accountId: string;
+  targetUserId: string;
+  newStatus: "active" | "disabled";
+}): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const isAdmin = await isAccountAdmin(supabase, params.accountId, user.id);
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const result = await toggleUserAiStatus(
+      supabase,
+      params.accountId,
+      params.targetUserId,
+      params.newStatus,
+      user.id
+    );
+
+    if (result.success) {
+      revalidatePath("/dashboard/admin");
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Toggle AI status error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+export async function toggleMemberStatusAction(params: {
+  accountId: string;
+  targetUserId: string;
+  newStatus: "active" | "suspended";
+}): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const isAdmin = await isAccountAdmin(supabase, params.accountId, user.id);
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const { toggleMemberStatus } = await import("@/lib/usage-admin");
+    const result = await toggleMemberStatus(
+      supabase,
+      params.accountId,
+      params.targetUserId,
+      params.newStatus,
+      user.id
+    );
+
+    if (result.success) {
+      revalidatePath("/dashboard/admin");
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Toggle member status error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+export async function waiveLimits(params: {
+  accountId: string;
+}): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+    
+    const isAdmin = await isAccountAdmin(supabase, params.accountId, user.id);
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const result = await resetAccountLimits(supabase, params.accountId, user.id);
+
+    if (result.success) {
+      revalidatePath("/dashboard/admin");
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Waive limits error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+export async function saveNote(params: {
+  accountId: string;
+  targetUserId: string;
+  note: string;
+}): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const isAdmin = await isAccountAdmin(supabase, params.accountId, user.id);
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const result = await updateMemberNote(
+      supabase,
+      params.accountId,
+      params.targetUserId,
+      params.note,
+      user.id
+    );
+
+    if (result.success) {
+      revalidatePath("/dashboard/admin");
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Save note error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}

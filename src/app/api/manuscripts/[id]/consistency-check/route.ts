@@ -49,10 +49,26 @@ export async function POST(
       );
     }
 
+    // Story 4.3/5.1 Fix: Get the public.users profile ID
+    // The RLS policy requires created_by to match the Profile ID (get_current_user_id()), not Auth ID
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: "User profile not found. Please log out and back in." },
+        { status: 404 }
+      );
+    }
+
     // Initiate consistency check (async, returns immediately)
+    // Pass profile.id as userId (which becomes created_by)
     const result = await initiateConsistencyCheck(supabase, {
       manuscriptId,
-      userId: user.id,
+      userId: profile.id,
     });
 
     return NextResponse.json(result, { status: 202 }); // 202 Accepted for async operations

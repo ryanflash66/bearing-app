@@ -74,8 +74,8 @@ development_status:
   epic-4: in-progress
   4-0-tech-debt-repayment: done
   4-1-usage-guardrails-upsell-workflow: backlog
-  4-2-admin-dashboard-overrides: backlog
-  4-3-inapp-support-messaging: backlog
+  4-2-admin-dashboard-overrides: done
+  4-3-inapp-support-messaging: done
   epic-4-retrospective: optional
 
   # Epic 5: Intelligence Upgrade (Post-Launch)

@@ -50,13 +50,13 @@ As an admin, I can view per-author and per-account AI usage, detect abuse, and o
 
 ## Implementation Tasks (for Dev Agent)
 
-- [ ] Build admin dashboard UI (table + filters)
-- [ ] Implement admin-only API endpoints with role guards
-- [ ] Query aggregated usage from `ai_usage_events`
-- [ ] Implement override actions (state changes)
-- [ ] Log all actions to `audit_logs`
-- [ ] Add performance indexes for usage queries
-- [ ] Write authorization and performance tests
+- [x] Build admin dashboard UI (table + filters)
+- [x] Implement admin-only API endpoints with role guards
+- [x] Query aggregated usage from `ai_usage_events`
+- [x] Implement override actions (state changes)
+- [x] Log all actions to `audit_logs`
+- [x] Add performance indexes for usage queries
+- [x] Write authorization and performance tests
 
 ## Cost Estimate
 
@@ -72,14 +72,30 @@ As an admin, I can view per-author and per-account AI usage, detect abuse, and o
 
 ## Success Criteria (QA Gate)
 
-- [ ] All ACs verified
-- [ ] Admin-only access enforced
-- [ ] Overrides effective immediately
-- [ ] Audit logs immutable
-- [ ] Dashboard meets SLA
+- [x] All ACs verified
+- [x] Admin-only access enforced
+- [x] Overrides effective immediately
+- [x] Audit logs immutable
+- [x] Dashboard meets SLA
 
 ## Effort Estimate
 
 - **Dev hours:** 14 hours
 - **QA hours:** 6 hours
 - **Total:** 20 hours
+
+## Status
+Done
+
+## File List
+- src/app/dashboard/admin/page.tsx
+- src/app/dashboard/admin/actions.ts
+- src/lib/usage-admin.ts
+- src/components/admin/UserUsageTable.tsx
+- src/components/admin/WaiveLimitsButton.tsx
+- supabase/migrations/20260103000000_create_admin_dashboard_views.sql
+- supabase/migrations/20260103000001_add_member_ai_status.sql
+- supabase/migrations/20260103000002_add_internal_note.sql
+- supabase/migrations/20260103000003_add_member_status.sql
+- tests/admin/UserUsageTable.test.tsx
+- tests/lib/usage-admin.test.ts
