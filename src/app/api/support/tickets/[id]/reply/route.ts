@@ -2,7 +2,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -40,7 +41,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const { data: newMessage, error: messageError } = await supabase
     .from("support_messages")
     .insert({
-        ticket_id: params.id,
+        ticket_id: id,
         sender_user_id: publicUser.id,
         message,
         is_internal: false
@@ -56,7 +57,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const { data: ticket } = await supabase
     .from("support_tickets")
     .update({ updated_at: new Date().toISOString() })
-    .eq("id", params.id)
+    .eq("id", id)
     .select("*, user:users(email)")
     .single();
 
