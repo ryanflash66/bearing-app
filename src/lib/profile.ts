@@ -17,6 +17,8 @@ export interface Account {
   name: string;
   owner_user_id: string;
   created_at: string;
+  usage_status?: "good_standing" | "flagged" | "upsell_required";
+  consecutive_overage_months?: number;
 }
 
 export interface ProfileResult {

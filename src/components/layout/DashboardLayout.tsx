@@ -12,6 +12,7 @@ interface DashboardLayoutProps {
     displayName?: string | null;
     role?: string;
   };
+  usageStatus?: "good_standing" | "flagged" | "upsell_required" | string;
 }
 
 interface NavItem {
@@ -185,7 +186,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
         <main className="p-4 lg:p-8">
           {usageStatus && usageStatus !== "good_standing" && (
             <div className="mb-6">
-               <UpsellBanner status={usageStatus} />
+               <UpsellBanner status={usageStatus as "flagged" | "upsell_required"} />
             </div>
           )}
           {children}
