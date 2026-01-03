@@ -24,3 +24,9 @@ All production environment variables must be manually mirrored in the Vercel Das
 ## 📁 Critical Files
 - `supabase/migrations/`: Database schema source of truth.
 - `_bmad-output/bmm-workflow-status.yaml`: Current project progress.
+
+## ⚠️ Known Warnings
+The following build/install warnings are known and safe to ignore for production:
+- **`inflight@1.0.6` (Memory Leak)**: Transitive dependency via `ts-jest` -> `babel-plugin-istanbul`. Only affects test execution, not the production build.
+- **`glob@7.2.3` (Unsupported)**: Same source path. Required by `babel-plugin-istanbul` for test coverage.
+**Action**: Do **NOT** force override these dependencies. Doing so breaks the test suite (`npm test`). We will wait for `babel-plugin-istanbul` to update upstream.
