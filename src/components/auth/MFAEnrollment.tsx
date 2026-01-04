@@ -33,8 +33,31 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
     setSetupError(null);
     try {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("No user found");
+
+      // Step 1: List existing factors
+      const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+      if (listError) throw listError;
+
+      // Step 2: Clean up ANY existing TOTP factors that are not verified
+      // If the user is here, they want to setup MFA, so partial attempts should be wiped
+      const mfaData = factors as any;
+      const totpFactors = (mfaData?.totp || []) as any[];
+      const unverifiedFactors = totpFactors.filter(f => f.status === 'unverified');
+      
+      for (const factor of unverifiedFactors) {
+         console.log("Cleaning up unverified factor:", factor.id);
+         await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      }
+
+      // Step 3: Enroll new factor
+      const friendlyName = `Bearing App (${user.email})`;
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
+        friendlyName, 
+        issuer: "Bearing App",
       });
 
       if (error) {
@@ -46,6 +69,7 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       setSecret(data.totp.secret);
       setQrCodeData(data.totp.qr_code);
     } catch (err) {
+      console.error("MFA Setup Error:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to setup MFA";
       setSetupError(errorMessage);
