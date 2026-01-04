@@ -2,7 +2,6 @@ import { type NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
 export async function proxy(request: NextRequest) {
-  console.log("Proxy (Middleware) running for:", request.nextUrl.pathname);
   return await updateSession(request);
 }
 

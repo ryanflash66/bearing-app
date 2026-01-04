@@ -7,18 +7,12 @@ export async function GET(request: Request) {
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get("next") ?? "/dashboard";
 
-  const { cookies } = await import("next/headers");
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
-  console.log("Auth Callback Cookies:", allCookies.map(c => `${c.name} (${c.value.substring(0, 10)}...)`));
-
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     } else {
-      console.error("Auth callback error:", error.message, error);
       return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`);
     }
   }
