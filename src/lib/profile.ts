@@ -44,50 +44,35 @@ export async function getOrCreateProfile(
   try {
     console.log('[getOrCreateProfile] Starting lookup for authId:', authId);
     
-    // Try to fetch existing profile by auth_id OR email
-    // This handles cases where a user might have an orphaned profile (same email, new auth_id)
+    // Use RPC to check for and claim any orphaned profile (bypassing RLS)
+    const { data: claimedProfile, error: claimError } = await supabase.rpc('claim_profile', {
+      p_auth_id: authId,
+      p_email: email
+    });
+
+    if (claimError) {
+      console.error('[getOrCreateProfile] RPC claim error:', claimError);
+    }
+
+    // Try to fetch existing profile (standard path)
+    // Note: If claim_profile worked, this will now return the profile because auth_id matches
     const { data: existingProfile, error: fetchError } = await supabase
       .from("users")
       .select("*")
-      .or(`auth_id.eq.${authId},email.eq.${email}`)
+      .eq("auth_id", authId)
       .single();
     
     console.log('[getOrCreateProfile] Profile fetch result:', {
       found: !!existingProfile,
+      claimed: !!claimedProfile && claimedProfile.length > 0,
       profileId: existingProfile?.id,
-      matchType: existingProfile 
-        ? (existingProfile.auth_id === authId ? 'auth_id' : 'email_claim') 
-        : 'none',
       fetchError: fetchError?.message,
       errorCode: fetchError?.code,
     });
 
-    if (existingProfile) {
-      // If found by email but auth_id mismatch, claim it!
-      if (existingProfile.auth_id !== authId) {
-         console.log('[getOrCreateProfile] Orphaned profile found (email match). claiming...', {
-            oldAuthId: existingProfile.auth_id,
-            newAuthId: authId
-         });
-         
-         const { error: updateError } = await supabase
-            .from("users")
-            .update({ auth_id: authId })
-            .eq("id", existingProfile.id);
-            
-         if (updateError) {
-             console.error("Failed to claim orphaned profile:", updateError);
-             // Verify if we should throw or continue. If we continue, we might still fail later?
-             // But let's assume if update fails, we can't do much.
-             // Actually, if update fails, the logic below using existingProfile might work 
-             // IF the downstream logic doesn't strictly depend on auth_id match in DB immediately?
-             // But RLS might Block access? 
-             // Optimistically we assume update works.
-         } else {
-             existingProfile.auth_id = authId; // Update local object
-         }
-      }
 
+
+    if (existingProfile) {
       console.log('[getOrCreateProfile] Existing profile found, fetching account...');
       
       // Also fetch the user's account
