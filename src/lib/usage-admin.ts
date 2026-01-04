@@ -66,7 +66,7 @@ export async function getAccountUsageStats(
         email: user?.email || "Unknown",
         display_name: user?.display_name || null,
         account_role: m.account_role,
-        account_role: m.account_role,
+
         ai_status: m.ai_status || "active", // Default to active if null
         member_status: m.member_status || "active",
         internal_note: m.internal_note || null,
