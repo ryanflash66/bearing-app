@@ -269,29 +269,19 @@ async function createProfileWithAccount(
     };
   }
 
-  // Step 2: Create the default account
+  // Step 2: Create the default account using Secure RPC
+  // This bypasses RLS issues and ensures atomicity (account + membership created together)
   const accountName = email.split("@")[0] + "'s Account";
-  console.log('[createProfileWithAccount] Step 2: Creating account:', { accountName, ownerId: newProfile.id });
+  console.log('[createProfileWithAccount] Step 2: Creating account via RPC:', { accountName, ownerId: newProfile.id });
   
-  const { data: newAccount, error: accountError } = await supabase
-    .from("accounts")
-    .insert({
-      name: accountName,
-      owner_user_id: newProfile.id,
-    })
-    .select()
-    .single();
-  
-  console.log('[createProfileWithAccount] Account creation result:', {
-    success: !!newAccount,
-    accountId: newAccount?.id,
-    error: accountError?.message,
-    errorCode: accountError?.code,
+  const { data: newAccounts, error: rpcError } = await supabase.rpc('create_default_account', {
+    p_name: accountName,
+    p_owner_id: newProfile.id
   });
 
-  if (accountError) {
-    console.error("Account creation error:", JSON.stringify(accountError, null, 2));
-    // Try to clean up the user we created
+  if (rpcError) {
+    console.error("Account creation RPC error:", JSON.stringify(rpcError, null, 2));
+    // Try to clean up user
     await supabase.from("users").delete().eq("id", newProfile.id);
     return {
       profile: null,
@@ -300,39 +290,23 @@ async function createProfileWithAccount(
     };
   }
 
-  // Step 3: Create the account membership (user as admin of their own account)
-  console.log('[createProfileWithAccount] Step 3: Creating account membership:', {
-    accountId: newAccount.id,
-    userId: newProfile.id,
-  });
-  
-  const { error: memberError } = await supabase
-    .from("account_members")
-    .insert({
-      account_id: newAccount.id,
-      user_id: newProfile.id,
-      account_role: "admin",
-    });
-  
-  console.log('[createProfileWithAccount] Membership creation result:', {
-    success: !memberError,
-    error: memberError?.message,
-    errorCode: memberError?.code,
-  });
+  // RPC returns an array (SETOF), take the first one
+  const newAccount = (newAccounts && newAccounts.length > 0) ? newAccounts[0] : null;
 
-  if (memberError) {
-    console.error("Membership creation error:", JSON.stringify(memberError, null, 2));
-    // Try to clean up
-    await supabase.from("accounts").delete().eq("id", newAccount.id);
+  if (!newAccount) {
+    console.error("Account creation RPC returned no data");
+     // Try to clean up user
     await supabase.from("users").delete().eq("id", newProfile.id);
     return {
       profile: null,
       account: null,
-      error: "Failed to set up account membership. Please try again.",
+      error: "Account creation failed (no data returned).",
     };
   }
+  
+  console.log('[createProfileWithAccount] RPC success:', { accountId: newAccount.id });
 
-  // Step 4: Log the account creation audit event
+  // Step 3: Log the account creation audit event
   await createAuditLog(supabase, {
     accountId: newAccount.id,
     userId: newProfile.id,
@@ -363,52 +337,38 @@ async function createAccountOnly(
   account: Account | null;
   error: string | null;
 }> {
-  // Step 1: Create the default account
+  // Step 1: Create the default account using Secure RPC
+  // This bypasses RLS issues and ensures atomicity (account + membership created together)
   const accountName = email.split("@")[0] + "'s Account";
-  console.log('[createAccountOnly] Creating account:', { accountName, ownerId: userId });
+  console.log('[createAccountOnly] Creating account via RPC:', { accountName, ownerId: userId });
   
-  const { data: newAccount, error: accountError } = await supabase
-    .from("accounts")
-    .insert({
-      name: accountName,
-      owner_user_id: userId,
-    })
-    .select()
-    .single();
-  
-  if (accountError) {
-    console.error("Account creation error:", JSON.stringify(accountError, null, 2));
+  const { data: newAccounts, error: rpcError } = await supabase.rpc('create_default_account', {
+    p_name: accountName,
+    p_owner_id: userId
+  });
+
+  if (rpcError) {
+    console.error("Account creation RPC error:", JSON.stringify(rpcError, null, 2));
     return {
       account: null,
       error: "Failed to create account. Please try again.",
     };
   }
 
-  // Step 2: Create the account membership
-  console.log('[createAccountOnly] Creating account membership:', {
-    accountId: newAccount.id,
-    userId: userId,
-  });
-  
-  const { error: memberError } = await supabase
-    .from("account_members")
-    .insert({
-      account_id: newAccount.id,
-      user_id: userId,
-      account_role: "admin",
-    });
-  
-  if (memberError) {
-    console.error("Membership creation error:", JSON.stringify(memberError, null, 2));
-    // Try to clean up
-    await supabase.from("accounts").delete().eq("id", newAccount.id);
+  // RPC returns an array (SETOF), take the first one
+  const newAccount = (newAccounts && newAccounts.length > 0) ? newAccounts[0] : null;
+
+  if (!newAccount) {
+    console.error("Account creation RPC returned no data");
     return {
       account: null,
-      error: "Failed to set up account membership. Please try again.",
+      error: "Account creation failed (no data returned).",
     };
   }
+  
+  console.log('[createAccountOnly] RPC success:', { accountId: newAccount.id });
 
-  // Step 3: Log the account creation audit event
+  // Step 2: Log the audit event (we do this outside the RPC for now as audit logging is less critical)
   await createAuditLog(supabase, {
     accountId: newAccount.id,
     userId: userId,
