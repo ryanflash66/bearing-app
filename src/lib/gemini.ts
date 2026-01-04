@@ -377,6 +377,14 @@ export async function processConsistencyCheckJob(
 
     // Process each chunk
     for (let i = 0; i < chunks.length; i++) {
+      // Update progress
+      await supabase
+        .from("consistency_checks")
+        .update({ 
+          error_message: `Analysing chunk ${i + 1} of ${chunks.length}...` // Temporary status update
+        })
+        .eq("id", jobId);
+
       const chunk = chunks[i];
       try {
         const report = await analyzeConsistencyWithGemini(chunk, i, chunks.length);
@@ -462,7 +470,8 @@ export async function processConsistencyCheckJob(
  */
 export async function initiateConsistencyCheck(
   supabase: SupabaseClient,
-  input: CreateConsistencyCheckInput
+  input: CreateConsistencyCheckInput,
+  scheduleBackgroundWork?: (work: () => Promise<void>) => void
 ): Promise<ConsistencyCheckResult> {
   const { manuscriptId, userId } = input;
 
@@ -526,9 +535,20 @@ export async function initiateConsistencyCheck(
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   const backgroundClient = createClient(supabaseUrl, supabaseServiceKey);
 
-  processConsistencyCheckJob(backgroundClient, jobId, manuscriptId, content, userId).catch((err) => {
-    console.error("Error processing consistency check job:", err);
-  });
+  const backgroundTask = async () => {
+    try {
+      await processConsistencyCheckJob(backgroundClient, jobId, manuscriptId, content, userId);
+    } catch (err) {
+      console.error("Error processing consistency check job:", err);
+    }
+  };
+
+  if (scheduleBackgroundWork) {
+    scheduleBackgroundWork(backgroundTask);
+  } else {
+    // Fallback for environments without 'after' support
+    backgroundTask();
+  }
 
   return {
     jobId,

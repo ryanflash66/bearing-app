@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { initiateConsistencyCheck } from "@/lib/gemini";
 
@@ -66,12 +66,27 @@ export async function POST(
 
     // Initiate consistency check (async, returns immediately)
     // Pass profile.id as userId (which becomes created_by)
-    const result = await initiateConsistencyCheck(supabase, {
-      manuscriptId,
-      userId: profile.id,
-    });
+    // Initiate consistency check (async, returns immediately)
+    // Pass profile.id as userId (which becomes created_by)
+    // Use 'after' to ensure background task completes even after response is sent
+    const { jobId, estimatedTokens } = await initiateConsistencyCheck(
+      supabase, 
+      {
+        manuscriptId,
+        userId: profile.id,
+      },
+      (backgroundTask) => {
+        // This callback allows us to wrap the task in 'after'
+        after(backgroundTask);
+      }
+    );
 
-    return NextResponse.json(result, { status: 202 }); // 202 Accepted for async operations
+    return NextResponse.json({
+      jobId, 
+      status: "queued", 
+      estimatedTokens, 
+      cached: false
+    }, { status: 202 });
   } catch (error) {
     console.error("Error initiating consistency check:", error);
     
