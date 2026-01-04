@@ -14,14 +14,14 @@ const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const OPENROUTER_MODELS = {
   // Gemini models (for consistency checks)
   "gemini-pro": "google/gemini-pro-1.5",
-  "gemini-flash": "google/gemini-flash-1.5",
+  "gemini-flash": "google/gemini-3-flash-preview",
   "gemini-flash-8b": "google/gemini-flash-1.5-8b",
   // Llama models (for suggestions)
   "llama-8b": "meta-llama/llama-3.1-8b-instruct",
   "llama-70b": "meta-llama/llama-3.1-70b-instruct",
   "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
   // Default fallbacks
-  default_consistency: "google/gemini-flash-1.5",
+  default_consistency: "google/gemini-3-flash-preview",
   default_suggestion: "meta-llama/llama-3.1-8b-instruct",
 } as const;
 
