@@ -11,6 +11,7 @@ import {
   OPENROUTER_MODELS,
   OpenRouterError,
 } from "./openrouter";
+import { createClient } from "@supabase/supabase-js";
 
 // Types
 export interface ConsistencyIssue {
@@ -338,8 +339,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown code bloc
     return report;
   } catch (error) {
     if (error instanceof OpenRouterError) {
-      console.error("OpenRouter API error:", error.getUserFriendlyMessage());
-      throw new Error(error.getUserFriendlyMessage());
+      const detailedError = `OpenRouter API error (${error.statusCode}): ${error.message}`;
+      console.error(detailedError);
+      throw new Error(detailedError);
     }
     console.error("Error calling OpenRouter API:", error);
     throw error;
@@ -519,8 +521,12 @@ export async function initiateConsistencyCheck(
     throw new Error(error);
   }
 
-  // 7. Process asynchronously
-  processConsistencyCheckJob(supabase, jobId, manuscriptId, content, userId).catch((err) => {
+  // 7. Process asynchronously using a fresh client to avoid request-context expiration
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const backgroundClient = createClient(supabaseUrl, supabaseServiceKey);
+
+  processConsistencyCheckJob(backgroundClient, jobId, manuscriptId, content, userId).catch((err) => {
     console.error("Error processing consistency check job:", err);
   });
 

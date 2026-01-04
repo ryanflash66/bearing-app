@@ -110,10 +110,10 @@ workflow_status:
         stories:
           - id: "story-1.1"
             name: "Email + MFA Authentication"
-            status: "completed"
-            completed: "2024-12-22"
+            status: "_bmad-output/implementation-artifacts/auth-hardening-walkthrough.md"
+            completed: "2026-01-03"
             qa_passed: true
-            notes: "QA Passed (report found)"
+            notes: "STABILITY UPGRADE: Replaced client-side provisioning with RPCs (claim_profile, create_default_account) and hardened MFA enrollment (unique names, session refresh)."
           - id: "story-1.2"
             name: "Author Dashboard Skeleton"
             status: "completed"

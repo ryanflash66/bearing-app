@@ -152,15 +152,31 @@ const cookieOptions = {
 
 ---
 
+## Provisioning Pattern: RPC-First
+To prevent RLS Deadlocks and ensure atomicity, Bearing uses **Security Definer RPCs** for user and account creation.
+
+### Rationale
+Standard client-side inserts (`supabase.from('users').insert(...)`) can fail if database triggers create linked rows simultaneously. RLS may prevent the client from "seeing" the row it just triggered, causing a 406 or duplicate key error.
+
+### Critical RPCs
+1. **`claim_profile(p_auth_id, p_email)`**: Used during signup/login to claim an existing "orphaned" profile row (created by external triggers) by updating its `auth_id`.
+2. **`create_default_account(p_user_id, p_name)`**: Atomically creates an entry in `accounts` and `account_members` in a single transaction, bypassing client-side RLS race conditions.
+
+---
+
 ## MFA (TOTP) Implementation
 
 ### TOTP Setup Flow
-1. User enables MFA in settings
-2. System generates TOTP secret (RFC 4226)
-3. QR code displayed (user scans with authenticator app)
-4. User enters 6-digit code to verify secret is working
-5. System generates backup codes (10×, print-friendly)
-6. TOTP enabled on account
+1. User enables MFA in settings.
+2. **Session Refresh:** System forces `supabase.auth.refreshSession()` to ensure client state matches server factors.
+3. **Cleanup:** System automatically unenrols any existing `unverified` TOTP factors to prevent naming collisions.
+4. **Enrollment with Unique Name:** 
+   - Friendly Name format: `Bearing App (${email}) - ${suffix}` (where suffix is a 4-digit timestamp).
+   - This mathematically prevents "Friendly Name already exists" blocking errors.
+5. System generates QR code displayed (user scans with authenticator app).
+6. User enters 6-digit code to verify secret.
+7. TOTP enabled on account.
+8. **Terminal Success State:** Once verified, the setup component switches to a "Two-Factor Authentication Enabled" success view, preventing re-enrollment loops.
 
 ### TOTP Login Flow
 1. User enters email + password

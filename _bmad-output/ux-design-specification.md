@@ -317,6 +317,7 @@ Three critical, PRD-specific components will be developed from scratch to serve 
 #### Additional Specialized Components:
 - **Usage Metering Dashboard**: Visual progress bars and token consumption visualizations.
 - **Service Marketplace Cards**: Hover➔Request interaction for ISBN and cover services.
+- **MFA Enrollment (Security)**: Features a **Terminal Success State** that replaces setup controls with a clear "Encryption Enabled" status once verified, preventing redundant enrollment attempts.
 - **Export Preview Modal**: WYSIWYG modal for KDP-ready format validation (PDF/Epub).
 
 ### Component Implementation Strategy
