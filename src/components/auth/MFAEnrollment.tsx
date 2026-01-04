@@ -39,6 +39,9 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       
       if (!user) throw new Error("No user found");
 
+      // Step 0: Force session refresh to ensure we see the latest factors
+      await supabase.auth.refreshSession();
+
       // Step 1: List existing factors
       const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) throw listError;
@@ -62,8 +65,11 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
          await supabase.auth.mfa.unenroll({ factorId: factor.id });
       }
 
-      // Step 3: Enroll new factor
-      const friendlyName = `Bearing App (${user.email})`;
+      // Step 3: Enroll new factor with UNIQUE name to prevent collisions
+      // We append a short suffix to ensure uniqueness even if cleanup failed (race condition)
+      const uniqueSuffix = new Date().getTime().toString().slice(-4); 
+      const friendlyName = `Bearing App (${user.email}) - ${uniqueSuffix}`;
+      
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName, 
