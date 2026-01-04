@@ -419,6 +419,7 @@ export async function processConsistencyCheckJob(
         report_json: finalReport,
         tokens_actual: tokensActual,
         completed_at: new Date().toISOString(),
+        error_message: null,
       })
       .eq("id", jobId);
 
