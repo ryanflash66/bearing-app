@@ -29,6 +29,8 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
     );
   };
 
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
+
   const setupMFA = async () => {
     setSetupError(null);
     try {
@@ -41,10 +43,18 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
       if (listError) throw listError;
 
-      // Step 2: Clean up ANY existing TOTP factors that are not verified
-      // If the user is here, they want to setup MFA, so partial attempts should be wiped
+      // Guard: Check for VERIFIED factors
       const mfaData = factors as any;
       const totpFactors = (mfaData?.totp || []) as any[];
+
+      const hasVerified = totpFactors.some(f => f.status === 'verified');
+      if (hasVerified) {
+          setIsAlreadyEnrolled(true);
+          if (onEnrolled) onEnrolled();
+          return;
+      }
+
+      // Step 2: Clean up ANY existing TOTP factors that are not verified
       const unverifiedFactors = totpFactors.filter(f => f.status === 'unverified');
       
       for (const factor of unverifiedFactors) {
@@ -120,6 +130,7 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
           email: user?.email ?? undefined,
         });
         if (onEnrolled) onEnrolled();
+        setIsAlreadyEnrolled(true); // Show success state immediately
       }
     } catch (err) {
       const errorMessage =
@@ -139,6 +150,17 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       Try again
     </button>
   );
+
+  if (isAlreadyEnrolled) {
+      return (
+        <div className="space-y-4 max-w-sm mx-auto p-4 border rounded bg-emerald-50 border-emerald-200">
+          <h3 className="text-lg font-bold text-emerald-800">Two-Factor Authentication Enabled</h3>
+          <p className="text-sm text-emerald-700">
+            Your account is secured with 2FA.
+          </p>
+        </div>
+      );
+  }
 
   if (setupError) {
     return (
