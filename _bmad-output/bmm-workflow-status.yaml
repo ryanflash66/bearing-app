@@ -247,7 +247,7 @@ epic_progress:
     stories: 4
     completed: 4
     status: "completed"
-    notes: "Story 3.5 added for Consistency Badges. All stories complete."
+    notes: "Story 3.5 added for Consistency Badges. All stories complete. HARDENING (Jan 2026): Implemented Next.js 'after' lifecycle and real-time progress logging to resolve OpenRouter integration hangs."
     story_list:
       - id: "story-3.5"
         name: "Consistency Badges in Binder"
@@ -260,11 +260,11 @@ epic_progress:
     status: "completed"
     notes: "All stories (4.0-4.3) completed."
   - epic: 5
-    name: "UX Enhancements"
+    name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
     completed: 0
     status: "backlog"
-    notes: "Derived from UX Design Specification"
+    notes: "Pushed back after Stabilization and Publication epics."
     story_list:
       - id: "story-5.1"
         name: "Integrate Custom Fine-Tuned Models"
@@ -272,23 +272,59 @@ epic_progress:
       - id: "story-5.2"
         name: "Cmd+K Commander Pattern"
         status: "backlog"
-        notes: "From UX spec - Novel UX Patterns"
       - id: "story-5.3"
         name: "Voice-to-Text Dictation"
         status: "backlog"
-        notes: "From UX spec - Accessibility"
       - id: "story-5.4"
         name: "Mobile Responsive Layout"
         status: "backlog"
-        notes: "From UX spec - Review-on-Mobile"
+  - epic: 6
+    name: "Publication & Beta Distribution"
+    stories: 4
+    completed: 0
+    status: "backlog"
+    story_list:
+      - id: "story-6.1"
+        name: "Beta Reader Access & Commenting"
+        status: "backlog"
+      - id: "story-6.2"
+        name: "WYSIWYG Export Previewer"
+        status: "backlog"
+      - id: "story-6.3"
+        name: "Publication Metadata & Blurb Hub"
+        status: "backlog"
+      - id: "story-6.4"
+        name: "Public Coming Soon Pages"
+        status: "backlog"
+  - epic: 0.5
+    name: "Stabilization & Hardening"
+    stories: 5
+    completed: 0
+    status: "backlog"
+    story_list:
+      - id: "story-h.1"
+        name: "Model & Service Governance"
+        status: "backlog"
+      - id: "story-h.2"
+        name: "Security & RLS Hardening"
+        status: "backlog"
+      - id: "story-h.3"
+        name: "Performance & Latency Baseline"
+        status: "backlog"
+      - id: "story-h.4"
+        name: "Job Resilience & Observability"
+        status: "backlog"
+      - id: "story-h.5"
+        name: "Visual & UX Polish Sweep"
+        status: "backlog"
 
 # Next Action
 next_workflow:
-  id: "story-5.1"
-  name: "Story 5.1: Integrate Custom Fine-Tuned Models"
+  id: "story-h.1"
+  name: "Story H.1: Model & Service Governance"
   agent: "dev"
-  command: "/dev-story story5.1"
-  description: "Allow workspace-level control over which OpenRouter model is used for suggests/consistency"
-  priority: "medium"
-  reason: "Begins the Intelligence Upgrade epic"
+  command: "/dev-story H.1"
+  description: "Centralize and formalize AI model configuration to avoid hardcoding and drift."
+  priority: "high"
+  reason: "First story of the Stabilization & Hardening epic (Sprint 0.5)"
 

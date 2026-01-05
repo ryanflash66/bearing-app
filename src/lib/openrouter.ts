@@ -11,18 +11,21 @@
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 // Model mapping: abstract names → OpenRouter model IDs
+import { AI_MODELS, DEFAULT_MODELS } from "./config/ai-models";
+
+// Model mapping: abstract names → OpenRouter model IDs
 export const OPENROUTER_MODELS = {
   // Gemini models (for consistency checks)
-  "gemini-pro": "google/gemini-pro-1.5",
-  "gemini-flash": "google/gemini-3-flash-preview",
-  "gemini-flash-8b": "google/gemini-flash-1.5-8b",
+  "gemini-pro": AI_MODELS.gemini.pro,
+  "gemini-flash": AI_MODELS.gemini.flash, // Updated to stable 1.5
+  "gemini-flash-8b": AI_MODELS.gemini.flash_8b,
   // Llama models (for suggestions)
-  "llama-8b": "meta-llama/llama-3.1-8b-instruct",
-  "llama-70b": "meta-llama/llama-3.1-70b-instruct",
-  "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
+  "llama-8b": AI_MODELS.llama["3.1_8b"],
+  "llama-70b": AI_MODELS.llama["3.1_70b"],
+  "llama-3.1-8b": AI_MODELS.llama["3.1_8b"], // Legacy alias
   // Default fallbacks
-  default_consistency: "google/gemini-3-flash-preview",
-  default_suggestion: "meta-llama/llama-3.1-8b-instruct",
+  default_consistency: DEFAULT_MODELS.consistency,
+  default_suggestion: DEFAULT_MODELS.suggestion,
 } as const;
 
 export type OpenRouterModelKey = keyof typeof OPENROUTER_MODELS;

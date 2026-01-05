@@ -71,15 +71,33 @@ development_status:
   epic-3-retrospective: optional
 
   # Epic 4: Support & Admin (Weeks 14-16)
-  epic-4: in-progress
+  epic-4: done
   4-0-tech-debt-repayment: done
-  4-1-usage-guardrails-upsell-workflow: backlog
+  4-1-usage-guardrails-upsell-workflow: done
   4-2-admin-dashboard-overrides: done
   4-3-inapp-support-messaging: done
   epic-4-retrospective: optional
 
-  # Epic 5: Intelligence Upgrade (Post-Launch)
+  # Epic: Hardening & Stabilization (Sprint 0.5) - PRIORITY
+  epic-hardening: in-progress
+  H-1-model-governance: done
+  H-2-security-rls-hardening: done
+  H-3-perf-latency-baseline: done
+  H-4-job-resilience: done
+  H-5-ux-polish-sweep: done
+
+  # Epic 6: Publication & Beta Distribution
+  epic-6: backlog
+  6-1-beta-reader-access: backlog
+  6-2-export-previewer: backlog
+  6-3-publication-metadata: backlog
+  6-4-public-landing-pages: backlog
+
+  # Epic 5: Intelligence Upgrade (Pushed Back)
   epic-5: backlog
   5-1-integrate-custom-models: backlog
+  5-2-commander-pattern: backlog
+  5-3-voice-dictation: backlog
+  5-4-mobile-landscape: backlog
   epic-5-retrospective: optional
 

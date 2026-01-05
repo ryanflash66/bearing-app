@@ -275,6 +275,7 @@ export async function* getLlamaSuggestionStream(
   userId: string
 ): AsyncGenerator<string, LlamaResponse> {
   const { selectionText, instruction, manuscriptId } = request;
+  const startTime = performance.now();
 
   // 1. Compute request hash
   const requestHash = await computeRequestHash(selectionText, instruction);
@@ -373,6 +374,10 @@ export async function* getLlamaSuggestionStream(
     created_by: userId,
   });
 
+  // Calculate latency
+  const endTime = performance.now();
+  const latencyMs = Math.round(endTime - startTime);
+
   await logUsageEvent(
     supabase,
     manuscript.account_id,
@@ -380,7 +385,8 @@ export async function* getLlamaSuggestionStream(
     "suggestion",
     "llama8b",
     tokensEstimated,
-    tokensActual
+    tokensActual,
+    latencyMs
   );
 
   return {
@@ -402,6 +408,7 @@ export async function getLlamaSuggestion(
   userId: string
 ): Promise<LlamaResponse> {
   const { selectionText, instruction, manuscriptId } = request;
+  const startTime = performance.now();
 
   // 1. Compute request hash
   const requestHash = await computeRequestHash(selectionText, instruction);
@@ -471,6 +478,10 @@ export async function getLlamaSuggestion(
     created_by: userId,
   });
 
+  // Calculate latency
+  const endTime = performance.now();
+  const latencyMs = Math.round(endTime - startTime);
+
   await logUsageEvent(
     supabase,
     manuscript.account_id,
@@ -478,7 +489,8 @@ export async function getLlamaSuggestion(
     "suggestion",
     "llama8b",
     tokensEstimated,
-    tokensActual
+    tokensActual,
+    latencyMs
   );
 
   return {

@@ -155,7 +155,8 @@ export async function logUsageEvent(
   feature: string, // e.g., 'consistency_check'
   model: string,   // e.g., 'gemini-pro'
   estimatedTokens: number,
-  actualTokens: number
+  actualTokens: number,
+  latencyMs: number = 0
 ): Promise<void> {
   try {
     const cycle = await getOrCreateOpenBillingCycle(supabase, accountId);
@@ -168,6 +169,7 @@ export async function logUsageEvent(
       model,
       tokens_estimated: estimatedTokens,
       tokens_actual: actualTokens,
+      latency_ms: latencyMs,
     });
 
     if (error) {

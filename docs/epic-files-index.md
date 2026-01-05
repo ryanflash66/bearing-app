@@ -12,7 +12,9 @@
 | `prd-epic-2.md` | Editor & Llama AI | Weeks 8-11 | 2.1-2.4 (4) | 100h | $0.10 |
 | `prd-epic-3.md` | Consistency Engine | Weeks 11-14 | 3.1-3.3 (3) | 66h | $1.35 |
 | `prd-epic-4.md` | Support & Admin | Weeks 14-16 | 4.1-4.3 (3) | 54h | $0 |
-| **TOTAL** | — | 18 weeks | 13 stories | **302h** | **$1.45/month** |
+| `epic-hardening.md` | Stabilization | Sprint 0.5 | H.1-H.5 (5) | 60h | $0 |
+| `prd-epic-6.md` | Publication | Weeks 17-19 | 6.1-6.4 (4) | 80h | $0 |
+| **TOTAL** | — | 22 weeks | 23 stories | **442h** | **$1.45/month** |
 
 ---
 

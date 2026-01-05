@@ -8,6 +8,7 @@ import Link from "next/link";
 import { getAccountUsageStats } from "@/lib/usage-admin";
 import UserUsageTable from "@/components/admin/UserUsageTable";
 import WaiveLimitsButton from "@/components/admin/WaiveLimitsButton";
+import JobMonitor from "@/components/admin/JobMonitor";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -183,6 +184,9 @@ export default async function AdminPage() {
            
            <UserUsageTable stats={usageStats} accountId={primaryAccount.id} />
         </div>
+
+        {/* System Health Monitor - Story H.4 */}
+        <JobMonitor />
 
         {/* Quick access sections */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

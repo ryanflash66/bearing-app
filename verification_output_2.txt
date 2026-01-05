@@ -1,0 +1,22 @@
+
+> bearing-app@1.0.0 verify-rls
+> npx tsx scripts/verify-rls.ts
+
+[dotenv@17.2.3] injecting env (4) from .env.local -- tip: ΓÜÖ∩╕Å  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (3) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: true }
+≡ƒöÆ Starting Cross-Account Security Audit...
+Creating test users...
+Created User A: 38981e2b-0503-4078-9012-026212c8643b
+Created User B: 0cd4e609-6e99-4876-b5cc-62fd5e7b2d80
+Setting up profile and account for User A...
+User A Account: 6f27a7d6-c1a8-4c52-9d94-61194ebddb70
+Setting up profile and account for User B...
+User A created manuscript: 82ed1ec8-dfdd-4007-a73f-54d5e7b33505
+User A created suggestion: 64f8e102-1787-462e-a833-28b542e7f058
+
+≡ƒò╡∩╕Å  Testing Isolation (User B reads User A data)...
+Γ£à PASS: User B cannot see Manuscript A (PGRST116: No rows found)
+Γ£à PASS: User B cannot see Suggestion A (PGRST116: No rows found)
+Γ£à PASS: User B cannot create consistency check for Manuscript A (Error: 42501)
+
+≡ƒº╣ Cleaning up...

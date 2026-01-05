@@ -106,6 +106,32 @@ export class AdminController {
 }
 ```
 
+### RPC-First Pattern for Privileged Operations
+To prevent RLS bypasses and ensures atomicity for complex operations (e.g., onboarding, membership changes), we enforce an **RPC-First** approach:
+
+1.  **Restriction**: Direct `INSERT`/`UPDATE` permissions on sensitive tables (`users`, `accounts`, `account_members`) are restricted or strictly scoped via RLS.
+2.  **Implementation**: Use `security definer` PostgreSQL functions (RPCs) for:
+    -   Account creation (`create_default_account`)
+    -   Membership changes (`invite_member`, `remove_member`)
+    -   Profile claiming (`claim_profile`)
+3.  **Rationale**:
+    -   **Atomicity**: Ensures user + account + membership are created in a single transaction.
+    -   **Validation**: Server-side logic verifies business rules (e.g., "one default account per user") that RLS cannot easily enforce.
+    -   **Privilege Elevation**: Allows temporary elevation of privileges (via `security definer`) to perform actions the user cannot do directly (e.g., assigning themselves as admin of a new account).
+
+**Example:**
+```typescript
+// Good: RPC handles complex logic atomically
+const { data, error } = await supabase.rpc('create_default_account', {
+  p_name: "My Account",
+  p_owner_id: userId
+});
+
+// Bad: Client-side orchestration (vulnerable to partial failure and RLS complexity)
+await supabase.from('accounts').insert(...);
+await supabase.from('account_members').insert(...);
+```
+
 ### Row-Level Security (RLS) in Postgres
 ```sql
 -- Defense in depth: API guards + RLS policies

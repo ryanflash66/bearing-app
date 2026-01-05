@@ -360,6 +360,7 @@ export async function processConsistencyCheckJob(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const startTime = performance.now();
     // Update status to running
     const { error: updateError } = await supabase
       .from("consistency_checks")
@@ -436,6 +437,10 @@ export async function processConsistencyCheckJob(
       .eq("id", manuscriptId)
       .single();
     
+    // Calculate latency
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+
     if (manuscript) {
       await logUsageEvent(
         supabase,
@@ -444,7 +449,8 @@ export async function processConsistencyCheckJob(
         "consistency_check",
         "gemini-pro",
         inputTokens, // estimated
-        tokensActual // actual
+        tokensActual, // actual
+        latencyMs // latency
       );
     }
 
