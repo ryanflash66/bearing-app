@@ -45,7 +45,7 @@ async function runPerfTest() {
     if (signInError) throw signInError;
 
     // Create Authenticated Client
-    const userClient = createClient(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    const userClient = createClient(SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
         global: { headers: { Authorization: `Bearer ${sessionData.session.access_token}` } }
     });
 
