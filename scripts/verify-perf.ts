@@ -54,6 +54,7 @@ async function runPerfTest() {
     if (profileError) throw profileError;
 
     const { data: profile } = await userClient.from('users').select('id').eq('auth_id', userId).single();
+    if (!profile) throw new Error('Profile creation failed or could not be retrieved');
     
     // Create Default Account (using user client)
     const { data: accountData, error: accountError } = await userClient.rpc('create_default_account', {
