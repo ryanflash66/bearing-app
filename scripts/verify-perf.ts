@@ -76,7 +76,7 @@ async function runPerfTest() {
 
     // 2. Call Llama Suggestion (Wrapped Function)
     console.log('Calling getLlamaSuggestion...');
-    process.env.NODE_ENV = 'test';
+    (process.env as any).NODE_ENV = 'test';
 
     const request = {
         selectionText: 'The fox jumped.',
