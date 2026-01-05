@@ -6,8 +6,8 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 dotenv.config();
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
@@ -85,6 +85,7 @@ async function runAudit() {
         .eq('auth_id', userA.id)
         .single();
     if (fetchAError) throw fetchAError;
+    if (!profileA) throw new Error("Profile A creation failed");
 
     // Create account for A using RPC
     const { data: accountAData, error: rpcAError } = await clientA.rpc('create_default_account', {
@@ -111,6 +112,7 @@ async function runAudit() {
         .select('id')
         .eq('auth_id', userB.id)
         .single();
+    if (!profileB) throw new Error("Profile B creation failed");
 
     const { data: accountBData, error: rpcBError } = await clientB.rpc('create_default_account', {
         p_name: 'User B Account',
