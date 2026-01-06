@@ -7,7 +7,7 @@ export interface UserProfile {
   email: string;
   display_name: string | null;
   pen_name: string | null;
-  role: "author" | "admin" | "support";
+  role: "author" | "admin" | "support" | "super_admin" | "support_agent";
   created_at: string;
   updated_at: string;
 }
