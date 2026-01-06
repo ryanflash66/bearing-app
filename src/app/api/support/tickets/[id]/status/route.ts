@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   // Check if user record exists
   if (!publicUser) {
-    console.error("User record not found in database");
+    console.error("Authentication failed");
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
