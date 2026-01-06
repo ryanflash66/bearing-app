@@ -24,7 +24,7 @@ async function runTest() {
     authorId = userA.user!.id;
 
     const { data: pubA } = await adminClient.from('users').insert({ auth_id: authorId, email: authorEmail, role: 'user', display_name: 'Test Author' }).select().single();
-    const publicAuthorId = pubA.id;
+    const publicAuthorId = pubA!.id;
     console.log(`Created Author: ${publicAuthorId}`);
 
     // Login as Author (Use Anon Client for Auth)
@@ -44,7 +44,7 @@ async function runTest() {
     }).select().single();
     
     if (ticError) throw ticError;
-    ticketId = ticket.id;
+    ticketId = ticket!.id;
     console.log(`Created Ticket: ${ticketId}`);
 
     // 2. Create Support Agent
@@ -60,7 +60,7 @@ async function runTest() {
 
     const { data: pubS, error: pubSError } = await adminClient.from('users').insert({ auth_id: supportId, email: supportEmail, role: 'support_agent', display_name: 'Test Support' }).select().single();
     if (pubSError) throw pubSError;
-    const publicSupportId = pubS.id;
+    const publicSupportId = pubS!.id;
     console.log(`Created Support: ${publicSupportId}`);
     
     // Login as Support
@@ -82,7 +82,7 @@ async function runTest() {
     
     // Let's verify status didn't change via admin
     const { data: verify1 } = await adminClient.from('support_tickets').select('status').eq('id', ticketId).single();
-    if (verify1.status !== 'open') throw new Error("❌ Direct UPDATE succeeded! (Should have failed)");
+    if (verify1!.status !== 'open') throw new Error("❌ Direct UPDATE succeeded! (Should have failed)");
     console.log("✅ Direct UPDATE blocked (Status is still open).");
 
     // 4. Test: Support tries to CLAIM via RPC (Should SUCCEED)
@@ -92,7 +92,7 @@ async function runTest() {
 
     // Verify
     const { data: verify2 } = await adminClient.from('support_tickets').select('status, assigned_to').eq('id', ticketId).single();
-    if (verify2.status !== 'in_progress' || verify2.assigned_to !== publicSupportId) {
+    if (verify2!.status !== 'in_progress' || verify2!.assigned_to !== publicSupportId) {
         throw new Error(`❌ RPC failed to update ticket: ${JSON.stringify(verify2)}`);
     }
     console.log("✅ RPC Claim succeeded.");
@@ -128,7 +128,7 @@ async function runTest() {
     console.log("✅ Reassignment correctly prevented.");
     
     // Cleanup extra support user
-    await adminClient.from('users').delete().eq('id', pubS2.id);
+    await adminClient.from('users').delete().eq('id', pubS2!.id);
     await adminClient.auth.admin.deleteUser(support2AuthId);
 
   } catch (err: any) {

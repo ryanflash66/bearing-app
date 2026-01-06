@@ -83,7 +83,7 @@ async function verifyCreateTicketRPC() {
     
     if (signInError) throw new Error(`Sign in failed: ${signInError.message}`);
     
-    const userClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    const userClient = createClient(supabaseUrl!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
         global: { headers: { Authorization: `Bearer ${signInData.session.access_token}` } }
     });
 

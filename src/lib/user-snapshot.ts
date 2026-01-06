@@ -17,7 +17,7 @@ export interface UserSnapshot {
  * AC 4.4.3: PII should be minimized
  * @example "john.doe@gmail.com" -> "j***@gmail.com"
  */
-export function maskEmail(email: string): string {
+function maskEmail(email: string): string {
   if (!email || !email.includes("@")) return "***";
   const [local, domain] = email.split("@");
   if (local.length <= 1) return `${local}***@${domain}`;
