@@ -16,6 +16,15 @@ function formatDate(dateString: string) {
   });
 }
 
+interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  sender_user_id: string;
+  message: string;
+  is_internal: boolean;
+  created_at: string;
+}
+
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
   const {
@@ -125,7 +134,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
 
           <div className="px-4 py-5 sm:p-6">
             <ul role="list" className="space-y-8">
-              {messages && messages.map((message) => {
+              {messages && (messages as SupportMessage[]).map((message) => {
                  // Determine if sender is current user or support
                  // We don't have sender details (name) joined yet.
                  // We can infer: if sender_user_id === user's public ID (from profile) -> "You"
