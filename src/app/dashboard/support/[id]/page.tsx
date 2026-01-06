@@ -27,6 +27,12 @@ interface SupportMessage {
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  
+  // Validate id parameter
+  if (!id || typeof id !== 'string' || id.trim() === '') {
+    notFound();
+  }
+  
   const supabase = await createClient();
   const {
     data: { user },
