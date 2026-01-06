@@ -133,7 +133,7 @@ export default async function SuperAdminDashboard() {
               <span className="text-slate-400">→</span>
             </Link>
             <Link
-              href="/dashboard/admin/support"
+              href="/dashboard/support"
               className="flex items-center justify-between px-6 py-4 hover:bg-slate-50"
             >
               <div>

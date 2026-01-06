@@ -75,6 +75,11 @@ export async function updateGlobalUserRole(
     return { success: false, error: "Unauthorized" };
   }
 
+  // SECURITY: Prevent self-demotion
+  if (targetUserId === actorUserId) {
+    return { success: false, error: "You cannot change your own role." };
+  }
+
   // Perform update on public profile
   const { error } = await supabase
     .from("users")

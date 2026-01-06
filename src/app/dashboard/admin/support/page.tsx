@@ -30,6 +30,11 @@ export default async function AdminSupportPage() {
     redirect("/login");
   }
 
+  // CONSOLIDATION: Redirect to the unified Agent Dashboard
+  redirect("/dashboard/support");
+  
+  // Unreachable code kept for reference until safe to delete
+  /*
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
   // Fetch tickets with user info
@@ -48,6 +53,7 @@ export default async function AdminSupportPage() {
     ...ticket,
     isStale: isStaleTicket(ticket),
   }));
+  */
 
   return (
     <DashboardLayout

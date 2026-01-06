@@ -79,7 +79,14 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
   const displayName = user.displayName || user.email.split("@")[0];
 
   // Filter nav items based on role
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin);
+  // AC: Bifurcate UI - Admins shouldn't see Author tools
+  const visibleNavItems = navItems.filter((item) => {
+    // Hide Author-specific tools for Admins
+    if (isAdmin && (item.name === "Manuscripts" || item.name === "Brain")) return false;
+    
+    // Standard role filter
+    return !item.adminOnly || isAdmin;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
