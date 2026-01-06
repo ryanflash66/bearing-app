@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!publicUser) {
     return NextResponse.json(
       { error: "User not found in database" },
-      { status: 403 }
+      { status: 404 }
     );
   }
 
