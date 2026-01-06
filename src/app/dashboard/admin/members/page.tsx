@@ -28,18 +28,17 @@ export default async function MembersPage({
     redirect("/login?returnUrl=/dashboard/admin/members");
   }
 
-  // REDIRECT: Super Admins should use Global User Management, not Account Members
-  const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
-  if (profile?.role === 'super_admin') {
-      redirect("/dashboard/admin/super/users");
-  }
-
   // Get user profile
   const { profile, error: profileError } = await getOrCreateProfile(
     supabase,
     user.id,
     user.email || ""
   );
+
+  // REDIRECT: Super Admins should use Global User Management, not Account Members
+  if (profile?.role === 'super_admin') {
+      redirect("/dashboard/admin/super/users");
+  }
 
   if (profileError || !profile) {
     redirect("/dashboard");
