@@ -10,7 +10,6 @@ interface GlobalUsersTableProps {
   total: number;
   currentPage: number;
   totalPages: number;
-  totalPages: number;
   currentSearch: string;
   currentUserId?: string;
 }
@@ -25,7 +24,6 @@ export default function GlobalUsersTable({
   users,
   total,
   currentPage,
-  totalPages,
   totalPages,
   currentSearch,
   currentUserId,
