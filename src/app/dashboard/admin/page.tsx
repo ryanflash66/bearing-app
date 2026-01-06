@@ -33,6 +33,11 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  // Redirect Super Admins to the God Mode Dashboard
+  if (profile.role === "super_admin") {
+    redirect("/dashboard/admin/super");
+  }
+
   // Get user's account
   const { accounts } = await getUserAccounts(supabase, profile.id);
   const primaryAccount = accounts[0];
