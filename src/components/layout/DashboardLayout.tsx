@@ -111,11 +111,17 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
         <nav className="mt-6 px-3">
           <ul className="space-y-1">
             {visibleNavItems.map((item) => {
-              const isActive = pathname === item.href;
+              // Redirect Super Admin to the Super Admin Dashboard
+              const finalHref = 
+                item.name === "Admin" && user.role === "super_admin" 
+                  ? "/dashboard/admin/super" 
+                  : item.href;
+                  
+              const isActive = pathname === finalHref || (item.name === "Admin" && pathname.startsWith("/dashboard/admin"));
               return (
                 <li key={item.name}>
                   <Link
-                    href={item.href}
+                    href={finalHref}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-amber-500/10 text-amber-400"
