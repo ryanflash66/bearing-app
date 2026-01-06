@@ -99,6 +99,23 @@ describe("PATCH /api/support/tickets/[id]/status", () => {
     expect(data.error).toBe("Status field is required");
   });
 
+  it("should return 400 if status field is whitespace only", async () => {
+    const mockSupabase = createMockSupabase();
+    (createClient as jest.Mock).mockResolvedValue(mockSupabase);
+
+    // Mock request with whitespace-only status
+    const req = {
+      json: jest.fn().mockResolvedValue({ status: "   " }),
+    } as any;
+
+    const params = Promise.resolve({ id: "ticket-1" });
+    const res = await PATCH(req, { params });
+    
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toBe("Status field is required");
+  });
+
   it("should return 400 if status field is not a string", async () => {
     const mockSupabase = createMockSupabase();
     (createClient as jest.Mock).mockResolvedValue(mockSupabase);
