@@ -53,7 +53,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const json = await request.json();
+  // Parse and validate request body
+  let json;
+  try {
+    json = await request.json();
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid JSON in request body" },
+      { status: 400 }
+    );
+  }
+
   const { status } = json;
+  
+  // Validate that status is provided, is a string, and not empty
+  if (typeof status !== 'string' || status.trim() === '') {
+    return NextResponse.json(
+      { error: "Status field is required" },
+      { status: 400 }
+    );
+  }
   
   // Validate status against current enum values
   if (!VALID_STATUSES.includes(status as TicketStatus)) {
