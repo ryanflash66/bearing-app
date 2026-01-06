@@ -28,11 +28,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Get user role (updated to match app_role enum from Story 4.1)
-  const { data: publicUser } = await supabase
+  const { data: publicUser, error: userError } = await supabase
     .from("users")
     .select("id, role")
     .eq("auth_id", user.id)
     .single();
+
+  // Check for database errors
+  if (userError) {
+    console.error("Database error during user lookup");
+    return NextResponse.json(
+      { error: "Database error" },
+      { status: 500 }
+    );
+  }
+
+  // Check if user record exists
+  if (!publicUser) {
+    console.error("Authentication failed");
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
 
   // Parse and validate request body
   let json;
@@ -66,7 +84,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   // Role-based permission check per AC 4.2.3 and 4.2.4
   // - super_admin / support_agent: Can update to any status
   // - user (ticket owner): Can only mark as 'resolved' (self-close)
-  const isSupport = publicUser?.role === "super_admin" || publicUser?.role === "support_agent";
+  const isSupport = publicUser.role === "super_admin" || publicUser.role === "support_agent";
   
   if (!isSupport && status !== "resolved") {
     // Non-support users can only self-resolve
