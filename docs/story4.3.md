@@ -45,13 +45,13 @@ As a User, I want a persistent "My Tickets" page with accessible inputs, so that
 
 ## Implementation Tasks (for Dev Agent)
 
-- [ ] Build Page: `/support` (Ticket List)
-- [ ] Build Page: `/support/new` (Create Ticket Form)
-- [ ] Build Page: `/support/[id]` (Ticket Detail & Reply)
-- [ ] Implement UI Components: StatusBadges, MessageBubbles.
-- [ ] Integrate with Story 4.2 Server Actions.
-- [ ] Verify Mobile Safari layout (manual check or viewport meta optimizations).
-- [ ] Run Accessibility Check (Lighthouse/Axe) and fix issues.
+- [x] Build Page: `/support` (Ticket List) -> Implemented as `/dashboard/support`
+- [x] Build Page: `/support/new` (Create Ticket Form) -> Implemented as `/dashboard/support/create`
+- [x] Build Page: `/support/[id]` (Ticket Detail & Reply) -> Implemented as `/dashboard/support/[id]`
+- [x] Implement UI Components: StatusBadges, MessageBubbles.
+- [x] Integrate with Story 4.2 Server Actions / API routes.
+- [x] Verify Mobile Safari layout.
+- [x] Run Accessibility Check (Lighthouse/Axe) and fix issues.
 
 ## Cost Estimate
 

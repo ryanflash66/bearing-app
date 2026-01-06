@@ -6,16 +6,8 @@ import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import ReplyForm from "@/components/support/ReplyForm";
 import TicketStatusSelect from "@/components/admin/TicketStatusSelect";
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  });
-}
+import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
+import { formatDate } from "@/components/support/SupportShared";
 
 export default async function AdminTicketDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -58,13 +50,16 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
         role: profile?.role,
       }}
     >
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div className="mb-6 flex items-center justify-between">
-            <Link href="/dashboard/admin/support" className="text-sm text-indigo-600 hover:text-indigo-500">
-                &larr; Back to Tickets
-            </Link>
-        </div>
-        
+      <div className="mb-6">
+        <Link href="/dashboard/admin/support" className="text-sm text-indigo-600 hover:text-indigo-500">
+          &larr; Back to Tickets
+        </Link>
+      </div>
+      
+      {/* AC 4.4.1: Grid layout with conversation left, snapshot right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content - Ticket Thread */}
+        <div className="lg:col-span-2 space-y-6">
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6 border-b border-slate-200 flex justify-between items-start">
             <div>
@@ -128,6 +123,14 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
                  );
               })}
             </ul>
+          </div>
+        </div>
+        </div>
+        
+        {/* Right Sidebar - User Snapshot (AC 4.4.1) */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6">
+            <UserSnapshotPanel userId={ticket.user.id} />
           </div>
         </div>
       </div>

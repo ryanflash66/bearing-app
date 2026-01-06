@@ -195,20 +195,34 @@ workflow_status:
             completed: "2026-01-02"
             notes: "Technical debt repayment for import resilience."
           - id: "story-4.1"
-            name: "Usage Guardrails & Upsell Workflow"
-            status: "completed"
-            completed: "2026-01-03"
-            notes: "Usage status enums, billing cycle triggers, and upsell banners."
+            name: "Admin Role Architecture (RBAC)"
+            status: "docs/story4.1.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: super_admin role, verifyAdminAccess utility, and RPC-First pattern enforcement."
           - id: "story-4.2"
-            name: "Admin Dashboard & Overrides"
-            status: "completed"
-            completed: "2026-01-03"
-            notes: "Admin dashboard with usage table, filters, overrides, and audit logs."
+            name: "Support Ticket Engine (State Machine)"
+            status: "docs/story4.2.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: create_ticket and reply_to_ticket RPCs with atomic status transitions."
           - id: "story-4.3"
-            name: "In-App Support Messaging"
-            status: "_bmad-output/implementation-artifacts/story4.3.md"
-            completed: "2026-01-03"
-            notes: "Secure support ticket system with author and admin flows."
+            name: "User Support Console (Frontend)"
+            status: "docs/story4.3.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: User-facing ticket list and detail pages with secure message history."
+          - id: "story-4.4"
+            name: "Support Agent Dashboard"
+            status: "docs/story4.4.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: Stale ticket detection (48h), PII masking, and User Context Snapshot."
+          - id: "story-4.5"
+            name: "Super Admin Dashboard"
+            status: "docs/story4.5.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: Global metrics (tokens, users, tickets) and user override links. Maintenance mode deferred."
+          - id: "story-4.6"
+            name: "Critical Notification System"
+            status: "required"
+            notes: "PENDING: Email notifications for ticket updates."
 
 # Story Progress Summary
 story_progress:
@@ -254,12 +268,40 @@ epic_progress:
         status: "completed"
         notes: "From UX spec - Visual feedback"
   - epic: 4
-    name: "Support & Admin"
-    stories: 4
-    completed: 4
-    status: "completed"
-    notes: "All stories (4.0-4.3) completed."
-  - epic: 5
+    name: "Support & Admin (Emergency Rework)"
+    stories: 6
+    completed: 5
+    status: "in-progress"
+    notes: "Emergency rework for scale and security. Stories 4.1-4.5 implemented."
+    story_list:
+      - id: "story-4.1"
+        name: "Admin Role Architecture (RBAC)"
+        status: "completed"
+      - id: "story-4.2"
+        name: "Support Ticket Engine (State Machine)"
+        status: "completed"
+      - id: "story-4.3"
+        name: "User Support Console (Frontend)"
+        status: "completed"
+      - id: "story-4.4"
+        name: "Support Agent Dashboard"
+        status: "completed"
+      - id: "story-4.5"
+        name: "Super Admin Dashboard"
+        status: "completed"
+      - id: "story-4.6"
+        name: "Critical Notification System"
+        status: "backlog"
+
+# Next Action
+next_workflow:
+  id: "story-4.6"
+  name: "Story 4.6: Critical Notification System"
+  agent: "dev"
+  command: "/dev-story 4.6"
+  description: "Implement email notification triggers for priority support tickets."
+  priority: "high"
+  reason: "Final story of Epic 4 before Stabilization & Hardening."  - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
     completed: 0

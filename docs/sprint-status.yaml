@@ -61,11 +61,13 @@ development_status:
   3-3-ai-usage-metering: done
   epic-3-retrospective: done
 
-  # Epic 4: Support & Admin (Weeks 14-16)
+  # Epic 4: Admin Infrastructure & Support System (Emergency Rework)
   epic-4: in-progress
-  4-0-tech-debt-repayment: done
-  4-1-usage-guardrails-upsell-workflow: review
-  4-2-admin-dashboard-overrides: backlog
-  4-3-inapp-support-messaging: backlog
+  4-1-admin-role-architecture: done
+  4-2-support-ticket-engine: done
+  4-3-user-support-console: done
+  4-4-support-agent-dashboard: done
+  4-5-super-admin-dashboard: done
+  4-6-critical-notification-system: backlog
   epic-4-retrospective: optional
 

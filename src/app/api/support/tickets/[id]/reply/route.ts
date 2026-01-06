@@ -2,8 +2,13 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
+/**
+ * POST /api/support/tickets/[id]/reply
+ * RPC-First Refactor: Uses reply_to_ticket RPC instead of direct table manipulation.
+ * This ensures status transitions are handled atomically at DB level.
+ */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: ticketId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,56 +28,54 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  // Get public user id
-  const { data: publicUser, error: userError } = await supabase
+  // RPC-First: Use reply_to_ticket function
+  // This handles: message creation, status transitions, updated_at refresh
+  const { error: rpcError } = await supabase.rpc("reply_to_ticket", {
+    ticket_id: ticketId,
+    content: message,
+  });
+
+  if (rpcError) {
+    if (rpcError.message.includes("Access denied")) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+    if (rpcError.message.includes("Ticket not found")) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+  }
+
+  // Fetch the ticket for notification context
+  const { data: ticket } = await supabase
+    .from("support_tickets")
+    .select("*, user:users(email)")
+    .eq("id", ticketId)
+    .single();
+
+  // Get current user's public ID for ownership check
+  const { data: publicUser } = await supabase
     .from("users")
     .select("id")
     .eq("auth_id", user.id)
     .single();
 
-  if (userError || !publicUser) {
-    return NextResponse.json({ error: "User profile not found" }, { status: 404 });
-  }
-  
-  // Verify ticket access (RLS will handle constraints, but nice to fail fast)
-  // We can just try to insert. RLS `Users and Support can send messages` checks ticket ownership.
-
-  // Create Message
-  const { data: newMessage, error: messageError } = await supabase
-    .from("support_messages")
-    .insert({
-        ticket_id: id,
-        sender_user_id: publicUser.id,
-        message,
-        is_internal: false
-    })
-    .select()
-    .single();
-
-  if (messageError) {
-     return NextResponse.json({ error: messageError.message }, { status: 500 });
-  }
-  
-  // Touch ticket updated_at and Fetch logic for notification
-  const { data: ticket } = await supabase
-    .from("support_tickets")
-    .update({ updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("*, user:users(email)")
-    .single();
-
-  if (ticket) {
-      import("@/lib/email").then(module => {
-          const isOwner = ticket.user_id === publicUser.id;
-           if (isOwner) {
-                module.notifyAdminReply(ticket.id, ticket.subject, user.email || "unknown");
-            } else {
-                if (ticket.user?.email) {
-                    module.notifyUserReply(ticket.id, ticket.subject, ticket.user.email, message);
-                }
-            }
-      }).catch(console.error);
+  // Fire-and-forget: Email notifications
+  if (ticket && publicUser) {
+    import("@/lib/email")
+      .then((module) => {
+        const isOwner = ticket.user_id === publicUser.id;
+        if (isOwner) {
+          // User replied -> notify support team
+          module.notifyAdminReply(ticket.id, ticket.subject, user.email || "unknown");
+        } else {
+          // Support replied -> notify user
+          if (ticket.user?.email) {
+            module.notifyUserReply(ticket.id, ticket.subject, ticket.user.email, message);
+          }
+        }
+      })
+      .catch(console.error);
   }
 
-  return NextResponse.json(newMessage);
+  return NextResponse.json({ success: true, ticketId });
 }
