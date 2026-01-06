@@ -28,22 +28,50 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Get user role (updated to match app_role enum from Story 4.1)
-  const { data: publicUser } = await supabase
+  const { data: publicUser, error: userError } = await supabase
     .from("users")
     .select("id, role")
     .eq("auth_id", user.id)
     .single();
 
-  // Explicitly check if publicUser exists before proceeding
-  if (!publicUser) {
+  // Check for database errors
+  if (userError) {
+    console.error("Database error during user lookup");
     return NextResponse.json(
-      { error: "User not found in database" },
-      { status: 404 }
+      { error: "Database error" },
+      { status: 500 }
     );
   }
 
-  const json = await request.json();
+  // Check if user record exists
+  if (!publicUser) {
+    console.error("Authentication failed");
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  // Parse and validate request body
+  let json;
+  try {
+    json = await request.json();
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid JSON in request body" },
+      { status: 400 }
+    );
+  }
+
   const { status } = json;
+  
+  // Validate that status is provided, is a string, and not empty
+  if (typeof status !== 'string' || status.trim() === '') {
+    return NextResponse.json(
+      { error: "Status field is required" },
+      { status: 400 }
+    );
+  }
   
   // Validate status against current enum values
   if (!VALID_STATUSES.includes(status as TicketStatus)) {
