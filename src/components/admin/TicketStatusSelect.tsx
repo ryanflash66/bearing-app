@@ -33,9 +33,9 @@ export default function TicketStatusSelect({ ticketId, currentStatus }: { ticket
         className="rounded-md border-slate-300 py-1 pl-3 pr-8 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 bg-white shadow-sm"
       >
         <option value="open">Open</option>
-        <option value="in_progress">In Progress</option>
+        <option value="pending_user">Awaiting User</option>
+        <option value="pending_agent">Pending Support</option>
         <option value="resolved">Resolved</option>
-        <option value="closed">Closed</option>
       </select>
   )
 }

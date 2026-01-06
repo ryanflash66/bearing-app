@@ -42,6 +42,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (rpcError.message.includes("Ticket not found")) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
+    if (rpcError.message.includes("Concurrent modification")) {
+      return NextResponse.json(
+        { error: "Another update was made to this ticket. Please refresh and try again." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: rpcError.message }, { status: 500 });
   }
 
