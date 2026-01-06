@@ -10,7 +10,9 @@ interface GlobalUsersTableProps {
   total: number;
   currentPage: number;
   totalPages: number;
+  totalPages: number;
   currentSearch: string;
+  currentUserId?: string;
 }
 
 const ROLES = [
@@ -24,7 +26,9 @@ export default function GlobalUsersTable({
   total,
   currentPage,
   totalPages,
+  totalPages,
   currentSearch,
+  currentUserId,
 }: GlobalUsersTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -122,20 +126,26 @@ export default function GlobalUsersTable({
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                  <select
-                    value={user.role}
-                    onChange={(e) =>
-                      handleRoleChange(user.id, e.target.value as any)
-                    }
-                    disabled={isPending}
-                    className="rounded-md border-slate-300 py-1 pl-2 pr-8 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  >
-                    {ROLES.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
+                  {user.id === currentUserId ? (
+                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+                        Cannot modify self
+                      </span>
+                  ) : (
+                    <select
+                        value={user.role}
+                        onChange={(e) =>
+                        handleRoleChange(user.id, e.target.value as any)
+                        }
+                        disabled={isPending}
+                        className="rounded-md border-slate-300 py-1 pl-2 pr-8 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        {ROLES.map((role) => (
+                        <option key={role.value} value={role.value}>
+                            {role.label}
+                        </option>
+                        ))}
+                    </select>
+                  )}
                 </td>
               </tr>
             ))}

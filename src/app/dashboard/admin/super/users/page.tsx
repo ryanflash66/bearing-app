@@ -69,6 +69,7 @@ export default async function GlobalUsersPage({
           currentPage={page}
           totalPages={totalPages}
           currentSearch={search}
+          currentUserId={user.id}
         />
       </div>
     </DashboardLayout>

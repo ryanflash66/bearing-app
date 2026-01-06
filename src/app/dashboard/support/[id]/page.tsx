@@ -28,16 +28,46 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
 
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
-  // Fetch ticket
-  const { data: ticket, error: ticketError } = await supabase
-    .from("support_tickets")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  // NUCLEAR FIX: Bypass RLS for Super Admins
+  const isSuper = profile?.role === "super_admin";
+  
+  let ticketData = null;
+  let ticketErrorVal = null;
 
-  if (ticketError || !ticket) {
+  if (isSuper) {
+      // Use Service Role to bypass RLS entirely
+      // This solves the "Phantom Ticket" 404 issue once and for all for Admins
+      const { createClient: createServiceClient } = require("@supabase/supabase-js");
+      const serviceClient = createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+      
+      const { data, error } = await serviceClient
+        .from("support_tickets")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+        
+      ticketData = data;
+      ticketErrorVal = error;
+  } else {
+      // Standard RLS fetch for users/others
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+        
+      ticketData = data;
+      ticketErrorVal = error;
+  }
+
+  if (ticketErrorVal || !ticketData) {
     notFound();
   }
+  
+  const ticket = ticketData;
 
   // Fetch messages
   // AC 4.3.4: "Messages are shown in reverse chronological order"
@@ -47,7 +77,17 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
   // This means newest messages at TOP? Or standard email thread (newest at top).
   // I'll sort by `created_at` DESC.
   
-  const { data: messages } = await supabase
+  // Use Service Role for messages too if Super Admin
+  const messagesClient = isSuper ? 
+    (function(){
+      const { createClient: createServiceClient } = require("@supabase/supabase-js");
+      return createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+    })() : supabase;
+
+  const { data: messages } = await messagesClient
     .from("support_messages")
     .select("*")
     .eq("ticket_id", params.id)
