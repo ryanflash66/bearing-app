@@ -34,11 +34,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .eq("auth_id", user.id)
     .single();
 
-  // Check for query errors or missing user record
-  if (userError || !publicUser) {
+  // Check for database errors
+  if (userError) {
+    console.error("Error fetching user from database:", userError);
     return NextResponse.json(
-      { error: "User not found or database error" },
+      { error: "Database error" },
       { status: 500 }
+    );
+  }
+
+  // Check if user record exists
+  if (!publicUser) {
+    console.error("User record not found for auth_id:", user.id);
+    return NextResponse.json(
+      { error: "User record not found" },
+      { status: 404 }
     );
   }
 
