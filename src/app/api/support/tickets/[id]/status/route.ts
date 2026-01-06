@@ -34,6 +34,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .eq("auth_id", user.id)
     .single();
 
+  // Explicitly check if publicUser exists before proceeding
+  if (!publicUser) {
+    return NextResponse.json(
+      { error: "User not found in database" },
+      { status: 403 }
+    );
+  }
+
   const json = await request.json();
   const { status } = json;
   
@@ -48,7 +56,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   // Role-based permission check per AC 4.2.3 and 4.2.4
   // - super_admin / support_agent: Can update to any status
   // - user (ticket owner): Can only mark as 'resolved' (self-close)
-  const isSupport = publicUser?.role === "super_admin" || publicUser?.role === "support_agent";
+  const isSupport = publicUser.role === "super_admin" || publicUser.role === "support_agent";
   
   if (!isSupport && status !== "resolved") {
     // Non-support users can only self-resolve
