@@ -52,7 +52,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     );
   }
 
-  const json = await request.json();
   // Parse and validate request body
   let json;
   try {
