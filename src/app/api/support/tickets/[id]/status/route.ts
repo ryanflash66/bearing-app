@@ -47,8 +47,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { status } = json;
   
-  // Validate that status is provided
-  if (!status) {
+  // Validate that status is provided and not empty
+  if (!status || typeof status !== 'string') {
     return NextResponse.json(
       { error: "Status field is required" },
       { status: 400 }
