@@ -40,7 +40,8 @@ BEGIN
   -- 3. Perform Update
   UPDATE public.support_tickets
   SET assigned_to = current_agent_id,
-      status = 'in_progress'
+      status = 'in_progress',
+      updated_at = NOW()
   WHERE id = ticket_id;
 
 END;

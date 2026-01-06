@@ -23,7 +23,7 @@ async function runTest() {
     const { data: userA } = await adminClient.auth.admin.createUser({ email: authorEmail, password: 'password123', email_confirm: true });
     authorId = userA.user!.id;
 
-    const { data: pubA } = await adminClient.from('users').insert({ auth_id: authorId, email: authorEmail, role: 'user' }).select().single();
+    const { data: pubA } = await adminClient.from('users').insert({ auth_id: authorId, email: authorEmail, role: 'user', display_name: 'Test Author' }).select().single();
     const publicAuthorId = pubA.id;
     console.log(`Created Author: ${publicAuthorId}`);
 
@@ -58,7 +58,7 @@ async function runTest() {
     }
     supportId = userS.user!.id;
 
-    const { data: pubS, error: pubSError } = await adminClient.from('users').insert({ auth_id: supportId, email: supportEmail, role: 'support_agent' }).select().single();
+    const { data: pubS, error: pubSError } = await adminClient.from('users').insert({ auth_id: supportId, email: supportEmail, role: 'support_agent', display_name: 'Test Support' }).select().single();
     if (pubSError) throw pubSError;
     const publicSupportId = pubS.id;
     console.log(`Created Support: ${publicSupportId}`);
@@ -102,6 +102,34 @@ async function runTest() {
     if (readError) throw readError;
     if (readData.length !== 1) throw new Error("❌ Support failed to view assigned ticket.");
     console.log("✅ Support can view assigned ticket.");
+
+    // 6. Test: Another Support Agent tries to CLAIM already-assigned ticket (Should FAIL)
+    console.log("Testing reassignment prevention...");
+    const support2Email = `support2_${random}@test.com`;
+    const { data: userS2 } = await adminClient.auth.admin.createUser({ email: support2Email, password: 'password123', email_confirm: true });
+    const support2AuthId = userS2.user!.id;
+    
+    const { data: pubS2 } = await adminClient.from('users').insert({ 
+      auth_id: support2AuthId, 
+      email: support2Email, 
+      role: 'support_agent', 
+      display_name: 'Test Support 2' 
+    }).select().single();
+    
+    const { data: supp2Login } = await adminClient.auth.signInWithPassword({ email: support2Email, password: 'password123' });
+    const support2Client = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        global: { headers: { Authorization: `Bearer ${supp2Login.session!.access_token}` } }
+    });
+    
+    const { error: reassignError } = await support2Client.rpc('claim_ticket', { ticket_id: ticketId });
+    if (!reassignError || !reassignError.message.includes('already assigned')) {
+        throw new Error(`❌ Reassignment should have failed but got: ${reassignError?.message || 'no error'}`);
+    }
+    console.log("✅ Reassignment correctly prevented.");
+    
+    // Cleanup extra support user
+    await adminClient.from('users').delete().eq('id', pubS2.id);
+    await adminClient.auth.admin.deleteUser(support2AuthId);
 
   } catch (err: any) {
     console.error("❌ Test Failed:", err);

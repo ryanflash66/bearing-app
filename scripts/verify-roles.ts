@@ -56,8 +56,6 @@ async function verifyRoles() {
     }
 
     console.log("✅ Verification Complete");
-    
-    console.log("✅ Verification Complete (if no errors above)");
 
   } catch (err: any) {
     console.error("❌ Test Failed:", err.message);

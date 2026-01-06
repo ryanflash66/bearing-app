@@ -30,10 +30,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from("support_tickets")
-    .update({ status })
-    .eq("id", id);
+  /* 
+   * FIX C2: Use RPC-First pattern
+   * Replaced direct table update with update_ticket_status RPC
+   * Ensures centralized permission logic and updated_at behavior
+   */
+  const { error } = await supabase.rpc("update_ticket_status", {
+    ticket_id: id,
+    new_status: status
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -16,8 +16,10 @@ const adminClient = createClient(supabaseUrl, serviceKey, {
 async function runTest() {
   console.log("🧪 Testing Support Agent Restrictions...");
   
-  let authorId, supportId;
-  let manuscriptId;
+  let authorId: string | undefined, supportId: string | undefined;
+  let publicAuthorId: string | undefined, publicSupportId: string | undefined;
+  let accountId: string | undefined;
+  let manuscriptId: string | undefined;
 
   try {
     // 1. Create Author
@@ -62,7 +64,7 @@ async function runTest() {
     }).select().single();
     
     if (accError) throw accError;
-    let accountId = account.id;
+    accountId = account.id;
     console.log("Using Account:", accountId);
 
     // Ensure Author is member of the account
@@ -106,7 +108,7 @@ async function runTest() {
     }).select().single();
 
     if (pubSuppError) throw pubSuppError;
-    const publicSupportId = publicSupportUser.id;
+    publicSupportId = publicSupportUser.id;
     console.log("Created Public Support Agent ID:", publicSupportId);
     
     // Validate role is set (implicit from insert)
@@ -164,9 +166,22 @@ async function runTest() {
     console.error("❌ Unexpected Error:", err);
     process.exit(1);
   } finally {
-      // Cleanup
-      if (authorId) await adminClient.auth.admin.deleteUser(authorId);
-      if (supportId) await adminClient.auth.admin.deleteUser(supportId);
+      // Cleanup in correct order: public data first, then auth users
+      console.log("Cleaning up test data...");
+      try {
+        if (manuscriptId) await adminClient.from('manuscripts').delete().eq('id', manuscriptId);
+        if (accountId) {
+          await adminClient.from('account_members').delete().eq('account_id', accountId);
+          await adminClient.from('accounts').delete().eq('id', accountId);
+        }
+        if (publicAuthorId) await adminClient.from('users').delete().eq('id', publicAuthorId);
+        if (publicSupportId) await adminClient.from('users').delete().eq('id', publicSupportId);
+        if (authorId) await adminClient.auth.admin.deleteUser(authorId);
+        if (supportId) await adminClient.auth.admin.deleteUser(supportId);
+        console.log("Cleanup complete.");
+      } catch (cleanupErr: any) {
+        console.warn("Cleanup warning:", cleanupErr.message);
+      }
   }
 }
 
