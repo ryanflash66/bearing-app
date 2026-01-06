@@ -36,7 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   // Check for database errors
   if (userError) {
-    console.error("Error fetching user from database:", userError);
+    console.error("Error fetching user from database:", userError.message || "Unknown error");
     return NextResponse.json(
       { error: "Database error" },
       { status: 500 }
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   // Check if user record exists
   if (!publicUser) {
-    console.error("User record not found for auth_id:", user.id);
+    console.error("User record not found in database");
     return NextResponse.json(
       { error: "User record not found" },
       { status: 404 }
