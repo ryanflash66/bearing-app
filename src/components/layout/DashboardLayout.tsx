@@ -75,7 +75,7 @@ const navItems: NavItem[] = [
 export default function DashboardLayout({ children, user, usageStatus }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
   const displayName = user.displayName || user.email.split("@")[0];
 
   // Filter nav items based on role
