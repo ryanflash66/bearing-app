@@ -121,6 +121,18 @@ export default async function SuperAdminDashboard() {
               <span className="text-slate-400">→</span>
             </Link>
             <Link
+              href="/dashboard/admin/super/users"
+              className="flex items-center justify-between px-6 py-4 hover:bg-slate-50"
+            >
+              <div>
+                <p className="font-medium text-slate-900">Global Users (God Mode)</p>
+                <p className="text-sm text-slate-500">
+                  View all users, change roles, system-wide overrides
+                </p>
+              </div>
+              <span className="text-slate-400">→</span>
+            </Link>
+            <Link
               href="/dashboard/admin/support"
               className="flex items-center justify-between px-6 py-4 hover:bg-slate-50"
             >
