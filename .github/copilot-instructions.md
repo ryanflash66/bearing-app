@@ -9,7 +9,7 @@ The Bearing App is a secure manuscript management and AI-assisted editing platfo
 - **Frontend**: Next.js 16+ (App Router), React 19, TypeScript
 - **Database**: Supabase (PostgreSQL with Row Level Security)
 - **Authentication**: Supabase Auth (JWT-based)
-- **Styling**: Tailwind CSS with vanilla CSS (Modern Parchment Design System)
+- **Styling**: Tailwind CSS (Modern Parchment Design System)
 - **AI Services**: OpenRouter (Gemini, Llama models)
 - **Testing**: Jest, React Testing Library, Playwright
 - **Deployment**: Vercel (frontend), Supabase (database)
@@ -41,7 +41,6 @@ The Bearing App is a secure manuscript management and AI-assisted editing platfo
 ## Project Structure
 
 ```
-/home/runner/work/bearing-app/bearing-app/
 ├── src/
 │   ├── app/              # Next.js App Router pages and API routes
 │   │   ├── api/          # API endpoints
