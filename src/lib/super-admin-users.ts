@@ -75,7 +75,7 @@ export async function updateGlobalUserRole(
     return { success: false, error: "Unauthorized" };
   }
 
-  // Perform update
+  // Perform update on public profile
   const { error } = await supabase
     .from("users")
     .update({ role: newRole })
@@ -84,6 +84,33 @@ export async function updateGlobalUserRole(
   if (error) {
     console.error("Global role update error:", error);
     return { success: false, error: error.message };
+  }
+
+  // SYNC TO AUTH METADATA (Critical for RLS)
+  // We must use a Service Role client to update auth.users
+  try {
+    const supabaseAdmin = new SupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      targetUserId,
+      { user_metadata: { role: newRole } }
+    );
+
+    if (authError) {
+      console.error("Failed to sync auth metadata:", authError);
+      // We don't fail the whole operation, but we log it as a critical warning
+    }
+  } catch (err) {
+    console.error("Error creating admin client:", err);
   }
 
   // Audit Log - Log to admin's account context

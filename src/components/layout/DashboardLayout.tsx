@@ -112,11 +112,17 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
           <ul className="space-y-1">
             {visibleNavItems.map((item) => {
               // Redirect Super Admin to the Super Admin Dashboard
-              const finalHref = 
-                item.name === "Admin" && user.role === "super_admin" 
-                  ? "/dashboard/admin/super" 
-                  : item.href;
-                  
+              let finalHref = item.href;
+              let finalName = item.name;
+
+              if (item.name === "Admin" && user.role === "super_admin") {
+                finalHref = "/dashboard/admin/super";
+              }
+              
+              if (item.name === "Support" && user.role === "support_agent") {
+                finalName = "Support Queue";
+              }
+
               const isActive = pathname === finalHref || (item.name === "Admin" && pathname.startsWith("/dashboard/admin"));
               return (
                 <li key={item.name}>
@@ -129,7 +135,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
                     }`}
                   >
                     {item.icon}
-                    {item.name}
+                    {finalName}
                   </Link>
                 </li>
               );
