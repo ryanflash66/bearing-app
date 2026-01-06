@@ -25,7 +25,8 @@ interface SupportMessage {
   created_at: string;
 }
 
-export default async function TicketDetailPage({ params }: { params: { id: string } }) {
+export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,7 +56,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
       const { data, error } = await serviceClient
         .from("support_tickets")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .single();
         
       ticketData = data;
@@ -65,7 +66,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
       const { data, error } = await supabase
         .from("support_tickets")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .single();
         
       ticketData = data;
@@ -99,7 +100,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
   const { data: messages } = await messagesClient
     .from("support_messages")
     .select("*")
-    .eq("ticket_id", params.id)
+    .eq("ticket_id", id)
     .eq("is_internal", false) // Users don't see internal notes
     .order("created_at", { ascending: false });
 
