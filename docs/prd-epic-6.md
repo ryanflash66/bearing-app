@@ -1,28 +1,28 @@
-# Epic 6: Publication & Beta Distribution
+# Epic 6: Creative Tools (AI Covers & Blog)
 
-## Overview
-Transitions the author from "Production" to "Distribution," providing the tools needed to collect feedback and prepare for professional self-publishing.
+**Goal:** empower authors to generate release-ready assets (Covers) and build their audience (Blog) directly from the platform.
 
-## User Stories
+## Scope
+This Epic focuses on the "Output" and "Marketing" phase of the book lifecycle.
+*   **AI Cover Designer:** A generative tool for creating book covers.
+*   **Author Blog:** A CMS for authors to write and publish posts.
+*   **Public Profile:** A reader-facing view of the author's bio and blog.
+*   **Admin Moderation:** Safety and quality control for public content.
 
-### Story 6.1: Beta Reader Access & Commenting
-**Description**: Authors can share a private link with Beta Readers who can leave comments but not edit the script.
-- **AC**: External users with "BETA" role can see but not change text.
-- **AC**: Commenting system linked to specific text selections.
+## Functional Requirements Covered
+*   **AI Cover Design Module (PRD 8)**: Input prompts -> multiple outputs -> selection.
+*   **Blog Module (PRD 9)**: Create, Edit, Publish posts.
+*   **Reader Platform (PRD 9)**: Public visibility of published content.
+*   **Admin Governance (PRD 10)**: Ability to take down offensive blogs.
 
-### Story 6.2: WYSIWYG Export Previewer
-**Description**: A high-fidelity preview of the manuscript in Kindle (KDP) and PDF Print formats.
-- **AC**: Visual representation of "Gutter" and "Bleed" for print.
-- **AC**: Table of Contents auto-generation for PDF.
+## Non-Functional Requirements
+*   **Generation Speed**: Cover generation < 15s.
+*   **SEO**: Public blog pages must be SSR with proper metadata.
+*   **Safety**: All AI prompts/outputs must pass safety filters.
+*   **Isolation**: Reader views must NOT have access to internal app APIs.
 
-### Story 6.3: Publication Metadata & Blurb Hub
-**Description**: A central place to manage ISBNs, Pen Names, Blurbs, and Book Descriptions.
-- **AC**: Metadata is automatically injected into Export headers.
-
-### Story 6.4: Public "Coming Soon" Pages
-**Description**: Authors can toggle a public landing page to build interest.
-- **AC**: Displays blurb, progress bar, and "Subscribe" for updates.
-
-## Technical Goals
-- **NFR**: Render 300-page PDF preview in < 5s.
-- **SEC**: Beta links must be revocable and token-based.
+## User Stories Overview
+*   **Story 6.1: AI Cover Generator**: Stable Diffusion/DALL-E integration.
+*   **Story 6.2: Blog Management (CMS)**: The author's dashboard for posts.
+*   **Story 6.3: Public Author Profile/Blog**: The next.js pages for outside readers.
+*   **Story 6.4: Admin Blog Moderation**: The Trust & Safety workflow.
