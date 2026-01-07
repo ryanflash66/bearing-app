@@ -34,7 +34,7 @@ export default function TicketStatusSelect({ ticketId, currentStatus }: { ticket
       >
         <option value="open">Open</option>
         <option value="pending_user">Awaiting User</option>
-        <option value="pending_agent">Pending Support</option>
+        <option value="pending_support">Pending Support</option>
         <option value="resolved">Resolved</option>
       </select>
   )

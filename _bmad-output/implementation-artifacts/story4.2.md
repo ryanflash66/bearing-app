@@ -39,8 +39,8 @@ The Epic requires granular states: `Pending User`, `Pending Support`, `Resolved`
   - [x] Create migration to update `support_tickets` check constraint for status column.
     - Implemented in `20260105000004_refine_ticket_statuses.sql`
   - [x] Add new states: `pending_user`, `pending_agent` (equiv. to `pending_support`), `resolved`.
-    - Enum: `('open', 'pending_user', 'pending_agent', 'resolved')`
-  - [x] Migrate any existing data if necessary (map `in_progress` -> `pending_agent`, `closed` -> `resolved`).
+    - Enum: `('open', 'pending_user', 'pending_support', 'resolved')`
+  - [x] Migrate any existing data if necessary (map `in_progress` -> `pending_support`, `closed` -> `resolved`).
     - Migration handles USING clause for type conversion
   - [x] Verify RLS policies still apply correctly to the new statuses.
     - RLS policies are status-agnostic (based on user_id/role)
@@ -50,7 +50,7 @@ The Epic requires granular states: `Pending User`, `Pending Support`, `Resolved`
     - Implemented in `20260105000007` and hardened in `20260106040000_epic4_hardening.sql`
     - Logic: Determines sender role via `is_support_agent()` / `is_super_admin()`
     - If Support OR Admin: Sets status = `pending_user`
-    - If User: Sets status = `pending_agent`
+    - If User: Sets status = `pending_support`
     - Includes optimistic locking for race condition prevention
   - [x] Create `resolve_ticket` RPC:
     - Implemented via `update_ticket_status` RPC (migration `20260105000007`)
@@ -73,8 +73,8 @@ The Epic requires granular states: `Pending User`, `Pending Support`, `Resolved`
 - **Security:** Ensure `reply_to_ticket` validates that the user actually belongs to the associated account or is a Support agent (Account scoped vs Role scoped).
 
 ### Naming Convention Note
-- Story specified `pending_support` but implementation uses `pending_agent`
-- These are semantically equivalent; `pending_agent` was chosen for clarity in codebase
+- Story specified `pending_support` and implementation uses `pending_support` (corrected from `pending_agent`)
+- `pending_agent` was removed to align with database enum
 - Both mean: "Ticket awaiting action from support team"
 
 ### Source Tree Focus
@@ -85,9 +85,9 @@ The Epic requires granular states: `Pending User`, `Pending Support`, `Resolved`
 ### Testing Standards
 - create a ticket -> check default 'open' ✅
 - support reply -> check 'pending_user' ✅
-- user reply -> check 'pending_agent' ✅
+- user reply -> check 'pending_support' ✅
 - resolve -> check 'resolved' ✅
-- user reply to resolved -> check 'pending_agent' ✅
+- user reply to resolved -> check 'pending_support' ✅
 
 ## Dev Agent Record
 

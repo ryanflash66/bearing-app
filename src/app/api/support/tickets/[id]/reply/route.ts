@@ -36,6 +36,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   });
 
   if (rpcError) {
+    console.error("RPC Error in reply_to_ticket:", rpcError);
     if (rpcError.message.includes("Access denied")) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
@@ -48,7 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         { status: 409 }
       );
     }
-    return NextResponse.json({ error: rpcError.message }, { status: 500 });
+    return NextResponse.json({ error: `Internal Error: ${rpcError.message}` }, { status: 500 });
   }
 
   // Fetch the ticket for notification context

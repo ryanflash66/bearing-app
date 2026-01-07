@@ -53,7 +53,7 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
           name="message"
           rows={3}
           required
-          className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="block w-full rounded-md border-gray-300 shadow-sm text-gray-900 caret-black focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           placeholder="Type your reply here..."
         />
         <button
