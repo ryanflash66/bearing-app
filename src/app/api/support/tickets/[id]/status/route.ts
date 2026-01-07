@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 /**
  * Valid ticket status values (from migration 20260105000004_refine_ticket_statuses.sql)
  */
-const VALID_STATUSES = ["open", "pending_user", "pending_agent", "resolved"] as const;
+const VALID_STATUSES = ["open", "pending_user", "pending_support", "resolved"] as const;
 type TicketStatus = typeof VALID_STATUSES[number];
 
 /**
@@ -15,7 +15,7 @@ type TicketStatus = typeof VALID_STATUSES[number];
  * Status State Flow (Story 4.2):
  * - 'open' → Initial state
  * - 'pending_user' → After agent/admin replies
- * - 'pending_agent' → After user replies (including reopening resolved)
+ * - 'pending_support' → After user replies (including reopening resolved)
  * - 'resolved' → Ticket closed by agent/admin OR owner
  */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

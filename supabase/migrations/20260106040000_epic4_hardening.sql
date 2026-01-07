@@ -47,7 +47,7 @@ BEGIN
   IF is_support THEN
      new_status := 'pending_user'::public.support_ticket_status;
   ELSE
-     new_status := 'pending_agent'::public.support_ticket_status;
+     new_status := 'pending_support'::public.support_ticket_status;
   END IF;
 
   -- Update status if changed (with Optimistic Locking)
