@@ -28,6 +28,7 @@ body {
 
 /* Ensure form elements have visible text, especially in cards/white containers */
 input, textarea, select {
+  background-color: #ffffff;
   color: #1a1a1a; /* Default to high-contrast dark text */
   caret-color: #000000 !important; /* Force visible cursor */
 }
