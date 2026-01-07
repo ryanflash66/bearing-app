@@ -6,15 +6,9 @@ import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import ReplyForm from "@/components/support/ReplyForm";
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  });
-}
+import { formatDate } from "@/components/support/SupportShared";
+import { headers } from "next/headers"; // Not needed if we use client component for button, but for now we'll use a form action or client component.
+import ResolveTicketButton from "@/components/support/ResolveTicketButton";
 
 interface SupportMessage {
   id: string;
@@ -124,6 +118,12 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             <h3 className="text-lg font-medium leading-6 text-slate-900">{ticket.subject}</h3>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
               Ticket #{ticket.id.slice(0, 8)} • <span className="capitalize">{ticket.status.replace("_", " ")}</span>
+            </p>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500 flex items-center gap-4">
+              <span>Ticket #{ticket.id.slice(0, 8)} • <span className="capitalize">{ticket.status.replace("_", " ")}</span></span>
+              {ticket.status !== 'resolved' && (
+                  <ResolveTicketButton ticketId={ticket.id} currentStatus={ticket.status} />
+              )}
             </p>
           </div>
           
