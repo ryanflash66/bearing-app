@@ -86,7 +86,7 @@ CREATE POLICY "Users can view messages"
 ON public.support_messages FOR SELECT 
 TO public 
 USING (
-  ticket_owner_auth_id = auth.uid() 
+  (ticket_owner_auth_id = auth.uid() AND is_internal = false)
   OR 
   (EXISTS ( 
     SELECT 1 FROM public.users 
