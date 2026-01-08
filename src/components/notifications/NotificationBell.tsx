@@ -30,9 +30,8 @@ export default function NotificationBell() {
     const { data } = await supabase
       .from("notifications")
       .select("*")
-      .eq("user_id", user.id) // Migration uses public.users ID, but RLS uses auth.uid(). 
-      // Wait, the policy says: user_id = (select id from public.users where auth_id = auth.uid())
-      // So ensuring we query correctly. The RLS handles the check.
+      // Removed .eq("user_id", user.id) because user.id is AuthID, but table uses PublicID.
+      // RLS policy "Users can view own notifications" handles this insecurely/correctly mapping auth.uid() -> public.id
       .order("created_at", { ascending: false })
       .limit(10);
       
