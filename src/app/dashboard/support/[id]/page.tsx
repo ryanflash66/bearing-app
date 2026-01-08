@@ -95,7 +95,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
     .select("*")
     .eq("ticket_id", id)
     .eq("is_internal", false) // Users don't see internal notes
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true }); // Chronological: oldest first
 
   return (
     <DashboardLayout
