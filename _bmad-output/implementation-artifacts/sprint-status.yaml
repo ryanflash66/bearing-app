@@ -83,7 +83,7 @@ development_status:
   epic-4: in-progress
   4-1-admin-role-architecture: done
   4-2-support-ticket-state-machine: done
-  4-3-user-support-console: ready-for-dev
+  4-3-user-support-console: done
   4-4-support-agent-dashboard: backlog
   4-5-super-admin-dashboard: backlog
   4-6-critical-notification-system: done

@@ -20,6 +20,7 @@ const createMockSupabase = () => {
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
   } as unknown as SupabaseClient;
 };
 
@@ -46,6 +47,17 @@ describe("Profile RLS Tests", () => {
       };
 
       const supabase = createMockSupabase();
+      
+      // Mock claim_profile to return nothing (not claimed)
+      (supabase.rpc as jest.Mock).mockImplementation((func, args) => {
+        if (func === "claim_profile") return { data: null, error: null };
+        if (func === "create_default_account") return { 
+          data: [newAccount], 
+          error: null 
+        };
+        return { data: null, error: null };
+      });
+
       let callCount = 0;
 
       (supabase.from as jest.Mock).mockImplementation((table: string) => {
@@ -62,59 +74,39 @@ describe("Profile RLS Tests", () => {
                   }),
                 }),
               }),
+              insert: jest.fn().mockReturnValue({ // Add insert mock for createProfileWithAccount
+                select: jest.fn().mockReturnValue({
+                   single: jest.fn().mockResolvedValue({
+                     data: newProfile,
+                     error: null
+                   })
+                })
+              })
             };
           }
-          // Second call - create user
+          // Second call (or any subsequent call) - create user (insert)
           return {
-            insert: jest.fn().mockReturnValue({
+            insert: jest.fn().mockReturnValue({ // Add insert mock for createProfileWithAccount
               select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: newProfile,
-                  error: null,
-                }),
-              }),
-            }),
-            delete: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ error: null }),
-            }),
+                 single: jest.fn().mockResolvedValue({
+                   data: newProfile,
+                   error: null
+                 })
+              })
+            })
           };
         }
-        if (table === "accounts") {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({
-                  data: newAccount,
-                  error: null,
-                }),
-              }),
-            }),
-            delete: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ error: null }),
-            }),
-          };
-        }
-        if (table === "account_members") {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: null }),
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                limit: jest.fn().mockReturnValue({
-                  single: jest.fn().mockResolvedValue({
-                    data: { accounts: newAccount },
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "audit_logs") {
+         if (table === "audit_logs") {
           return {
             insert: jest.fn().mockResolvedValue({ error: null }),
           };
         }
-        return {};
+        return {
+             insert: jest.fn().mockReturnThis(),
+             select: jest.fn().mockReturnThis(),
+             eq: jest.fn().mockReturnThis(),
+             single: jest.fn().mockResolvedValue({ data: null, error: null })
+        };
       });
 
       const result = await getOrCreateProfile(supabase, authId, email);

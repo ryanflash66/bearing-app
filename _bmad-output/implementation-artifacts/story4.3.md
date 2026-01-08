@@ -75,5 +75,44 @@ So that I don't have to check my email for updates.
 
 ## Dev Agent Record
 
+### Implementation Notes
+- Implemented full support ticketing system with database tables `support_tickets` and `support_messages`.
+- Secure RLS policies ensuring isolation between users and granting full access to admins/support roles.
+- Created User Dashboard UI (`/dashboard/support`) for creating, viewing, and replying to tickets.
+- Created Admin Dashboard UI (`/dashboard/admin/support`) for managing tickets and updating status.
+- Implemented Email Integration mock service in `src/lib/email.ts` with hooks in API routes.
+- Integrated `audit_logs` for ticket creation events.
+- Added comprehensive unit tests for API and Components, and an E2E test suite.
+- **Review Fix (AI):** Implemented `notifications` table and updated `reply_to_ticket` RPC to generate in-app alerts.
+- **Review Fix (AI):** Hardened audit logging in API routes to prevent race conditions.
+- **Review Fix (AI):** Completed Missing Audit Logs for Replies.
+
+### Debug Log
+- Initial implementation of API required explicitly fetching user profile ID as it differs from Auth ID.
+- Added support for Status Updates via Admin UI.
+- **Migration Fix:** Repaired migration history after slight drift.
+
+## File List
+- supabase/migrations/20260103000004_create_support_tables.sql
+- supabase/migrations/20260107000001_add_notifications.sql
+- src/app/api/support/tickets/route.ts
+- tests/api/tickets.test.ts
+- src/app/dashboard/support/create/page.tsx
+- src/components/support/CreateTicketForm.tsx
+- tests/components/support/CreateTicketForm.test.tsx
+- src/app/dashboard/support/page.tsx
+- src/app/dashboard/support/[id]/page.tsx
+- src/components/support/ReplyForm.tsx
+- src/app/api/support/tickets/[id]/reply/route.ts
+- src/lib/email.ts
+- src/app/dashboard/admin/page.tsx
+- src/app/dashboard/admin/support/page.tsx
+- src/app/api/support/tickets/[id]/status/route.ts
+- src/components/admin/TicketStatusSelect.tsx
+- src/app/dashboard/admin/support/[id]/page.tsx
+- src/components/admin/UserSnapshotPanel.tsx
+- tests/e2e/support.spec.ts
+
+## Change Log
 ### Agent Model Used
 Antigravity (System)

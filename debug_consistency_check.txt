@@ -1,0 +1,156 @@
+
+> bearing-app@1.0.0 test
+> jest tests/api/consistency-check.test.ts
+
+  console.error
+    Error initiating consistency check: Error: Token cap exceeded. You have 0 remaining this month.
+        at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:196:7)
+        at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+        at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+        at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+        at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+        at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+        at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+        at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+        at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:275:16)
+        at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:343:7)
+
+    [0m [90m 89 |[39m     }[33m,[39m { status[33m:[39m [35m202[39m })[33m;[39m
+     [90m 90 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m     console[33m.[39merror([32m"Error initiating consistency check:"[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 92 |[39m     
+     [90m 93 |[39m     [90m// Handle token cap errors specifically[39m
+     [90m 94 |[39m     [36mif[39m (error [36minstanceof[39m [33mError[39m [33m&&[39m error[33m.[39mmessage[33m.[39mincludes([32m"Token cap"[39m)) {[0m
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:203:22)
+
+  console.error
+    Error initiating consistency check: Error: Manuscript content is empty
+        at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:212:7)
+        at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+        at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+        at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+        at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+        at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+        at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+        at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+        at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:275:16)
+        at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:343:7)
+
+    [0m [90m 89 |[39m     }[33m,[39m { status[33m:[39m [35m202[39m })[33m;[39m
+     [90m 90 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m     console[33m.[39merror([32m"Error initiating consistency check:"[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 92 |[39m     
+     [90m 93 |[39m     [90m// Handle token cap errors specifically[39m
+     [90m 94 |[39m     [36mif[39m (error [36minstanceof[39m [33mError[39m [33m&&[39m error[33m.[39mmessage[33m.[39mincludes([32m"Token cap"[39m)) {[0m
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:219:22)
+
+  console.error
+    Error initiating consistency check: Error: Network error
+        at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:515:7)
+        at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+        at new Promise (<anonymous>)
+        at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+        at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+        at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+        at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+        at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+        at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+        at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+        at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+        at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:275:16)
+        at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\index.js:343:7)
+
+    [0m [90m 89 |[39m     }[33m,[39m { status[33m:[39m [35m202[39m })[33m;[39m
+     [90m 90 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m     console[33m.[39merror([32m"Error initiating consistency check:"[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 92 |[39m     
+     [90m 93 |[39m     [90m// Handle token cap errors specifically[39m
+     [90m 94 |[39m     [36mif[39m (error [36minstanceof[39m [33mError[39m [33m&&[39m error[33m.[39mmessage[33m.[39mincludes([32m"Token cap"[39m)) {[0m
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:530:23)
+
+FAIL tests/api/consistency-check.test.ts
+  POST /api/manuscripts/:id/consistency-check
+    ├ù should create async job immediately and return job ID (AC 3.1.1) (10 ms)
+    ├ù should return cached result immediately if available (2 ms)
+    ΓêÜ should return 401 for unauthenticated requests (1 ms)
+    ΓêÜ should return 404 for non-existent manuscript
+    ΓêÜ should return 429 for token cap exceeded (21 ms)
+    ΓêÜ should return 400 for empty manuscript content (2 ms)
+  GET /api/manuscripts/:id/consistency-check
+    ΓêÜ should return latest consistency check job (2 ms)
+    ΓêÜ should return specific job when jobId provided (1 ms)
+    ΓêÜ should return null when no job found (1 ms)
+  Large manuscript chunking (AC 3.1.3)
+    ΓêÜ should chunk large manuscripts into safe segments (3 ms)
+    ΓêÜ should return single chunk for small manuscripts
+  Retry scenarios (AC 3.1.5)
+    ΓêÜ should mark job as failed on API error
+    ΓêÜ should allow retry after failure (4 ms)
+
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should create async job immediately and return job ID (AC 3.1.1)
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      {"auth": {"getUser": [Function mockConstructor]}, "from": [Function mockConstructor]},
+      Object {
+        "manuscriptId": "ms-id",
+    -   "userId": "user-id",
+    +   "userId": "ms-id",
+      },
+    + [Function anonymous],
+
+    Number of calls: 1
+
+      135 |     expect(data.status).toBe("queued");
+      136 |     expect(data.estimatedTokens).toBe(50000);
+    > 137 |     expect(initiateConsistencyCheck).toHaveBeenCalledWith(
+          |                                      ^
+      138 |       mockSupabaseClient,
+      139 |       {
+      140 |         manuscriptId: "ms-id",
+
+      at Object.toHaveBeenCalledWith (tests/api/consistency-check.test.ts:137:38)
+
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should return cached result immediately if available
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      160 |
+      161 |     expect(response.status).toBe(202);
+    > 162 |     expect(data.cached).toBe(true);
+          |                         ^
+      163 |     expect(data.status).toBe("completed");
+      164 |   });
+      165 |
+
+      at Object.toBe (tests/api/consistency-check.test.ts:162:25)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 11 passed, 13 total
+Snapshots:   0 total
+Time:        1.483 s
+Ran all test suites matching tests/api/consistency-check.test.ts.

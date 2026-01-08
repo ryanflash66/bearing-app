@@ -69,7 +69,7 @@ export async function POST(
     // Initiate consistency check (async, returns immediately)
     // Pass profile.id as userId (which becomes created_by)
     // Use 'after' to ensure background task completes even after response is sent
-    const { jobId, estimatedTokens } = await initiateConsistencyCheck(
+    const { jobId, estimatedTokens, status, cached } = await initiateConsistencyCheck(
       supabase, 
       {
         manuscriptId,
@@ -83,9 +83,9 @@ export async function POST(
 
     return NextResponse.json({
       jobId, 
-      status: "queued", 
+      status: status || "queued", 
       estimatedTokens, 
-      cached: false
+      cached: !!cached
     }, { status: 202 });
   } catch (error) {
     console.error("Error initiating consistency check:", error);

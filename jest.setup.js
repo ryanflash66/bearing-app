@@ -1,5 +1,11 @@
 import "@testing-library/jest-dom";
 
+// Mock Environment Variables
+process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock.supabase.co";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "mock-anon-key";
+process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "mock-service-key";
+process.env.OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "mock-openrouter-key";
+
 // Polyfill for TextEncoder/TextDecoder (required by PDFKit)
 if (typeof global.TextEncoder === "undefined") {
   const { TextEncoder, TextDecoder } = require("util");

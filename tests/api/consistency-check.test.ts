@@ -98,6 +98,7 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
       error: null,
     });
     // Reset the from mock to return proper chain
+    // Mock queries
     const mockManuscriptsQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -112,7 +113,26 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
         error: null,
       }),
     };
-    mockSupabaseClient.from.mockReturnValue(mockManuscriptsQuery);
+
+    const mockUsersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: { id: "user-id" },
+        error: null,
+      }),
+    };
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") return mockManuscriptsQuery;
+      if (table === "users") return mockUsersQuery;
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
   });
 
   it("should create async job immediately and return job ID (AC 3.1.1)", async () => {
@@ -139,7 +159,8 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
       {
         manuscriptId: "ms-id",
         userId: "user-id",
-      }
+      },
+      expect.any(Function)
     );
   });
 
@@ -178,9 +199,25 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
   });
 
   it("should return 404 for non-existent manuscript", async () => {
-    mockSupabaseClient.from().select().eq().is().single.mockResolvedValue({
-      data: null,
-      error: { message: "Not found" },
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          is: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: "Not found" },
+          }),
+        };
+      }
+      // Return default for others to avoid crashes if called
+       return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          is: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: { id: "user-id" }, error: null }),
+       };
     });
 
     const request = {
@@ -235,6 +272,7 @@ describe("GET /api/manuscripts/:id/consistency-check", () => {
       error: null,
     });
     // Reset the from mock to return proper chain
+    // Mock queries
     const mockManuscriptsQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -249,7 +287,18 @@ describe("GET /api/manuscripts/:id/consistency-check", () => {
         error: null,
       }),
     };
-    mockSupabaseClient.from.mockReturnValue(mockManuscriptsQuery);
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") return mockManuscriptsQuery;
+      // consistency_checks table is mocked per test
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
   });
 
   it("should return latest consistency check job", async () => {

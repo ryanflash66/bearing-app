@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Load environment variables from .env.local
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
 
 // Mock Supabase Setup (or use real test DB env if available)
 // For integration, we prefer real DB calls if we have a test environment.
@@ -64,10 +64,22 @@ describe("Usage Guardrails Integration (Story 4.1)", () => {
     // Create a public profile for FKs
     await adminSupabase.from("users").insert({ id: testUserId, auth_id: testUserId, email: user.user.email, display_name: "Test User" });
 
-    // 2. Create Test Account
-    const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
-    if (error || !account) throw new Error("Failed to create test account");
+    // 2. Create Test Account (Direct Insert to bypass RPC auth checks)
+    const { data: account, error } = await adminSupabase.from("accounts").insert({
+        name: "Guardrails Test Account",
+        owner_user_id: testUserId,
+        usage_status: "good_standing"
+    }).select().single();
+
+    if (error || !account) throw new Error("Failed to create test account: " + error?.message);
     testAccountId = account.id;
+
+    // Create Membership
+    await adminSupabase.from("account_members").insert({
+        account_id: testAccountId,
+        user_id: testUserId,
+        role: "owner"
+    });
   });
 
   afterAll(async () => {

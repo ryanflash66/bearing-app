@@ -34,6 +34,7 @@ const createMockSupabase = (overrides: Partial<SupabaseClient> = {}) => {
     auth: {
       getUser: jest.fn(),
     },
+    rpc: jest.fn(),
   };
 
   return { ...defaultMock, ...overrides } as unknown as SupabaseClient;
@@ -168,7 +169,7 @@ describe("Account RLS Tests", () => {
   });
 
   describe("Account Creation", () => {
-    it("should create account with owner as admin member", async () => {
+    it("should create account via RPC", async () => {
       const newAccount = {
         id: "new-account-id",
         name: "New Account",
@@ -177,73 +178,33 @@ describe("Account RLS Tests", () => {
       };
 
       const supabase = createMockSupabase();
-      const insertMock = jest.fn();
-      
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
-        if (table === "accounts") {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: newAccount, error: null }),
-              }),
-            }),
-            delete: jest.fn().mockReturnValue({
-              eq: jest.fn().mockResolvedValue({ error: null }),
-            }),
-          };
-        }
-        if (table === "account_members") {
-          return {
-            insert: insertMock.mockResolvedValue({ error: null }),
-          };
-        }
-        return {};
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: [newAccount],
+        error: null
       });
 
       const result = await createAccount(supabase, "New Account", "owner-user-id");
+
+      expect(supabase.rpc).toHaveBeenCalledWith("create_default_account", {
+        p_name: "New Account",
+        p_owner_id: "owner-user-id"
+      });
 
       expect(result.error).toBeNull();
       expect(result.account).toEqual(newAccount);
     });
 
-    it("should rollback on membership creation failure", async () => {
-      const newAccount = {
-        id: "new-account-id",
-        name: "New Account",
-        owner_user_id: "owner-user-id",
-        created_at: new Date().toISOString(),
-      };
-
-      const deleteMock = jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ error: null }),
-      });
-
+    it("should handle RPC failure gracefully", async () => {
       const supabase = createMockSupabase();
-      (supabase.from as jest.Mock).mockImplementation((table: string) => {
-        if (table === "accounts") {
-          return {
-            insert: jest.fn().mockReturnValue({
-              select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: newAccount, error: null }),
-              }),
-            }),
-            delete: deleteMock,
-          };
-        }
-        if (table === "account_members") {
-          return {
-            insert: jest.fn().mockResolvedValue({ error: { message: "Permission denied" } }),
-          };
-        }
-        return {};
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: null,
+        error: { message: "RPC Error" }
       });
 
       const result = await createAccount(supabase, "New Account", "owner-user-id");
 
-      expect(result.error).toBe("Failed to set up account membership. Please try again.");
+      expect(result.error).toBe("Failed to create account. Please try again.");
       expect(result.account).toBeNull();
-      // Verify cleanup was attempted
-      expect(deleteMock).toHaveBeenCalled();
     });
   });
 });

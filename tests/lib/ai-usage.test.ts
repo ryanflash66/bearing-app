@@ -47,6 +47,15 @@ describe("AI Usage Metering", () => {
       });
 
       (mockSupabase.from as jest.Mock).mockImplementation((table) => {
+        if (table === "accounts") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { usage_status: "good_standing" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "billing_cycles") {
           return {
             select: jest.fn().mockReturnValue({
@@ -80,6 +89,15 @@ describe("AI Usage Metering", () => {
       });
 
       (mockSupabase.from as jest.Mock).mockImplementation((table) => {
+        if (table === "accounts") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { usage_status: "good_standing" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "billing_cycles") {
            return {
             select: jest.fn().mockReturnValue({
@@ -129,7 +147,7 @@ describe("AI Usage Metering", () => {
         return {};
       });
 
-      await logUsageEvent(mockSupabase, accountId, userId, "test_feature", "test_model", 100, 100);
+      await logUsageEvent(mockSupabase, accountId, userId, "test_feature", "test_model", 100, 100, 100);
 
       expect(mockInsert).toHaveBeenCalledWith({
         account_id: accountId,
@@ -139,6 +157,7 @@ describe("AI Usage Metering", () => {
         model: "test_model",
         tokens_estimated: 100,
         tokens_actual: 100,
+        latency_ms: 100,
       });
     });
   });
