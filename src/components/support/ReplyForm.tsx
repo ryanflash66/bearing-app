@@ -57,6 +57,9 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
           placeholder="Type your reply here..."
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
+              // Prevent submission if IME composition is active (e.g. CJK input)
+              if (e.nativeEvent.isComposing) return;
+              
               e.preventDefault();
               e.currentTarget.form?.requestSubmit();
             }

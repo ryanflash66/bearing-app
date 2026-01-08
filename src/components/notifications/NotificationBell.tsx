@@ -27,11 +27,19 @@ export default function NotificationBell() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Fetch public profile ID to explicitly filter notifications
+    const { data: profile } = await supabase
+      .from('users')
+      .select('id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (!profile) return;
+
     const { data } = await supabase
       .from("notifications")
       .select("*")
-      // Removed .eq("user_id", user.id) because user.id is AuthID, but table uses PublicID.
-      // RLS policy "Users can view own notifications" handles this insecurely/correctly mapping auth.uid() -> public.id
+      .eq("user_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(10);
       
