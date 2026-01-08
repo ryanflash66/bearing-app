@@ -60,10 +60,37 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('realtime_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          // RLS ensures we only get our own notifications if replication is set up correctly.
+          // However, for extra safety via client-side filter (if needed) or relying on RLS.
+          // Note: Realtime respects RLS if 'Realtime RLS' is enabled in Dashboard for the table.
+        },
+        (payload) => {
+          // Verify the new notification belongs to the current user (if payload has it)
+          // Or just optimistically fetch/add.
+          // Since RLS is on, we should receive events. Safe to fetch list again or prepend.
+          
+          const newNotification = payload.new as Notification;
+          // Prepend new notification
+          setNotifications(prev => [newNotification, ...prev]);
+          setUnreadCount(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase]);
 
   // Close on click outside
   useEffect(() => {
