@@ -125,12 +125,24 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
             <p className="mt-1 max-w-2xl text-sm text-slate-500">
               Ticket #{ticket.id.slice(0, 8)} • <span className="capitalize">{ticket.status.replace("_", " ")}</span>
             </p>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500 flex items-center gap-4">
-              <span>Ticket #{ticket.id.slice(0, 8)} • <span className="capitalize">{ticket.status.replace("_", " ")}</span></span>
-              {ticket.status !== 'resolved' && (
+            <div className="mt-1 max-w-2xl text-sm text-slate-500 flex items-center gap-3">
+              <span>Ticket #{ticket.id.slice(0, 8)}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                  ticket.status === 'open' ? 'bg-green-100 text-green-800' :
+                  ticket.status === 'resolved' ? 'bg-gray-100 text-gray-800' :
+                  ticket.status === 'pending_user' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-blue-100 text-blue-800'
+              }`}>
+                  {ticket.status.replace("_", " ")}
+              </span>
+              
+              <div className="ml-auto sm:ml-4">
+               {ticket.status !== 'resolved' && (
                   <ResolveTicketButton ticketId={ticket.id} currentStatus={ticket.status} />
-              )}
-            </p>
+               )}
+              </div>
+            </div>
           </div>
           
           {/* Reply Form */}
