@@ -55,6 +55,12 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
           required
           className="block w-full rounded-md border-gray-300 shadow-sm text-gray-900 caret-black focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           placeholder="Type your reply here..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
         />
         <button
           type="submit"
