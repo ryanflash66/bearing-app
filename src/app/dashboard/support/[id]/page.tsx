@@ -147,6 +147,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               ticketId={ticket.id}
               initialMessages={(messages || []) as SupportMessage[]}
               currentUserId={profile?.id || ""}
+              ticketOwnerId={ticket.user_id}
             />
         </div>
       </div>
