@@ -180,7 +180,6 @@ export default function TicketConversation({
                     <span className="text-xs font-semibold">
                       {senderLabel}
                     </span>
-                    </span>
                     <span className="text-xs text-slate-400">
                       {formatDate(message.created_at)}
                     </span>
