@@ -206,19 +206,16 @@ workflow_status:
             notes: "IMPLEMENTED: create_ticket and reply_to_ticket RPCs with atomic status transitions."
           - id: "story-4.3"
             name: "User Support Console (Frontend)"
-            status: "docs/story4.3.md"
-            completed: "2026-01-05"
-            notes: "IMPLEMENTED: User-facing ticket list and detail pages with secure message history."
+            status: "in_progress"
+            notes: "IMPLEMENTED: User-facing ticket list and detail pages. CURRENT: Enabling real-time notification replication."
           - id: "story-4.4"
             name: "Support Agent Dashboard"
-            status: "docs/story4.4.md"
-            completed: "2026-01-05"
-            notes: "IMPLEMENTED: Stale ticket detection (48h), PII masking, and User Context Snapshot."
+            status: "required"
+            notes: "PENDING: Stale ticket detection (48h), PII masking, and User Context Snapshot."
           - id: "story-4.5"
             name: "Super Admin Dashboard"
-            status: "docs/story4.5.md"
-            completed: "2026-01-05"
-            notes: "IMPLEMENTED: Global metrics (tokens, users, tickets) and user override links. Maintenance mode deferred."
+            status: "required"
+            notes: "PENDING: Global metrics (tokens, users, tickets) and user override links."
           - id: "story-4.6"
             name: "Critical Notification System"
             status: "required"
@@ -272,7 +269,7 @@ epic_progress:
     stories: 6
     completed: 5
     status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.5 implemented."
+    notes: "Emergency rework for scale and security. Stories 4.1-4.2 implemented."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
@@ -282,26 +279,28 @@ epic_progress:
         status: "completed"
       - id: "story-4.3"
         name: "User Support Console (Frontend)"
-        status: "completed"
+        status: "in_progress"
       - id: "story-4.4"
         name: "Support Agent Dashboard"
-        status: "completed"
+        status: "required"
       - id: "story-4.5"
         name: "Super Admin Dashboard"
-        status: "completed"
+        status: "required"
       - id: "story-4.6"
         name: "Critical Notification System"
         status: "backlog"
 
 # Next Action
+# Next Action
 next_workflow:
-  id: "story-4.6"
-  name: "Story 4.6: Critical Notification System"
+  id: "story-4.3"
+  name: "Story 4.3: User Support Console (Frontend)"
   agent: "dev"
-  command: "/dev-story 4.6"
-  description: "Implement email notification triggers for priority support tickets."
+  command: "/dev-story 4.3"
+  description: "Wrapping up accessible inputs and enabling real-time notification replication for the support console."
   priority: "high"
-  reason: "Final story of Epic 4 before Stabilization & Hardening."  - epic: 5
+  reason: "User is currently rounding this up with real-time notification work."
+- epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
     completed: 0

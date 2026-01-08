@@ -4,12 +4,10 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
-import ReplyForm from "@/components/support/ReplyForm";
 
-import { formatDate } from "@/components/support/SupportShared";
-import { headers } from "next/headers"; // Not needed if we use client component for button, but for now we'll use a form action or client component.
+import { headers } from "next/headers";
 import ResolveTicketButton from "@/components/support/ResolveTicketButton";
-import RealtimeMessageList from "@/components/support/RealtimeMessageList";
+import TicketConversation from "@/components/support/TicketConversation";
 
 interface SupportMessage {
   id: string;
@@ -145,20 +143,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
           </div>
-          
-          {/* Reply Form */}
-          <div className="px-4 py-5 sm:p-6 bg-slate-50 border-b border-slate-200">
-             <h4 className="text-sm font-medium text-slate-900 mb-2">Add a reply</h4>
-             <ReplyForm ticketId={ticket.id} />
-          </div>
-
-          <div className="px-4 py-5 sm:p-6">
-            <RealtimeMessageList
+          <TicketConversation
               ticketId={ticket.id}
               initialMessages={(messages || []) as SupportMessage[]}
               currentUserId={profile?.id || ""}
             />
-          </div>
         </div>
       </div>
     </DashboardLayout>
