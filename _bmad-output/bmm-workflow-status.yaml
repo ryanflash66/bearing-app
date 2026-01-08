@@ -267,9 +267,9 @@ epic_progress:
   - epic: 4
     name: "Support & Admin (Emergency Rework)"
     stories: 6
-    completed: 5
+    completed: 2
     status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.2 implemented."
+    notes: "Emergency rework for scale and security. Stories 4.1-4.2 completed. Story 4.3 in progress."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
