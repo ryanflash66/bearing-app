@@ -20,6 +20,11 @@ USING (
   ))
 );
 
+-- 2. Performance Optimization
+-- Index auth_id on public.users to support the EXISTS query above
+-- This prevents full table scans on every row access
+CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
+
 -- Note: The destructive cleanup from the previous migration (06) has already run.
 -- Future migrations should prefer soft-deletion or quarantine for "orphaned" production data.
  
