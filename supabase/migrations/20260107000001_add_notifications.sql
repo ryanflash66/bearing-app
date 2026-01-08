@@ -75,7 +75,7 @@ begin
     end
   where id = ticket_id;
   
-  -- Create Notification if Support repled to User
+  -- Create Notification if Support replied to User
   if v_sender_id != v_ticket_owner_id then
     insert into public.notifications (
       user_id, 
