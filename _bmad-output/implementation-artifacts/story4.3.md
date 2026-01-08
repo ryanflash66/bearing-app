@@ -113,13 +113,18 @@ As an author, I can contact support directly from the app. Messages are stored s
 - Implemented Email Integration mock service in `src/lib/email.ts` with hooks in API routes.
 - Integrated `audit_logs` for ticket creation events.
 - Added comprehensive unit tests for API and Components, and an E2E test suite.
+- **Review Fix (AI):** Implemented `notifications` table and updated `reply_to_ticket` RPC to generate in-app alerts.
+- **Review Fix (AI):** Hardened audit logging in API routes to prevent race conditions.
+- **Review Fix (AI):** Completed Missing Audit Logs for Replies.
 
 ### Debug Log
 - Initial implementation of API required explicitly fetching user profile ID as it differs from Auth ID.
 - Added support for Status Updates via Admin UI.
+- **Migration Fix:** Repaired migration history after slight drift.
 
 ## File List
 - supabase/migrations/20260103000004_create_support_tables.sql
+- supabase/migrations/20260107000001_add_notifications.sql
 - src/app/api/support/tickets/route.ts
 - tests/api/tickets.test.ts
 - src/app/dashboard/support/create/page.tsx
@@ -135,6 +140,7 @@ As an author, I can contact support directly from the app. Messages are stored s
 - src/app/api/support/tickets/[id]/status/route.ts
 - src/components/admin/TicketStatusSelect.tsx
 - src/app/dashboard/admin/support/[id]/page.tsx
+- src/components/admin/UserSnapshotPanel.tsx
 - tests/e2e/support.spec.ts
 
 ## Change Log

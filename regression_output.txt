@@ -1,0 +1,1307 @@
+
+> bearing-app@1.0.0 test
+> jest
+
+FAIL tests/integration/usage-guardrails.test.ts
+  ΓùÅ Console
+
+    console.log
+      [dotenv@17.2.3] injecting env (7) from .env.local -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:142:11)
+
+    console.error
+      Account creation RPC error: {
+        code: 'P0001',
+        details: null,
+        hint: null,
+        message: 'Permission denied: Owner ID does not match authenticated user'
+      }
+
+      43 |
+      44 |     if (rpcError) {
+    > 45 |       console.error("Account creation RPC error:", rpcError);
+         |               ^
+      46 |       return {
+      47 |         account: null,
+      48 |         error: "Failed to create account. Please try again.",
+
+      at error (src/lib/account.ts:45:15)
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:68:32)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should start in good_standing
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should flag account after first month of overage
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should trigger upsell_required after second consecutive month of overage
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should block usage when status is upsell_required
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should reset to good_standing if usage drops in third month
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+FAIL tests/rls/account.test.ts
+  ΓùÅ Console
+
+    console.error
+      Account service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\account.ts:39:64)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\account.test.ts:203:41)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      64 |
+      65 |   } catch (err) {
+    > 66 |     console.error("Account service error:", err);
+         |             ^
+      67 |     return {
+      68 |       account: null,
+      69 |       error: "An unexpected error occurred. Please try again.",
+
+      at error (src/lib/account.ts:66:13)
+      at Object.<anonymous> (tests/rls/account.test.ts:203:41)
+
+    console.error
+      Account service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\account.ts:39:64)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\account.test.ts:241:41)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      64 |
+      65 |   } catch (err) {
+    > 66 |     console.error("Account service error:", err);
+         |             ^
+      67 |     return {
+      68 |       account: null,
+      69 |       error: "An unexpected error occurred. Please try again.",
+
+      at error (src/lib/account.ts:66:13)
+      at Object.<anonymous> (tests/rls/account.test.ts:241:41)
+
+  ΓùÅ Account RLS Tests ΓÇ║ Account Creation ΓÇ║ should create account with owner as admin member
+
+    expect(received).toBeNull()
+
+    Received: "An unexpected error occurred. Please try again."
+
+      203 |       const result = await createAccount(supabase, "New Account", "owner-user-id");
+      204 |
+    > 205 |       expect(result.error).toBeNull();
+          |                            ^
+      206 |       expect(result.account).toEqual(newAccount);
+      207 |     });
+      208 |
+
+      at Object.toBeNull (tests/rls/account.test.ts:205:28)
+
+  ΓùÅ Account RLS Tests ΓÇ║ Account Creation ΓÇ║ should rollback on membership creation failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Failed to set up account membership. Please try again."
+    Received: "An unexpected error occurred. Please try again."
+
+      241 |       const result = await createAccount(supabase, "New Account", "owner-user-id");
+      242 |
+    > 243 |       expect(result.error).toBe("Failed to set up account membership. Please try again.");
+          |                            ^
+      244 |       expect(result.account).toBeNull();
+      245 |       // Verify cleanup was attempted
+      246 |       expect(deleteMock).toHaveBeenCalled();
+
+      at Object.toBe (tests/rls/account.test.ts:243:28)
+
+FAIL tests/api/consistency-check.test.ts
+  ΓùÅ Console
+
+    console.error
+      Error initiating consistency check: Error: Token cap exceeded. You have 0 remaining this month.
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:196:7)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      89 |     }, { status: 202 });
+      90 |   } catch (error) {
+    > 91 |     console.error("Error initiating consistency check:", error);
+         |             ^
+      92 |     
+      93 |     // Handle token cap errors specifically
+      94 |     if (error instanceof Error && error.message.includes("Token cap")) {
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:203:22)
+
+    console.error
+      Error initiating consistency check: Error: Manuscript content is empty
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:212:7)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      89 |     }, { status: 202 });
+      90 |   } catch (error) {
+    > 91 |     console.error("Error initiating consistency check:", error);
+         |             ^
+      92 |     
+      93 |     // Handle token cap errors specifically
+      94 |     if (error instanceof Error && error.message.includes("Token cap")) {
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:219:22)
+
+    console.error
+      Error initiating consistency check: Error: Network error
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\api\consistency-check.test.ts:515:7)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      89 |     }, { status: 202 });
+      90 |   } catch (error) {
+    > 91 |     console.error("Error initiating consistency check:", error);
+         |             ^
+      92 |     
+      93 |     // Handle token cap errors specifically
+      94 |     if (error instanceof Error && error.message.includes("Token cap")) {
+
+      at error (src/app/api/manuscripts/[id]/consistency-check/route.ts:91:13)
+      at Object.<anonymous> (tests/api/consistency-check.test.ts:530:23)
+
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should create async job immediately and return job ID (AC 3.1.1)
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      {"auth": {"getUser": [Function mockConstructor]}, "from": [Function mockConstructor]},
+      Object {
+        "manuscriptId": "ms-id",
+    -   "userId": "user-id",
+    +   "userId": "ms-id",
+      },
+    + [Function anonymous],
+
+    Number of calls: 1
+
+      135 |     expect(data.status).toBe("queued");
+      136 |     expect(data.estimatedTokens).toBe(50000);
+    > 137 |     expect(initiateConsistencyCheck).toHaveBeenCalledWith(
+          |                                      ^
+      138 |       mockSupabaseClient,
+      139 |       {
+      140 |         manuscriptId: "ms-id",
+
+      at Object.toHaveBeenCalledWith (tests/api/consistency-check.test.ts:137:38)
+
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should return cached result immediately if available
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      160 |
+      161 |     expect(response.status).toBe(202);
+    > 162 |     expect(data.cached).toBe(true);
+          |                         ^
+      163 |     expect(data.status).toBe("completed");
+      164 |   });
+      165 |
+
+      at Object.toBe (tests/api/consistency-check.test.ts:162:25)
+
+FAIL tests/rls/profile.test.ts
+  ΓùÅ Console
+
+    console.log
+      [getOrCreateProfile] Starting lookup for authId: auth-user-123
+
+      at log (src/lib/profile.ts:45:13)
+
+    console.error
+      Profile service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\profile.ts:48:72)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\profile.test.ts:120:46)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      219 |     };
+      220 |   } catch (err) {
+    > 221 |     console.error("Profile service error:", err);
+          |             ^
+      222 |     return {
+      223 |       profile: null,
+      224 |       account: null,
+
+      at error (src/lib/profile.ts:221:13)
+      at Object.<anonymous> (tests/rls/profile.test.ts:120:46)
+
+    console.log
+      [getOrCreateProfile] Starting lookup for authId: existing-auth-123
+
+      at log (src/lib/profile.ts:45:13)
+
+    console.error
+      Profile service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\profile.ts:48:72)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\profile.test.ts:181:46)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      219 |     };
+      220 |   } catch (err) {
+    > 221 |     console.error("Profile service error:", err);
+          |             ^
+      222 |     return {
+      223 |       profile: null,
+      224 |       account: null,
+
+      at error (src/lib/profile.ts:221:13)
+      at Object.<anonymous> (tests/rls/profile.test.ts:181:46)
+
+    console.log
+      [getOrCreateProfile] Starting lookup for authId: race-auth-123
+
+      at log (src/lib/profile.ts:45:13)
+
+    console.error
+      Profile service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\profile.ts:48:72)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\profile.test.ts:271:46)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      219 |     };
+      220 |   } catch (err) {
+    > 221 |     console.error("Profile service error:", err);
+          |             ^
+      222 |     return {
+      223 |       profile: null,
+      224 |       account: null,
+
+      at error (src/lib/profile.ts:221:13)
+      at Object.<anonymous> (tests/rls/profile.test.ts:271:46)
+
+    console.log
+      [getOrCreateProfile] Starting lookup for authId: auth-id
+
+      at log (src/lib/profile.ts:45:13)
+
+    console.error
+      Profile service error: TypeError: supabase.rpc is not a function
+          at rpc (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\profile.ts:48:72)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\rls\profile.test.ts:343:46)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      219 |     };
+      220 |   } catch (err) {
+    > 221 |     console.error("Profile service error:", err);
+          |             ^
+      222 |     return {
+      223 |       profile: null,
+      224 |       account: null,
+
+      at error (src/lib/profile.ts:221:13)
+      at Object.<anonymous> (tests/rls/profile.test.ts:343:46)
+
+    console.error
+      Profile update error: { code: '42501', message: 'Permission denied' }
+
+      408 |
+      409 |     if (error) {
+    > 410 |       console.error("Profile update error:", error);
+          |               ^
+      411 |       return {
+      412 |         profile: null,
+      413 |         error: "Failed to update profile. Please try again.",
+
+      at error (src/lib/profile.ts:410:15)
+      at Object.<anonymous> (tests/rls/profile.test.ts:364:22)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should create profile with default account for new user
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      120 |       const result = await getOrCreateProfile(supabase, authId, email);
+      121 |
+    > 122 |       expect(result.isNewProfile).toBe(true);
+          |                                   ^
+      123 |       expect(result.profile).not.toBeNull();
+      124 |       expect(result.profile?.email).toBe(email);
+      125 |       expect(result.account).not.toBeNull();
+
+      at Object.toBe (tests/rls/profile.test.ts:122:35)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should return existing profile without creating new account
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "existing-profile-123"
+    Received: undefined
+
+      182 |
+      183 |       expect(result.isNewProfile).toBe(false);
+    > 184 |       expect(result.profile?.id).toBe("existing-profile-123");
+          |                                  ^
+      185 |       expect(result.account?.id).toBe("existing-account-123");
+      186 |       expect(result.error).toBeNull();
+      187 |     });
+
+      at Object.toBe (tests/rls/profile.test.ts:184:34)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should handle profile creation race condition gracefully
+
+    expect(received).not.toBeNull()
+
+    Received: null
+
+      272 |
+      273 |       // Should recover and return the existing profile
+    > 274 |       expect(result.profile).not.toBeNull();
+          |                                  ^
+      275 |       expect(result.error).toBeNull();
+      276 |     });
+      277 |   });
+
+      at Object.toBeNull (tests/rls/profile.test.ts:274:34)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ Error Handling ΓÇ║ should return error on profile fetch failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Failed to load profile. Please try again."
+    Received: "An unexpected error occurred. Please try again."
+
+      344 |
+      345 |       expect(result.profile).toBeNull();
+    > 346 |       expect(result.error).toBe("Failed to load profile. Please try again.");
+          |                            ^
+      347 |     });
+      348 |
+      349 |     it("should return error on profile update failure", async () => {
+
+      at Object.toBe (tests/rls/profile.test.ts:346:28)
+
+FAIL tests/api/upload.test.ts
+  ΓùÅ POST /api/manuscripts/upload ΓÇ║ should handle PDF file upload
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "PDF Content"
+    Received: "PDF import temporarily disabled due to build issues."
+
+      108 |     expect(res.status).toBe(200);
+      109 |     const data = await res.json();
+    > 110 |     expect(data.chapters[0].content).toBe("PDF Content");
+          |                                      ^
+      111 |   });
+      112 |
+      113 |   it("should handle Markdown file upload", async () => {
+
+      at Object.toBe (tests/api/upload.test.ts:110:38)
+
+FAIL tests/manuscripts/consistency.test.ts
+  ΓùÅ Console
+
+    console.error
+      Error calling OpenRouter API: ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "character",
+            "plot",
+            "timeline",
+            "tone"
+          ],
+          "path": [
+            "issues",
+            0,
+            "type"
+          ],
+          "message": "Invalid option: expected one of \"character\"|\"plot\"|\"timeline\"|\"tone\""
+        },
+        {
+          "code": "invalid_value",
+          "values": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "path": [
+            "issues",
+            0,
+            "severity"
+          ],
+          "message": "Invalid option: expected one of \"low\"|\"medium\"|\"high\""
+        }
+      ]
+          at parse (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\gemini.ts:337:44)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\manuscripts\consistency.test.ts:165:7)
+
+      344 |       throw new Error(detailedError);
+      345 |     }
+    > 346 |     console.error("Error calling OpenRouter API:", error);
+          |             ^
+      347 |     throw error;
+      348 |   }
+      349 | }
+
+      at error (src/lib/gemini.ts:346:13)
+      at Object.<anonymous> (tests/manuscripts/consistency.test.ts:165:7)
+
+    console.log
+      Mock JSON called. Mock Report: {"issues":[],"summary":"No issues."}
+
+      at Object.log (tests/manuscripts/consistency.test.ts:214:19)
+
+  ΓùÅ Consistency Checks ΓÇ║ initiateConsistencyCheck ΓÇ║ should start a check and return job ID
+
+    supabaseUrl is required.
+
+      541 |   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      542 |   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    > 543 |   const backgroundClient = createClient(supabaseUrl, supabaseServiceKey);
+          |                                        ^
+      544 |
+      545 |   const backgroundTask = async () => {
+      546 |     try {
+
+      at validateSupabaseUrl (node_modules/@supabase/supabase-js/src/lib/helpers.ts:86:11)
+      at new SupabaseClient (node_modules/@supabase/supabase-js/src/SupabaseClient.ts:117:21)
+      at createClient (node_modules/@supabase/supabase-js/src/index.ts:60:10)
+      at initiateConsistencyCheck (src/lib/gemini.ts:543:40)
+      at Object.<anonymous> (tests/manuscripts/consistency.test.ts:191:22)
+
+PASS tests/manuscripts/manuscript.test.ts
+PASS tests/api/tickets.test.ts
+  ΓùÅ Console
+
+    console.log
+      [MOCK EMAIL] To: admin@example.com, Subject: [Support] New Ticket: Issue, Body: User user@test.com created a new ticket.
+      
+      Subject: Issue
+      
+      View Ticket: http://localhost:3000/dashboard/admin/support/ticket-1
+
+      at log (src/lib/email.ts:22:13)
+
+    console.error
+      Account service error: TypeError: Cannot read properties of undefined (reading 'eq')
+          at Object.getUserAccounts (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\account.ts:95:8)
+          at getUserAccounts (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\app\api\support\tickets\route.ts:70:43)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+      116 |     return { accounts, error: null };
+      117 |   } catch (err) {
+    > 118 |     console.error("Account service error:", err);
+          |             ^
+      119 |     return {
+      120 |       accounts: [],
+      121 |       error: "An unexpected error occurred. Please try again.",
+
+      at Object.error (src/lib/account.ts:118:13)
+      at getUserAccounts (src/app/api/support/tickets/route.ts:70:43)
+
+FAIL tests/lib/ai-usage.test.ts
+  ΓùÅ AI Usage Metering ΓÇ║ checkUsageLimit ΓÇ║ allows usage when under cap
+
+    expect(received).resolves.not.toThrow()
+
+    Received promise rejected instead of resolved
+    Rejected to value: [TypeError: Cannot read properties of undefined (reading 'eq')]
+
+      68 |       });
+      69 |
+    > 70 |       await expect(checkUsageLimit(mockSupabase, accountId, 1000)).resolves.not.toThrow();
+         |             ^
+      71 |     });
+      72 |
+      73 |     it("throws when usage exceeds cap", async () => {
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at Object.expect (tests/lib/ai-usage.test.ts:70:13)
+
+  ΓùÅ AI Usage Metering ΓÇ║ checkUsageLimit ΓÇ║ throws when usage exceeds cap
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected pattern: /Monthly AI token limit reached/
+    Received message: "Cannot read properties of undefined (reading 'eq')"
+
+          106 |   const { data: account, error: accountError } = await supabase
+          107 |     .from("accounts")
+        > 108 |     .select("usage_status")
+              |             ^
+          109 |     .eq("id", accountId)
+          110 |     .single();
+          111 |
+
+      at checkUsageLimit (src/lib/ai-usage.ts:108:13)
+      at Object.<anonymous> (tests/lib/ai-usage.test.ts:103:35)
+      at Object.toThrow (node_modules/expect/build/index.js:2155:20)
+      at Object.toThrow (tests/lib/ai-usage.test.ts:103:75)
+
+  ΓùÅ AI Usage Metering ΓÇ║ logUsageEvent ΓÇ║ inserts event into db
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      Object {
+        "account_id": "acc-123",
+        "cycle_id": "cycle-123",
+        "feature": "test_feature",
+    +   "latency_ms": 0,
+        "model": "test_model",
+        "tokens_actual": 100,
+        "tokens_estimated": 100,
+        "user_id": "user-123",
+      },
+
+    Number of calls: 1
+
+      132 |       await logUsageEvent(mockSupabase, accountId, userId, "test_feature", "test_model", 100, 100);
+      133 |
+    > 134 |       expect(mockInsert).toHaveBeenCalledWith({
+          |                          ^
+      135 |         account_id: accountId,
+      136 |         user_id: userId,
+      137 |         cycle_id: cycleId,
+
+      at Object.toHaveBeenCalledWith (tests/lib/ai-usage.test.ts:134:26)
+
+PASS tests/manuscripts/versionHistory.test.ts
+  ΓùÅ Console
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.error
+      Unexpected error fetching version history: TypeError: supabase.from(...).select(...).eq(...).is(...).single is not a function
+          at single (R:\Dropbox\_Code\Projects\bearing\bearing-app\src\lib\manuscriptVersions.ts:129:8)
+          at Object.<anonymous> (R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\manuscripts\versionHistory.test.ts:659:45)
+          at Promise.finally.completed (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1557:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1497:10)
+          at _callCircusTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1007:40)
+          at _runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:947:3)
+          at R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:849:7
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:862:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at _runTestsForDescribeBlock (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:857:11)
+          at run (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:761:3)
+          at runAndTransformResultsToJestFormat (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\jestAdapterInit.js:1918:21)
+          at jestAdapter (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-circus\build\runner.js:101:19)
+          at runTestInternal (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:275:16)
+          at runTest (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:343:7)
+          at Object.worker (R:\Dropbox\_Code\Projects\bearing\bearing-app\node_modules\jest-runner\build\testWorker.js:497:12)
+
+      167 |     };
+      168 |   } catch (err) {
+    > 169 |     console.error("Unexpected error fetching version history:", err);
+          |             ^
+      170 |     return { versions: [], error: "Failed to fetch version history", hasMore: false, nextCursor: null };
+      171 |   }
+      172 | }
+
+      at error (src/lib/manuscriptVersions.ts:169:13)
+      at Object.<anonymous> (tests/manuscripts/versionHistory.test.ts:659:45)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+    console.log
+      [Test Setup] Initializing global stores
+
+      at Object.log (tests/manuscripts/versionHistory.test.ts:53:13)
+
+PASS tests/lib/useGhostText.test.ts
+PASS tests/lib/useZenMode.test.ts
+PASS tests/LoginForm.test.tsx
+  ΓùÅ Console
+
+    console.log
+      {"level":"audit","type":"login_success","email":"test@example.com","timestamp":"2026-01-08T00:16:41.754Z"}
+
+      at log (src/lib/audit.ts:54:11)
+
+PASS tests/api/manuscripts-suggest.test.ts
+PASS tests/SignupForm.test.tsx
+  ΓùÅ Console
+
+    console.log
+      {"level":"audit","type":"signup","email":"test@example.com","timestamp":"2026-01-08T00:16:41.848Z"}
+
+      at log (src/lib/audit.ts:54:11)
+
+    console.log
+      {"level":"audit","type":"signup_failure","email":"invalid@example.com","metadata":{"reason":"Invalid email"},"timestamp":"2026-01-08T00:16:41.885Z"}
+
+      at log (src/lib/audit.ts:54:11)
+
+PASS tests/lib/email.test.ts
+  ΓùÅ Console
+
+    console.log
+      [MOCK EMAIL] To: test@example.com, Subject: Test, Body: Hello
+
+      at log (src/lib/email.ts:22:13)
+
+PASS tests/admin/UserUsageTable.test.tsx
+PASS tests/components/manuscripts/Binder.test.tsx
+  ΓùÅ Console
+
+    console.log
+      <body>
+        <div>
+          <aside
+            class="w-64 bg-slate-50/90 backdrop-blur-md border-r border-slate-200/50 overflow-y-auto flex-shrink-0 transition-all duration-300 ease-in-out "
+          >
+            <div
+              class="p-4 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10"
+            >
+              <h2
+                class="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono"
+              >
+                Binder
+              </h2>
+            </div>
+            <ul
+              class="py-2 space-y-0.5"
+            >
+              <li>
+                <button
+                  class="w-full text-left px-4 py-3 hover:bg-slate-100/50 flex items-center justify-between group transition-colors"
+                >
+                  <span
+                    class="text-sm font-medium text-slate-700 group-hover:text-slate-900 line-clamp-2"
+                  >
+                    Chapter One
+                  </span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="w-full text-left px-4 py-3 hover:bg-slate-100/50 flex items-center justify-between group transition-colors"
+                >
+                  <span
+                    class="text-sm font-medium text-slate-700 group-hover:text-slate-900 line-clamp-2"
+                  >
+                    Scene 1
+                  </span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="w-full text-left px-4 py-3 hover:bg-slate-100/50 flex items-center justify-between group transition-colors"
+                >
+                  <span
+                    class="text-sm font-medium text-slate-700 group-hover:text-slate-900 line-clamp-2"
+                  >
+                    Chapter Two
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </body>
+
+      at debug (node_modules/@testing-library/react/dist/pure.js:203:13)
+
+PASS tests/admin/admin.test.ts
+PASS tests/manuscripts/ConsistencyReportViewer.test.tsx
+PASS tests/lib/usage-admin.test.ts
+PASS tests/sanity.test.ts
+PASS tests/rls/consistency-check.test.ts
+PASS tests/dashboard.test.tsx
+PASS tests/manuscripts/export.test.ts
+PASS tests/manuscripts/MagicIngest.test.tsx
+PASS tests/llama/llama.test.ts
+  ΓùÅ Console
+
+    console.warn
+      OPENROUTER_API_KEY not configured, using mock response
+
+      223 |   if (!isOpenRouterConfigured()) {
+      224 |     if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+    > 225 |       console.warn("OPENROUTER_API_KEY not configured, using mock response");
+          |               ^
+      226 |       return {
+      227 |         suggestion: getMockResponse(selectionText, "suggestion"),
+      228 |         rationale: "This is a mock suggestion for development",
+
+      at warn (src/lib/llama.ts:225:15)
+      at callLlamaAPI (src/lib/llama.ts:458:28)
+      at Object.<anonymous> (tests/llama/llama.test.ts:132:23)
+
+    console.warn
+      OPENROUTER_API_KEY not configured, using mock response
+
+      223 |   if (!isOpenRouterConfigured()) {
+      224 |     if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+    > 225 |       console.warn("OPENROUTER_API_KEY not configured, using mock response");
+          |               ^
+      226 |       return {
+      227 |         suggestion: getMockResponse(selectionText, "suggestion"),
+      228 |         rationale: "This is a mock suggestion for development",
+
+      at warn (src/lib/llama.ts:225:15)
+      at callLlamaAPI (src/lib/llama.ts:458:28)
+      at Object.<anonymous> (tests/llama/llama.test.ts:203:7)
+
+PASS tests/components/support/CreateTicketForm.test.tsx
+
+Summary of all failing tests
+FAIL tests/integration/usage-guardrails.test.ts
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should start in good_standing
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should flag account after first month of overage
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should trigger upsell_required after second consecutive month of overage
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should block usage when status is upsell_required
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should reset to good_standing if usage drops in third month
+
+    Failed to create test account
+
+      67 |     // 2. Create Test Account
+      68 |     const { account, error } = await createAccount(adminSupabase, "Guardrails Test Account", testUserId);
+    > 69 |     if (error || !account) throw new Error("Failed to create test account");
+         |                                  ^
+      70 |     testAccountId = account.id;
+      71 |   });
+      72 |
+
+      at Object.<anonymous> (tests/integration/usage-guardrails.test.ts:69:34)
+
+FAIL tests/rls/account.test.ts
+  ΓùÅ Account RLS Tests ΓÇ║ Account Creation ΓÇ║ should create account with owner as admin member
+
+    expect(received).toBeNull()
+
+    Received: "An unexpected error occurred. Please try again."
+
+      203 |       const result = await createAccount(supabase, "New Account", "owner-user-id");
+      204 |
+    > 205 |       expect(result.error).toBeNull();
+          |                            ^
+      206 |       expect(result.account).toEqual(newAccount);
+      207 |     });
+      208 |
+
+      at Object.toBeNull (tests/rls/account.test.ts:205:28)
+
+  ΓùÅ Account RLS Tests ΓÇ║ Account Creation ΓÇ║ should rollback on membership creation failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Failed to set up account membership. Please try again."
+    Received: "An unexpected error occurred. Please try again."
+
+      241 |       const result = await createAccount(supabase, "New Account", "owner-user-id");
+      242 |
+    > 243 |       expect(result.error).toBe("Failed to set up account membership. Please try again.");
+          |                            ^
+      244 |       expect(result.account).toBeNull();
+      245 |       // Verify cleanup was attempted
+      246 |       expect(deleteMock).toHaveBeenCalled();
+
+      at Object.toBe (tests/rls/account.test.ts:243:28)
+
+FAIL tests/api/consistency-check.test.ts
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should create async job immediately and return job ID (AC 3.1.1)
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      {"auth": {"getUser": [Function mockConstructor]}, "from": [Function mockConstructor]},
+      Object {
+        "manuscriptId": "ms-id",
+    -   "userId": "user-id",
+    +   "userId": "ms-id",
+      },
+    + [Function anonymous],
+
+    Number of calls: 1
+
+      135 |     expect(data.status).toBe("queued");
+      136 |     expect(data.estimatedTokens).toBe(50000);
+    > 137 |     expect(initiateConsistencyCheck).toHaveBeenCalledWith(
+          |                                      ^
+      138 |       mockSupabaseClient,
+      139 |       {
+      140 |         manuscriptId: "ms-id",
+
+      at Object.toHaveBeenCalledWith (tests/api/consistency-check.test.ts:137:38)
+
+  ΓùÅ POST /api/manuscripts/:id/consistency-check ΓÇ║ should return cached result immediately if available
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      160 |
+      161 |     expect(response.status).toBe(202);
+    > 162 |     expect(data.cached).toBe(true);
+          |                         ^
+      163 |     expect(data.status).toBe("completed");
+      164 |   });
+      165 |
+
+      at Object.toBe (tests/api/consistency-check.test.ts:162:25)
+
+FAIL tests/rls/profile.test.ts
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should create profile with default account for new user
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      120 |       const result = await getOrCreateProfile(supabase, authId, email);
+      121 |
+    > 122 |       expect(result.isNewProfile).toBe(true);
+          |                                   ^
+      123 |       expect(result.profile).not.toBeNull();
+      124 |       expect(result.profile?.email).toBe(email);
+      125 |       expect(result.account).not.toBeNull();
+
+      at Object.toBe (tests/rls/profile.test.ts:122:35)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should return existing profile without creating new account
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "existing-profile-123"
+    Received: undefined
+
+      182 |
+      183 |       expect(result.isNewProfile).toBe(false);
+    > 184 |       expect(result.profile?.id).toBe("existing-profile-123");
+          |                                  ^
+      185 |       expect(result.account?.id).toBe("existing-account-123");
+      186 |       expect(result.error).toBeNull();
+      187 |     });
+
+      at Object.toBe (tests/rls/profile.test.ts:184:34)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ AC 1.3.1: New User Profile Creation with Default Account ΓÇ║ should handle profile creation race condition gracefully
+
+    expect(received).not.toBeNull()
+
+    Received: null
+
+      272 |
+      273 |       // Should recover and return the existing profile
+    > 274 |       expect(result.profile).not.toBeNull();
+          |                                  ^
+      275 |       expect(result.error).toBeNull();
+      276 |     });
+      277 |   });
+
+      at Object.toBeNull (tests/rls/profile.test.ts:274:34)
+
+  ΓùÅ Profile RLS Tests ΓÇ║ Error Handling ΓÇ║ should return error on profile fetch failure
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Failed to load profile. Please try again."
+    Received: "An unexpected error occurred. Please try again."
+
+      344 |
+      345 |       expect(result.profile).toBeNull();
+    > 346 |       expect(result.error).toBe("Failed to load profile. Please try again.");
+          |                            ^
+      347 |     });
+      348 |
+      349 |     it("should return error on profile update failure", async () => {
+
+      at Object.toBe (tests/rls/profile.test.ts:346:28)
+
+FAIL tests/api/upload.test.ts
+  ΓùÅ POST /api/manuscripts/upload ΓÇ║ should handle PDF file upload
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "PDF Content"
+    Received: "PDF import temporarily disabled due to build issues."
+
+      108 |     expect(res.status).toBe(200);
+      109 |     const data = await res.json();
+    > 110 |     expect(data.chapters[0].content).toBe("PDF Content");
+          |                                      ^
+      111 |   });
+      112 |
+      113 |   it("should handle Markdown file upload", async () => {
+
+      at Object.toBe (tests/api/upload.test.ts:110:38)
+
+FAIL tests/manuscripts/consistency.test.ts
+  ΓùÅ Consistency Checks ΓÇ║ initiateConsistencyCheck ΓÇ║ should start a check and return job ID
+
+    supabaseUrl is required.
+
+      541 |   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      542 |   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    > 543 |   const backgroundClient = createClient(supabaseUrl, supabaseServiceKey);
+          |                                        ^
+      544 |
+      545 |   const backgroundTask = async () => {
+      546 |     try {
+
+      at validateSupabaseUrl (node_modules/@supabase/supabase-js/src/lib/helpers.ts:86:11)
+      at new SupabaseClient (node_modules/@supabase/supabase-js/src/SupabaseClient.ts:117:21)
+      at createClient (node_modules/@supabase/supabase-js/src/index.ts:60:10)
+      at initiateConsistencyCheck (src/lib/gemini.ts:543:40)
+      at Object.<anonymous> (tests/manuscripts/consistency.test.ts:191:22)
+
+FAIL tests/lib/ai-usage.test.ts
+  ΓùÅ AI Usage Metering ΓÇ║ checkUsageLimit ΓÇ║ allows usage when under cap
+
+    expect(received).resolves.not.toThrow()
+
+    Received promise rejected instead of resolved
+    Rejected to value: [TypeError: Cannot read properties of undefined (reading 'eq')]
+
+      68 |       });
+      69 |
+    > 70 |       await expect(checkUsageLimit(mockSupabase, accountId, 1000)).resolves.not.toThrow();
+         |             ^
+      71 |     });
+      72 |
+      73 |     it("throws when usage exceeds cap", async () => {
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at Object.expect (tests/lib/ai-usage.test.ts:70:13)
+
+  ΓùÅ AI Usage Metering ΓÇ║ checkUsageLimit ΓÇ║ throws when usage exceeds cap
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected pattern: /Monthly AI token limit reached/
+    Received message: "Cannot read properties of undefined (reading 'eq')"
+
+          106 |   const { data: account, error: accountError } = await supabase
+          107 |     .from("accounts")
+        > 108 |     .select("usage_status")
+              |             ^
+          109 |     .eq("id", accountId)
+          110 |     .single();
+          111 |
+
+      at checkUsageLimit (src/lib/ai-usage.ts:108:13)
+      at Object.<anonymous> (tests/lib/ai-usage.test.ts:103:35)
+      at Object.toThrow (node_modules/expect/build/index.js:2155:20)
+      at Object.toThrow (tests/lib/ai-usage.test.ts:103:75)
+
+  ΓùÅ AI Usage Metering ΓÇ║ logUsageEvent ΓÇ║ inserts event into db
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      Object {
+        "account_id": "acc-123",
+        "cycle_id": "cycle-123",
+        "feature": "test_feature",
+    +   "latency_ms": 0,
+        "model": "test_model",
+        "tokens_actual": 100,
+        "tokens_estimated": 100,
+        "user_id": "user-123",
+      },
+
+    Number of calls: 1
+
+      132 |       await logUsageEvent(mockSupabase, accountId, userId, "test_feature", "test_model", 100, 100);
+      133 |
+    > 134 |       expect(mockInsert).toHaveBeenCalledWith({
+          |                          ^
+      135 |         account_id: accountId,
+      136 |         user_id: userId,
+      137 |         cycle_id: cycleId,
+
+      at Object.toHaveBeenCalledWith (tests/lib/ai-usage.test.ts:134:26)
+
+
+Test Suites: 7 failed, 21 passed, 28 total
+Tests:       18 failed, 3 skipped, 173 passed, 194 total
+Snapshots:   0 total
+Time:        5.568 s, estimated 9 s
+Ran all test suites.

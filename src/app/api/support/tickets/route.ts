@@ -57,17 +57,16 @@ export async function POST(request: Request) {
     )
     .catch(console.error);
 
-  // Fire-and-forget: Audit Log
-  import("@/lib/account")
-    .then(async (module) => {
-      const { data: publicUser } = await supabase
+  // Audit Log (Awaited to ensure reliability per Code Review)
+  try {
+    const { data: publicUser } = await supabase
         .from("users")
         .select("id")
         .eq("auth_id", user.id)
         .single();
-      
-      if (publicUser) {
-        const { accounts } = await module.getUserAccounts(supabase, publicUser.id);
+    
+    if (publicUser) {
+        const { accounts } = await import("@/lib/account").then(m => m.getUserAccounts(supabase, publicUser.id));
         const accountId = accounts[0]?.id;
         if (accountId) {
           await supabase.from("audit_logs").insert({
@@ -79,9 +78,11 @@ export async function POST(request: Request) {
             metadata: { subject },
           });
         }
-      }
-    })
-    .catch(console.error);
+    }
+  } catch (error) {
+    console.error("Failed to write audit log:", error);
+    // Don't fail the request if audit log fails, but log it
+  }
 
   return NextResponse.json(ticket || { id: ticketId });
 }

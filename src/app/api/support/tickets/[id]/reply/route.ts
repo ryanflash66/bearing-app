@@ -13,6 +13,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  
+  // Helper to get account ID for audit logging
+  async function getAccountId(userId: string) {
+    const { data: member } = await supabase
+        .from("account_members")
+        .select("account_id")
+        .eq("user_id", userId)
+        .limit(1)
+        .single();
+    return member?.account_id;
+  }
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -79,6 +90,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         }
       })
       .catch(console.error);
+  }
+
+  }
+
+  // Audit Log (Added per Code Review)
+  try {
+    const accountId = await getAccountId(publicUser?.id || "");
+    if (accountId && publicUser) {
+        await supabase.from("audit_logs").insert({
+            account_id: accountId,
+            user_id: publicUser.id,
+            action: "support_reply_sent",
+            entity_type: "support_message", // Linking to ticket ID as entity ID for easier tracing
+            entity_id: ticketId, 
+            metadata: { 
+                reply_length: message.length 
+            },
+        });
+    }
+  } catch (logError) {
+    console.error("Failed to write audit log for reply:", logError);
   }
 
   return NextResponse.json({ success: true, ticketId });

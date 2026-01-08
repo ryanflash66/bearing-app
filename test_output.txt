@@ -1,35 +1,45 @@
-  console.log
-    [dotenv@17.2.3] injecting env (4) from .env.local -- tip: ≡ƒùé∩╕Å backup and recover secrets: https://dotenvx.com/ops
 
-      at _log (node_modules/dotenv/lib/main.js:142:11)
+> bearing-app@1.0.0 test
+> jest tests/api/tickets.test.ts
 
-FAIL tests/integration/usage-guardrails.test.ts
-  Usage Guardrails Integration (Story 4.1)
-    ΓêÜ should start in good_standing (199 ms)
-    ΓêÜ should flag account after first month of overage (834 ms)
-    ΓêÜ should trigger upsell_required after second consecutive month of overage (674 ms)
-    ΓêÜ should block usage when status is upsell_required (169 ms)
-    ├ù should reset to good_standing if usage drops in third month (190 ms)
+FAIL tests/api/tickets.test.ts
+  POST /api/support/tickets
+    ΓêÜ should return 401 if user is not authenticated (3 ms)
+    ├ù should create a ticket and return 200 (1 ms)
+    ├ù should create an initial message in support_messages (1 ms)
 
-  ΓùÅ Usage Guardrails Integration (Story 4.1) ΓÇ║ should reset to good_standing if usage drops in third month
+  ΓùÅ POST /api/support/tickets ΓÇ║ should create a ticket and return 200
 
-    expect(received).toBe(expected) // Object.is equality
+    TypeError: supabase.rpc is not a function
 
-    Expected: "good_standing"
-    Received: null
+      30 |   // RPC-First: Use create_ticket function
+      31 |   // This handles: rate limiting, ticket creation, initial message creation
+    > 32 |   const { data: ticketId, error: rpcError } = await supabase.rpc("create_ticket", {
+         |                                                              ^
+      33 |     subject,
+      34 |     message,
+      35 |     priority,
 
-      160 |     
-      161 |     expect(error).toBeNull();
-    > 162 |     expect(result.new_account_status).toBe("good_standing");
-          |                                       ^
-      163 |      
-      164 |      // 4. Verify DB
-      165 |     const { data: account } = await adminSupabase.from("accounts").select("*").eq("id", testAccountId).single();
+      at rpc (src/app/api/support/tickets/route.ts:32:62)
+      at Object.<anonymous> (tests/api/tickets.test.ts:91:17)
 
-      at Object.toBe (tests/integration/usage-guardrails.test.ts:162:39)
+  ΓùÅ POST /api/support/tickets ΓÇ║ should create an initial message in support_messages
+
+    TypeError: supabase.rpc is not a function
+
+      30 |   // RPC-First: Use create_ticket function
+      31 |   // This handles: rate limiting, ticket creation, initial message creation
+    > 32 |   const { data: ticketId, error: rpcError } = await supabase.rpc("create_ticket", {
+         |                                                              ^
+      33 |     subject,
+      34 |     message,
+      35 |     priority,
+
+      at rpc (src/app/api/support/tickets/route.ts:32:62)
+      at Object.<anonymous> (tests/api/tickets.test.ts:142:5)
 
 Test Suites: 1 failed, 1 total
-Tests:       1 failed, 4 passed, 5 total
+Tests:       2 failed, 1 passed, 3 total
 Snapshots:   0 total
-Time:        4.49 s, estimated 6 s
-Ran all test suites matching tests/integration/usage-guardrails.test.ts.
+Time:        1.277 s
+Ran all test suites matching tests/api/tickets.test.ts.
