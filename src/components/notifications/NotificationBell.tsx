@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -20,7 +20,7 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchNotifications = async () => {
     const { data: { user } } = await supabase.auth.getUser();
