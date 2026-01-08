@@ -26,14 +26,16 @@ export default function CreateTicketForm() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create ticket");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create ticket");
       }
+      
+      const successData = await res.json();
       
       router.refresh();
       // Redirect to the created ticket detail page (UX Improvement per Verification)
-      if (data?.id) {
-          router.push(`/dashboard/support/${data.id}`);
+      if (successData?.id) {
+          router.push(`/dashboard/support/${successData.id}`);
       } else {
           router.push("/dashboard/support");
       }
