@@ -96,15 +96,15 @@ export default function NotificationBell() {
                  return prev;
              }
              
-             // 2. Prepend and 3. Limit list size (keep top 10 to match fetch limit)
+             // 2. Only increment if unread (and confirmed not duplicate)
+             if (!newNotification.is_read) {
+                 setUnreadCount(prevCount => prevCount + 1);
+             }
+             
+             // 3. Prepend and Limit list size (keep top 10 to match fetch limit)
              const updated = [newNotification, ...prev].slice(0, 10);
              return updated;
           });
-
-          // 2. Only increment if unread
-          if (!newNotification.is_read) {
-              setUnreadCount(prev => prev + 1);
-          }
         }
       )
       .subscribe();
