@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UpsellBanner from "@/components/dashboard/UpsellBanner";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -206,6 +207,8 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
                   Admin
                 </span>
               )}
+              {/* Notification Bell */}
+              <NotificationBell />
             </div>
           </div>
         </header>

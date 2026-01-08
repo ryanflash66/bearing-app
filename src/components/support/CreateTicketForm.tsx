@@ -31,7 +31,12 @@ export default function CreateTicketForm() {
       }
       
       router.refresh();
-      router.push("/dashboard/support");
+      // Redirect to the created ticket detail page (UX Improvement per Verification)
+      if (data?.id) {
+          router.push(`/dashboard/support/${data.id}`);
+      } else {
+          router.push("/dashboard/support");
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
