@@ -27,19 +27,10 @@ export default function NotificationBell() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Fetch public profile ID to explicitly filter notifications
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single();
-
-    if (!profile) return;
-
+    // RLS policy handles user_id mapping ((select id from users where auth_id = auth.uid()))
     const { data } = await supabase
       .from("notifications")
       .select("*")
-      .eq("user_id", profile.id)
       .order("created_at", { ascending: false })
       .limit(10);
       
