@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -23,7 +23,7 @@ export default function NotificationBell() {
   // Using lazy useState for stable client instance per component lifecycle (React 18 safe)
   const [supabase] = useState(() => createClient());
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -49,7 +49,7 @@ export default function NotificationBell() {
         setNotifications([]);
         setUnreadCount(0);
     }
-  };
+  }, [supabase]);
 
   const markAsRead = async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
@@ -60,10 +60,61 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, []);
+
+    // Safety net: refetch when tab becomes visible again (e.g. after backgrounding)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Safety net: low-frequency polling in case realtime misses events
+    const pollingIntervalId = window.setInterval(() => {
+        fetchNotifications();
+    }, 5 * 60 * 1000); // every 5 minutes
+    
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('realtime_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          // RLS ensures we only get our own notifications if replication is set up correctly.
+          // However, for extra safety via client-side filter (if needed) or relying on RLS.
+          // Note: Realtime respects RLS if 'Realtime RLS' is enabled in Dashboard for the table.
+        },
+        (payload) => {
+          const newNotification = payload.new as Notification;
+          
+          setNotifications(prev => {
+             // 1. Prevent Duplicates
+             if (prev.some(n => n.id === newNotification.id)) {
+                 return prev;
+             }
+             
+             // 2. Only increment if unread (and confirmed not duplicate)
+             if (!newNotification.is_read) {
+                 setUnreadCount(prevCount => prevCount + 1);
+             }
+             
+             // 3. Prepend and Limit list size (keep top 10 to match fetch limit)
+             const updated = [newNotification, ...prev].slice(0, 10);
+             return updated;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(pollingIntervalId);
+    };
+  }, [supabase, fetchNotifications]);
 
   // Close on click outside
   useEffect(() => {
