@@ -74,7 +74,7 @@ async function runAudit() {
         .insert({
             auth_id: userA.id,
             email: EMAIL_A,
-            role: 'author'
+            role: 'user'
         });
     if (profileAError) throw profileAError;
 
@@ -103,7 +103,7 @@ async function runAudit() {
         .insert({
             auth_id: userB.id,
             email: EMAIL_B,
-            role: 'author'
+            role: 'user'
         });
     if (profileBError) throw profileBError;
 
