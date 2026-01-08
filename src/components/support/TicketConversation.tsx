@@ -20,6 +20,7 @@ interface TicketConversationProps {
   ticketId: string;
   initialMessages: SupportMessage[];
   currentUserId: string;
+  ticketOwnerId: string; // The user who created the ticket
 }
 
 // Extracted keyboard handler (per code review)
@@ -35,6 +36,7 @@ export default function TicketConversation({
   ticketId,
   initialMessages,
   currentUserId,
+  ticketOwnerId,
 }: TicketConversationProps) {
   const [messages, setMessages] = useState<SupportMessage[]>(initialMessages);
   const [loading, setLoading] = useState(false);
@@ -153,9 +155,17 @@ export default function TicketConversation({
         {fetchError && (
           <p className="text-sm text-red-600 mb-4 text-center">{fetchError}</p>
         )}
-        <ul role="list" className="space-y-4">
           {messages.map((message) => {
             const isMe = message.sender_user_id === currentUserId;
+            const isTicketOwner = message.sender_user_id === ticketOwnerId;
+            
+            // Determine sender label
+            let senderLabel = "Support";
+            if (isMe) {
+              senderLabel = "You";
+            } else if (isTicketOwner) {
+              senderLabel = "User";
+            }
 
             return (
               <li key={message.id} className={`flex ${isMe ? "justify-end" : ""}`}>
@@ -168,7 +178,8 @@ export default function TicketConversation({
                 >
                   <div className="flex items-center justify-between space-x-2 mb-1">
                     <span className="text-xs font-semibold">
-                      {isMe ? "You" : "Support"}
+                      {senderLabel}
+                    </span>
                     </span>
                     <span className="text-xs text-slate-400">
                       {formatDate(message.created_at)}
