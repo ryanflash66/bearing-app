@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -23,7 +23,7 @@ export default function NotificationBell() {
   // Using lazy useState for stable client instance per component lifecycle (React 18 safe)
   const [supabase] = useState(() => createClient());
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -49,7 +49,7 @@ export default function NotificationBell() {
         setNotifications([]);
         setUnreadCount(0);
     }
-  };
+  }, [supabase]);
 
   const markAsRead = async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
@@ -60,6 +60,19 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Safety net: refetch when tab becomes visible again (e.g. after backgrounding)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Safety net: low-frequency polling in case realtime misses events
+    const pollingIntervalId = window.setInterval(() => {
+        fetchNotifications();
+    }, 5 * 60 * 1000); // every 5 minutes
     
     // Subscribe to real-time changes
     const channel = supabase
@@ -75,22 +88,33 @@ export default function NotificationBell() {
           // Note: Realtime respects RLS if 'Realtime RLS' is enabled in Dashboard for the table.
         },
         (payload) => {
-          // Verify the new notification belongs to the current user (if payload has it)
-          // Or just optimistically fetch/add.
-          // Since RLS is on, we should receive events. Safe to fetch list again or prepend.
-          
           const newNotification = payload.new as Notification;
-          // Prepend new notification
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          
+          setNotifications(prev => {
+             // 1. Prevent Duplicates
+             if (prev.some(n => n.id === newNotification.id)) {
+                 return prev;
+             }
+             
+             // 2. Prepend and 3. Limit list size (keep top 10 to match fetch limit)
+             const updated = [newNotification, ...prev].slice(0, 10);
+             return updated;
+          });
+
+          // 2. Only increment if unread
+          if (!newNotification.is_read) {
+              setUnreadCount(prev => prev + 1);
+          }
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.clearInterval(pollingIntervalId);
     };
-  }, [supabase]);
+  }, [supabase, fetchNotifications]);
 
   // Close on click outside
   useEffect(() => {
