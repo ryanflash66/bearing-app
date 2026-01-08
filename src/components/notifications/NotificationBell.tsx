@@ -28,15 +28,26 @@ export default function NotificationBell() {
     if (!user) return;
 
     // RLS policy handles user_id mapping ((select id from users where auth_id = auth.uid()))
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("notifications")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(10);
       
+    if (error) {
+      console.error("Failed to fetch notifications:", error);
+      // Fail gracefully: don't crash, just show no notifications (or could show a toast)
+      // We don't want to spam toasts for background polling though.
+      return;
+    }
+
     if (data) {
       setNotifications(data as Notification[]);
       setUnreadCount(data.filter((n: Notification) => !n.is_read).length);
+    } else {
+        // Handle case where data might be null (though usually it's [] if no rows)
+        setNotifications([]);
+        setUnreadCount(0);
     }
   };
 
