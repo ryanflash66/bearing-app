@@ -90,7 +90,7 @@ USING (
   OR 
   (EXISTS ( 
     SELECT 1 FROM public.users 
-    WHERE id = (SELECT id FROM public.users WHERE auth_id = auth.uid()) 
+    WHERE auth_id = auth.uid() 
     AND (role = 'support_agent' OR role = 'super_admin')
   ))
 );
