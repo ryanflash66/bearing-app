@@ -170,7 +170,7 @@ BEGIN
   SET 
     updated_at = now(),
     status = CASE 
-      WHEN v_sender_pk = v_ticket_owner_pk THEN 'pending_support'::public.support_ticket_status
+      WHEN v_sender_pk = v_ticket_owner_pk THEN 'pending_agent'::public.support_ticket_status
       ELSE 'pending_user'::public.support_ticket_status
     END
   WHERE id = ticket_id;
