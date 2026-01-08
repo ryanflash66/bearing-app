@@ -155,6 +155,7 @@ export default function TicketConversation({
         {fetchError && (
           <p className="text-sm text-red-600 mb-4 text-center">{fetchError}</p>
         )}
+        <ul role="list" className="space-y-4">
           {messages.map((message) => {
             const isMe = message.sender_user_id === currentUserId;
             const isTicketOwner = message.sender_user_id === ticketOwnerId;
