@@ -9,6 +9,7 @@ import ReplyForm from "@/components/support/ReplyForm";
 import { formatDate } from "@/components/support/SupportShared";
 import { headers } from "next/headers"; // Not needed if we use client component for button, but for now we'll use a form action or client component.
 import ResolveTicketButton from "@/components/support/ResolveTicketButton";
+import RealtimeMessageList from "@/components/support/RealtimeMessageList";
 
 interface SupportMessage {
   id: string;
@@ -152,36 +153,11 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           </div>
 
           <div className="px-4 py-5 sm:p-6">
-            <ul role="list" className="space-y-8">
-              {messages && (messages as SupportMessage[]).map((message) => {
-                 // Determine if sender is current user or support
-                 // We don't have sender details (name) joined yet.
-                 // We can infer: if sender_user_id === user's public ID (from profile) -> "You"
-                 // Else -> "Support"
-                 // Profile ID matches public.users.id
-                 const isMe = message.sender_user_id === profile?.id;
-                 
-                 return (
-                  <li key={message.id} className={`flex ${isMe ? 'justify-end' : ''}`}>
-                    <div className={`relative max-w-xl rounded-lg px-4 py-3 shadow-sm ${
-                        isMe ? 'bg-indigo-50 text-slate-900' : 'bg-white border border-slate-200 text-slate-700'
-                    }`}>
-                        <div className="flex items-center justify-between space-x-2 mb-1">
-                            <span className="text-xs font-semibold">
-                                {isMe ? "You" : "Support"}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                                {formatDate(message.created_at)}
-                            </span>
-                        </div>
-                      <div className="text-sm whitespace-pre-wrap">
-                        {message.message}
-                      </div>
-                    </div>
-                  </li>
-                 );
-              })}
-            </ul>
+            <RealtimeMessageList
+              ticketId={ticket.id}
+              initialMessages={(messages || []) as SupportMessage[]}
+              currentUserId={profile?.id || ""}
+            />
           </div>
         </div>
       </div>
