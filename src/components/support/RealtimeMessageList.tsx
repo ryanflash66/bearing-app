@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { formatDate } from "@/components/support/SupportShared";
 
@@ -25,7 +25,7 @@ export default function RealtimeMessageList({
   currentUserId,
 }: RealtimeMessageListProps) {
   const [messages, setMessages] = useState<SupportMessage[]>(initialMessages);
-  const [supabase] = useState(() => createClient());
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchMessages = useCallback(async () => {
     const { data, error } = await supabase
@@ -33,7 +33,7 @@ export default function RealtimeMessageList({
       .select("*")
       .eq("ticket_id", ticketId)
       .eq("is_internal", false)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true }); // Chronological: oldest first
 
     if (!error && data) {
       setMessages(data as SupportMessage[]);
@@ -61,15 +61,13 @@ export default function RealtimeMessageList({
               if (prev.some((m) => m.id === newMessage.id)) {
                 return prev;
               }
-              // Prepend (newest first per component's order)
-              return [newMessage, ...prev];
+              // Append (oldest first / chronological order)
+              return [...prev, newMessage];
             });
           }
         }
       )
-      .subscribe((status) => {
-        console.log(`[RealtimeMessageList] Channel status: ${status}`);
-      });
+      .subscribe();
 
     // Refetch when tab becomes visible (safety net)
     const handleVisibilityChange = () => {
