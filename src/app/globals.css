@@ -29,8 +29,9 @@ body {
 /* Ensure form elements have visible text, especially in cards/white containers */
 input, textarea, select {
   background-color: #ffffff;
-  color: #1a1a1a; /* Default to high-contrast dark text */
-  caret-color: #000000 !important; /* Force visible cursor */
+  color: #1a1a1a;
+  /* Forms plugin handles most, but ensuring caret is black for visibility */
+  caret-color: #000000;
 }
 
 /* If you need specifically white text in dark inputs, you can override with .text-white */
