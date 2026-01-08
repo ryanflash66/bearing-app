@@ -46,7 +46,8 @@ USING (auth_user_id = auth.uid());
 CREATE POLICY "Users can update own notifications" 
 ON public.notifications FOR UPDATE 
 TO public 
-USING (auth_user_id = auth.uid());
+USING (auth_user_id = auth.uid())
+WITH CHECK (auth_user_id = auth.uid());
 
 
 -- 2. SUPPORT MESSAGES
