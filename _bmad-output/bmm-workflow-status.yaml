@@ -208,8 +208,9 @@ workflow_status:
             notes: "IMPLEMENTED: create_ticket and reply_to_ticket RPCs with atomic status transitions."
           - id: "story-4.3"
             name: "User Support Console (Frontend)"
-            status: "in_progress"
-            notes: "IMPLEMENTED: User-facing ticket list and detail pages. CURRENT: Enabling real-time notification replication."
+            status: "_bmad-output/implementation-artifacts/story4.3.md"
+            completed: "2026-01-11"
+            notes: "IMPLEMENTED: User-facing ticket list and detail pages with real-time notifications and accessibility fixes."
           - id: "story-4.4"
             name: "Support Agent Dashboard"
             status: "required"
@@ -226,10 +227,10 @@ workflow_status:
 # Story Progress Summary
 story_progress:
   total: 21
-  completed: 18
+  completed: 19
   ux_rework: 0
   ready: 1
-  pending: 3
+  pending: 2
   
 epic_progress:
   - epic: 1
@@ -269,9 +270,9 @@ epic_progress:
   - epic: 4
     name: "Support & Admin (Emergency Rework)"
     stories: 6
-    completed: 2
+    completed: 3
     status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.2 completed. Story 4.3 in progress."
+    notes: "Emergency rework for scale and security. Stories 4.1-4.3 completed."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
@@ -281,7 +282,7 @@ epic_progress:
         status: "completed"
       - id: "story-4.3"
         name: "User Support Console (Frontend)"
-        status: "in_progress"
+        status: "completed"
       - id: "story-4.4"
         name: "Support Agent Dashboard"
         status: "required"
@@ -295,13 +296,13 @@ epic_progress:
 # Next Action
 # Next Action
 next_workflow:
-  id: "story-4.3"
-  name: "Story 4.3: User Support Console (Frontend)"
+  id: "story-4.4"
+  name: "Story 4.4: Support Agent Dashboard"
   agent: "dev"
-  command: "/dev-story 4.3"
-  description: "Wrapping up accessible inputs and enabling real-time notification replication for the support console."
+  command: "/bmad-bmm-workflows-dev-story 4.4"
+  description: "Implement stale ticket detection (48h), PII masking, and User Context Snapshot for agents."
   priority: "high"
-  reason: "User is currently rounding this up with real-time notification work."
+  reason: "Next step in the Support & Admin epic."
 - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
