@@ -54,7 +54,7 @@ epics:
       - id: 4.3 # In-App Inbox
         status: in_review
       - id: 4.4 # Admin Dashboard
-        status: planned
+        status: completed
 
   - id: 5
     name: "Services & Monetization"
