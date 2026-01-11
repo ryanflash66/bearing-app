@@ -83,7 +83,7 @@ As a User, I want a persistent "My Tickets" page with accessible inputs, so that
 
 #### New
 - `tests/e2e/dashboard/support.spec.ts` - E2E tests for AC 4.3.1-4.3.4
-- `tests/e2e/dashboard/accessibility.spec.ts` - Axe-core integration for AC 4.3.5
+- `tests/e2e/dashboard/accessibility.spec.ts` - axe-core integration for AC 4.3.5
 - `tests/e2e/fixtures/auth.fixture.ts` - Shared auth fixture for E2E tests
 - `tests/support/factories/ticket.factory.ts` - Test data factory
 

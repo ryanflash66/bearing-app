@@ -8,10 +8,10 @@ import AxeBuilder from '@axe-core/playwright';
  * Per Code Review C1.
  */
 test.describe('Support Console - Accessibility (AC 4.3.5)', () => {
-  test('should have no critical or serious accessibility violations on Create Ticket page', async ({ page }) => {
-    await page.goto('/dashboard/support/create');
+  test('should have no critical or serious accessibility violations on Create Ticket page', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/dashboard/support/create');
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
+    const accessibilityScanResults = await new AxeBuilder({ page: authenticatedPage })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 
@@ -33,10 +33,10 @@ test.describe('Support Console - Accessibility (AC 4.3.5)', () => {
     expect(criticalViolations).toEqual([]);
   });
 
-  test('should have no critical or serious accessibility violations on Ticket List page', async ({ page }) => {
-    await page.goto('/dashboard/support');
+  test('should have no critical or serious accessibility violations on Ticket List page', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/dashboard/support');
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
+    const accessibilityScanResults = await new AxeBuilder({ page: authenticatedPage })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
 

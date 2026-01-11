@@ -57,7 +57,6 @@ export default function CreateTicketForm() {
           id="subject"
           name="subject"
           required
-          aria-label="Subject"
           className="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm relative z-0"
           placeholder="Brief description of the issue"
         />
@@ -70,7 +69,6 @@ export default function CreateTicketForm() {
           name="message"
           rows={4}
           required
-          aria-label="Message"
           className="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:text-gray-900 sm:text-sm relative z-0"
           placeholder="Describe your issue in detail..."
         />

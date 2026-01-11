@@ -80,7 +80,8 @@ workflow_status:
         note: "Found 4 epics with 13 stories total"
         
       - id: "test-design"
-        status: "_bmad-output/test-design-epic-4.md"
+        status: "done"
+        artifact_path: "_bmad-output/test-design-epic-4.md"
         agent: "tea"
         command: "testarch-test-design"
         completed: "2026-01-10"
