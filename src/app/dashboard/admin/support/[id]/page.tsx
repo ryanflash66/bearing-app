@@ -21,22 +21,67 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
 
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
-  // Fetch ticket
-  const { data: ticket, error: ticketError } = await supabase
-    .from("support_tickets")
-    .select(`
+  // NUCLEAR FIX: Bypass RLS for Super Admins
+  // This solves the "Phantom Ticket" 404 issue (AC 4.4.1 blocker)
+  const isSuper = profile?.role === "super_admin";
+  let ticketData = null;
+  let ticketErrorVal = null;
+  
+  if (isSuper) {
+    // Service Role Bypass
+    const { createClient: createServiceClient } = require("@supabase/supabase-js");
+    const serviceClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    const { data, error } = await serviceClient
+      .from("support_tickets")
+      .select(`
         *,
         user:users(id, email, display_name)
-    `)
-    .eq("id", params.id)
-    .single();
+      `)
+      .eq("id", params.id)
+      .single();
+      
+    ticketData = data;
+    ticketErrorVal = error;
+  } else {
+    // Standard RLS
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .select(`
+        *,
+        user:users(id, email, display_name)
+      `)
+      .eq("id", params.id)
+      .single();
+      
+    ticketData = data;
+    ticketErrorVal = error;
+  }
+
+  // Use the result
+  const ticket = ticketData;
+  const ticketError = ticketErrorVal;
 
   if (ticketError || !ticket) {
+    // Log failure for debugging
+    console.error("Admin Ticket Fetch Error:", ticketError);
     notFound();
   }
 
-  // Fetch messages
-  const { data: messages } = await supabase
+  // Fetch messages (Use Service Role if Super Admin)
+  const messagesClient = isSuper ? 
+    (() => {
+        const { createClient: createServiceClient } = require("@supabase/supabase-js");
+        return createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+    })() : supabase;
+
+  const { data: messages } = await messagesClient
     .from("support_messages")
     .select("*")
     .eq("ticket_id", params.id)
