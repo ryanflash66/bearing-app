@@ -4,7 +4,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
-import { formatDate, StatusBadge } from "@/components/support/SupportShared";
+import { addDerivedFields, compareTickets } from "@/lib/tickets";
+import TicketListItem from "@/components/support/TicketListItem";
 
 export default async function SupportPage() {
   const supabase = await createClient();
@@ -24,10 +25,15 @@ export default async function SupportPage() {
   const isAgent = isSuperAdmin || isSupportAgent;
 
   // Fetch tickets
-  const { data: tickets } = await supabase
+  const { data: rawTickets } = await supabase
     .from("support_tickets")
     .select("*")
     .order("updated_at", { ascending: false });
+
+  // Use helpers for processing
+  const tickets = (rawTickets || [])
+    .map(addDerivedFields)
+    .sort(compareTickets);
 
   return (
     <DashboardLayout
@@ -59,37 +65,12 @@ export default async function SupportPage() {
           <ul role="list" className="divide-y divide-slate-200">
             {tickets && tickets.length > 0 ? (
               tickets.map((ticket) => (
-                <li key={ticket.id}>
-                  <Link href={`/dashboard/support/${ticket.id}`} className="block hover:bg-slate-50">
-                    <div className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium text-indigo-600">{ticket.subject}</p>
-                          {isAgent && (
-                             <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800">
-                               {ticket.user_id === user.id ? "Me" : "User"}
-                             </span>
-                          )}
-                        </div>
-                        <div className="ml-2 flex flex-shrink-0">
-                          <StatusBadge status={ticket.status} />
-                        </div>
-                      </div>
-                      <div className="mt-2 sm:flex sm:justify-between">
-                        <div className="sm:flex">
-                          <p className="flex items-center text-sm text-slate-500">
-                             Ticket #{ticket.id.slice(0, 8)}
-                          </p>
-                        </div>
-                        <div className="mt-2 flex items-center text-sm text-slate-500 sm:mt-0">
-                          <p>
-                            Last updated on <time dateTime={ticket.updated_at}>{formatDate(ticket.updated_at)}</time>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
+                <TicketListItem 
+                    key={ticket.id}
+                    ticket={ticket}
+                    isAgent={!!isAgent}
+                    currentUserId={user.id}
+                />
               ))
             ) : (
               <li className="px-4 py-8 text-center text-sm text-slate-500">

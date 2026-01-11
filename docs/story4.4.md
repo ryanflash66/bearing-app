@@ -53,7 +53,9 @@ Done
 - src/components/admin/UserSnapshotPanel.tsx
 - src/lib/user-snapshot.ts
 - src/app/api/support/tickets/route.ts (RPC refactor - AC 4.4.4)
+
 - src/app/api/support/tickets/[id]/reply/route.ts (RPC refactor - AC 4.4.4)
+- src/app/dashboard/support/page.tsx (Unified Dashboard with Admin Logic)
 
 ## Cost Estimate
 
@@ -74,15 +76,13 @@ Done
 - [x] Non-agents cannot access these pages
 
 ## Senior Developer Review (AI)
-**Date:** 2026-01-05  
-**Reviewer:** Amelia (Code Review Agent)  
+**Date:** 2026-01-11
+**Reviewer:** BMad (Code Review Workflow)
 **Decision:** ✅ APPROVED
 
 **Issues Found & Fixed:**
-- H1: Revenue estimate field added to GlobalMetrics (AC 4.5.1 concern)
-- H3: File List updated to include RPC refactor files
-- H4: Removed unused `priorityOrder` variable (dead code)
-- M3: Replaced magic number with `COST_PER_1K_TOKENS` constant
-- L1: Removed duplicate `formatDate` function, now uses shared import
-- L3: Added JSDoc to `isStaleTicket()` function
-- H2: Added security note about PII handling in `getUserSnapshot`
+- H1: AC 4.4.2 (Stale Detection) missing in unified dashboard. -> Implemented `isStaleTicket` logic (48h threshold).
+- H2: AC 4.4.1 (User Snapshot) inaccessible via unified dashboard. -> Added conditional routing for agents to `/admin/support/[id]`.
+- M1: Priority sorting missing. -> Implemented client-side sorting (Priority > Date).
+- M2: Admin dashboard page was a redirect. -> Updated generic dashboard to handle admin features.
+
