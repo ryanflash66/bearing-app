@@ -37,7 +37,7 @@ const STALE_HOURS = 48;
  */
 export function addDerivedFields(t: SupportTicket): TicketWithDerived {
   const updatedAtMs = new Date(t.updated_at).getTime();
-  const isPendingAgent = t.status === "open" || t.status === "pending_support";
+  const isPendingAgent = t.status === "pending_agent";
   const hoursSinceUpdate = (Date.now() - updatedAtMs) / MS_PER_HOUR;
 
   return {
