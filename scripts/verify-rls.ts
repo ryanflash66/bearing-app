@@ -19,9 +19,6 @@ if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
 // HELPERS
 // ------------------------------------------------------------------
 
-// Create a FRESH Service Role Client for each major operation to avoid state pollution
-// (Helper removed - using direct createClient inside runAudit to ensure fresh instance)
-
 async function createTestUserAndClient(
     adminClient: SupabaseClient, 
     emailPrefix: string, 
@@ -30,64 +27,52 @@ async function createTestUserAndClient(
     const email = `${emailPrefix}_${Date.now()}@example.com`;
     const password = 'password123';
 
-    // 1. Create Auth User
+    // Auth user
     const { data, error } = await adminClient.auth.admin.createUser({
         email,
         password,
-        email_confirm: true
+        email_confirm: true,
     });
     if (error) throw error;
     const user = data.user;
 
-    // 2. Create Public Profile
-    // Use adminClient (Service Role) to bypass RLS for role assignment
+    // Public profile via service role
     const { error: profileErr } = await adminClient.from('users').insert({
         auth_id: user.id,
         email,
-        role
+        role,
     });
     if (profileErr) throw profileErr;
 
-    // 3. Create Session-based CLIENT for this user
-    // We do NOT use adminClient to sign in, as that pollutes the admin client state.
-    // Instead, we use signInWithPassword on a fresh anon client OR just use the returned session if we could.
-    // Supabase JS 'signInWithPassword' requires a client. 
-    // We will create a discrete client for the user.
-    
-    // To sign in, we need a client. We can use a temporary client.
-    const tempClient = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false } });
-    const { data: sessionData, error: signInErr } = await tempClient.auth.signInWithPassword({
-        email,
-        password
+    // Single anon client for sign-in and downstream calls
+    const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
     });
-    
-    if (signInErr) throw signInErr;
-    if (!sessionData.session) throw new Error("No session created");
 
-    // 4. Return the user, and a client configured with their token
-    console.log(`Debug: User ${email} signed in. Token prefix: ${sessionData.session.access_token.substring(0, 10)}...`);
+    const { data: sessionData, error: signInErr } =
+        await anonClient.auth.signInWithPassword({ email, password });
+    if (signInErr) throw signInErr;
+    if (!sessionData.session) throw new Error('No session created');
+
+    const token = sessionData.session.access_token;
     
-    // Explicitly verify the client thinks it is authenticated
+    // Optional debug logging (safe)
+    if (process.env.AUDIT_DEBUG === 'true') {
+        console.log(`Debug: User ${email} signed in. Token prefix: ${token.substring(0, 10)}...`);
+    }
+
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-        global: { headers: { Authorization: `Bearer ${sessionData.session.access_token}` } }
+        global: { headers: { Authorization: `Bearer ${token}` } },
     });
-    
-    const { data: authCheck } = await userClient.auth.getUser();
-    console.log(`Debug: Client Auth Check for ${email}: ${authCheck.user ? 'Authenticated' : 'Anon'}`);
 
     return { user, client: userClient };
 }
 
-async function createTicketForUser(client: SupabaseClient, userId: string) {
-    // Need internal ID, but client likely knows it or we pass it.
-    // Assuming profile creation succeeded, we need the internal ID.
-    const { data: profile } = await client.from('users').select('id').eq('auth_id', userId).single();
-    if (!profile) throw new Error("Profile not found for ticket creation");
-
+async function createTicketForUser(client: SupabaseClient, profileId: string) {
     const { data, error } = await client
         .from('support_tickets')
         .insert({
-            user_id: profile.id,
+            user_id: profileId,
             subject: 'Test Ticket',
             priority: 'medium',
             status: 'open',
@@ -98,55 +83,77 @@ async function createTicketForUser(client: SupabaseClient, userId: string) {
     return data;
 }
 
+async function getAccountIdForOwner(
+  client: SupabaseClient,
+  ownerUserId: string,
+) {
+  const { data: accountData, error: accountErr } = await client.rpc(
+    'create_default_account',
+    { p_name: 'A Corp', p_owner_id: ownerUserId },
+  );
+  if (accountErr) throw accountErr;
+
+  if (accountData?.length) return accountData[0].id;
+
+  const { data: accountFetch } = await client
+    .from('accounts')
+    .select('id')
+    .eq('owner_user_id', ownerUserId)
+    .single();
+
+  if (!accountFetch) throw new Error('Account creation failed or not found');
+  return accountFetch.id;
+}
+
 // ------------------------------------------------------------------
 // TESTS
 // ------------------------------------------------------------------
 
-async function testAdminCanReadUserMessages(adminClient: SupabaseClient) {
-    console.log('\n👮 Testing Admin Access...');
-    
-    let adminUser, adminUserClient, endUser, endUserClient;
+async function testAdminCanReadUserMessages(
+  adminClient: SupabaseClient,
+  createdUsers: User[],
+) {
+  console.log('\n👮 Testing Admin Access...');
 
-    try {
-        // Setup Admin
-        const adminSetup = await createTestUserAndClient(adminClient, 'admin_check', 'support_agent');
-        adminUser = adminSetup.user;
-        adminUserClient = adminSetup.client;
+  const { user: adminUser, client: adminUserClient } =
+    await createTestUserAndClient(adminClient, 'admin_check', 'support_agent');
+  createdUsers.push(adminUser);
 
-        // Setup User
-        const userSetup = await createTestUserAndClient(adminClient, 'user_check', 'user');
-        endUser = userSetup.user;
-        endUserClient = userSetup.client;
+  const { user: endUser, client: endUserClient } =
+    await createTestUserAndClient(adminClient, 'user_check', 'user');
+  createdUsers.push(endUser);
 
-        // User Creates Ticket
-        const ticket = await createTicketForUser(endUserClient, endUser.id);
-        
-        // User Sends Message
-        const { error: msgErr } = await endUserClient.rpc('reply_to_ticket', {
-            ticket_id: ticket.id,
-            content: 'Hello Support',
-        });
-        if (msgErr) throw msgErr;
+  // Get User Profile
+  const { data: endUserProfile, error: profileErr } = await endUserClient
+    .from('users')
+    .select('id')
+    .eq('auth_id', endUser.id)
+    .single();
+  if (profileErr || !endUserProfile) throw profileErr ?? new Error('Profile missing');
 
-        // Verify Admin Access
-        const { data: adminView, error: adminErr } = await adminUserClient
-            .from('support_messages')
-            .select('*')
-            .eq('ticket_id', ticket.id)
-            .single();
+  // User Creates Ticket
+  const ticket = await createTicketForUser(endUserClient, endUserProfile.id);
 
-        if (adminView) {
-            console.log('✅ PASS: Admin can read user message.');
-        } else {
-            console.error('❌ FAIL: Admin cannot read message:', adminErr);
-            throw new Error('Admin RLS check failed');
-        }
+  // User Sends Message
+  const { error: msgErr } = await endUserClient.rpc('reply_to_ticket', {
+      ticket_id: ticket.id,
+      content: 'Hello Support',
+  });
+  if (msgErr) throw msgErr;
 
-    } finally {
-        if (adminUser) await adminClient.auth.admin.deleteUser(adminUser.id);
-        if (endUser) await adminClient.auth.admin.deleteUser(endUser.id);
-        // Cascading deletes should handle profiles/tickets
-    }
+  // Verify Admin Access
+  const { data: adminView, error: adminErr } = await adminUserClient
+      .from('support_messages')
+      .select('*')
+      .eq('ticket_id', ticket.id)
+      .single();
+
+  if (adminView) {
+      console.log('✅ PASS: Admin can read user message.');
+  } else {
+      console.error('❌ FAIL: Admin cannot read message:', adminErr);
+      throw new Error('Admin RLS check failed');
+  }
 }
 
 async function runAudit() {
@@ -178,26 +185,8 @@ async function runAudit() {
         const { data: profileA } = await clientA.from('users').select('id').eq('auth_id', userA.id).single();
         if (!profileA) throw new Error("Profile A missing");
 
-        // RPC account
-         const { data: accountData, error: accountErr } = await clientA.rpc('create_default_account', { p_name: 'A Corp', p_owner_id: profileA.id });
-         if (accountErr) throw accountErr;
-         
-         let accountId;
-         if (accountData && accountData.length > 0) {
-             accountId = accountData[0].id;
-             console.log(`Debug: User A Account ID from RPC: ${accountId}`);
-         } else {
-             // Fallback fetch
-             const { data: accountFetch } = await clientA
-                .from('accounts')
-                .select('id')
-                .eq('owner_user_id', profileA.id) // Fixed column name
-                .single();
-                
-             if (!accountFetch) throw new Error("Account creation failed or not found");
-             accountId = accountFetch.id;
-             console.log(`Debug: User A Account ID from Fetch: ${accountId}`);
-         }
+        const accountId = await getAccountIdForOwner(clientA, profileA.id);
+        console.log(`Debug: User A Account ID: ${accountId}`);
 
          // Manuscript
          const { data: msA, error: msErr } = await clientA.from('manuscripts').insert({
@@ -219,10 +208,11 @@ async function runAudit() {
              console.log('✅ PASS: User B cannot see Manuscript A');
          } else {
              console.error('❌ FAIL: Leak detected', leak);
+             process.exit(1);
          }
 
          // 2. Admin Access Test
-         await testAdminCanReadUserMessages(adminClient);
+         await testAdminCanReadUserMessages(adminClient, createdUsers);
          
          // 3. Performance Metrics
          console.log('\n📊 Checking AI Usage Latency Metrics...');
