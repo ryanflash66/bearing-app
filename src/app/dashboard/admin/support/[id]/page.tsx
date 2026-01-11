@@ -8,6 +8,7 @@ import AdminReplyForm from "@/components/admin/AdminReplyForm";
 import TicketStatusSelect from "@/components/admin/TicketStatusSelect";
 import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
 import { formatDate } from "@/components/support/SupportShared";
+import { getAdminAwareClient } from "@/lib/supabase-admin";
 
 export default async function AdminTicketDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -21,8 +22,12 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
 
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
+  // NUCLEAR FIX: Bypass RLS for Super Admins
+  // Use shared helper to get admin-aware client (Standard or Service Role)
+  const client = getAdminAwareClient(supabase, profile);
+
   // Fetch ticket
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticket, error: ticketError } = await client
     .from("support_tickets")
     .select(`
         *,
@@ -32,11 +37,14 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
     .single();
 
   if (ticketError || !ticket) {
+    // Log failure for debugging
+    console.error("Admin Ticket Fetch Error:", ticketError);
     notFound();
   }
 
   // Fetch messages
-  const { data: messages } = await supabase
+  // (Client is already admin-aware, so reuse it)
+  const { data: messages } = await client
     .from("support_messages")
     .select("*")
     .eq("ticket_id", params.id)
@@ -128,6 +136,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
         </div>
         
         {/* Right Sidebar - User Snapshot (AC 4.4.1) */}
+        {/* Use ticket.user.id which we know exists from the query */}
         <div className="lg:col-span-1">
           <div className="sticky top-6">
             <UserSnapshotPanel userId={ticket.user.id} />
@@ -137,3 +146,4 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
     </DashboardLayout>
   );
 }
+
