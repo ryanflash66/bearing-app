@@ -58,7 +58,6 @@ export default function CreateTicketForm() {
           name="subject"
           required
           className="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm relative z-0"
-          className="mt-1 block w-full rounded-md border-slate-300 text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
           placeholder="Brief description of the issue"
         />
       </div>
@@ -71,7 +70,6 @@ export default function CreateTicketForm() {
           rows={4}
           required
           className="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:text-gray-900 sm:text-sm relative z-0"
-          className="mt-1 block w-full rounded-md border-slate-300 text-slate-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:text-sm"
           placeholder="Describe your issue in detail..."
         />
       </div>
