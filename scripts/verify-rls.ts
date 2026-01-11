@@ -213,6 +213,71 @@ async function runAudit() {
     
     console.log(`Found ${logs?.length} recent audit logs.`);
 
+    // 5. Test Admin Access (Simulate Realtime RLS Check)
+    console.log('\n👮 Testing Admin Access (Admin reads User A messages)...');
+    
+    // Create an admin user locally (User C)
+    const EMAIL_C = `admin_${Date.now()}@example.com`;
+    const { data: dataC, error: errC } = await adminClient.auth.admin.createUser({
+      email: EMAIL_C,
+      password: PASSWORD,
+      email_confirm: true
+    });
+    if (errC) throw errC;
+    const userC = dataC.user;
+    
+    // Create Admin Profile
+    await adminClient.from('users').insert({
+        auth_id: userC.id,
+        email: EMAIL_C,
+        role: 'support_agent' // Explicitly Support Agent
+    });
+
+    const { data: sessionC } = await adminClient.auth.signInWithPassword({
+        email: EMAIL_C,
+        password: PASSWORD
+    });
+    const clientC = createClient(SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        global: { headers: { Authorization: `Bearer ${sessionC.session?.access_token}` } }
+    });
+
+    // Create a support ticket and message as User A
+    const { data: ticketA, error: tickErr } = await clientA
+        .from('support_tickets')
+        .insert({
+            user_id: profileA.id,
+            subject: 'Help me',
+            description: 'I need help',
+            priority: 'medium',
+            status: 'open'
+        })
+        .select()
+        .single();
+    if(tickErr) throw tickErr;
+
+    // We need to use the RPC to insert a message properly to populate denormalized fields
+    // But for this test let's simulate a raw RLS check on SELECT
+    // Insert message as User A using RPC (which we know works)
+    await clientA.rpc('reply_to_ticket', { ticket_id: ticketA.id, content: 'User message' });
+
+    // NOW: Can Admin (Client C) see it?
+    const { data: adminMsg, error: adminMsgErr } = await clientC
+        .from('support_messages')
+        .select('*')
+        .eq('ticket_id', ticketA.id)
+        .single();
+
+    if (adminMsg) {
+        console.log('✅ PASS: Admin CAN see User A support message');
+    } else {
+        console.error('❌ FAIL: Admin CANNOT see User A support message:', adminMsgErr);
+    }
+    
+    // Cleanup Admin
+    await adminClient.auth.admin.deleteUser(userC.id);
+
+
+
     // Verify Performance Metrics (Story H.3)
     const { data: metrics, error: metricsError } = await adminClient
         .from('ai_usage_events')
