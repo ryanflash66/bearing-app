@@ -8,6 +8,7 @@ import AdminReplyForm from "@/components/admin/AdminReplyForm";
 import TicketStatusSelect from "@/components/admin/TicketStatusSelect";
 import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
 import { formatDate } from "@/components/support/SupportShared";
+import { getAdminAwareClient } from "@/lib/supabase-admin";
 
 export default async function AdminTicketDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -22,48 +23,18 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
   // NUCLEAR FIX: Bypass RLS for Super Admins
-  // This solves the "Phantom Ticket" 404 issue (AC 4.4.1 blocker)
-  const isSuper = profile?.role === "super_admin";
-  let ticketData = null;
-  let ticketErrorVal = null;
-  
-  if (isSuper) {
-    // Service Role Bypass
-    const { createClient: createServiceClient } = require("@supabase/supabase-js");
-    const serviceClient = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    
-    const { data, error } = await serviceClient
-      .from("support_tickets")
-      .select(`
-        *,
-        user:users(id, email, display_name)
-      `)
-      .eq("id", params.id)
-      .single();
-      
-    ticketData = data;
-    ticketErrorVal = error;
-  } else {
-    // Standard RLS
-    const { data, error } = await supabase
-      .from("support_tickets")
-      .select(`
-        *,
-        user:users(id, email, display_name)
-      `)
-      .eq("id", params.id)
-      .single();
-      
-    ticketData = data;
-    ticketErrorVal = error;
-  }
+  // Use shared helper to get admin-aware client (Standard or Service Role)
+  const client = getAdminAwareClient(supabase, profile);
 
-  // Use the result
-  const ticket = ticketData;
-  const ticketError = ticketErrorVal;
+  // Fetch ticket
+  const { data: ticket, error: ticketError } = await client
+    .from("support_tickets")
+    .select(`
+        *,
+        user:users(id, email, display_name)
+    `)
+    .eq("id", params.id)
+    .single();
 
   if (ticketError || !ticket) {
     // Log failure for debugging
@@ -71,17 +42,9 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
     notFound();
   }
 
-  // Fetch messages (Use Service Role if Super Admin)
-  const messagesClient = isSuper ? 
-    (() => {
-        const { createClient: createServiceClient } = require("@supabase/supabase-js");
-        return createServiceClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-    })() : supabase;
-
-  const { data: messages } = await messagesClient
+  // Fetch messages
+  // (Client is already admin-aware, so reuse it)
+  const { data: messages } = await client
     .from("support_messages")
     .select("*")
     .eq("ticket_id", params.id)
@@ -173,6 +136,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
         </div>
         
         {/* Right Sidebar - User Snapshot (AC 4.4.1) */}
+        {/* Use ticket.user.id which we know exists from the query */}
         <div className="lg:col-span-1">
           <div className="sticky top-6">
             <UserSnapshotPanel userId={ticket.user.id} />
@@ -182,3 +146,4 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
     </DashboardLayout>
   );
 }
+
