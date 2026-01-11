@@ -184,6 +184,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation menu"
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
