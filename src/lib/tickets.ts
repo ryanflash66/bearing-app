@@ -54,8 +54,8 @@ export function addDerivedFields(t: SupportTicket): TicketWithDerived {
  * Sort comparator for tickets: Priority (Desc) -> Date (Desc/Newest First)
  */
 export function compareTickets(a: TicketWithDerived, b: TicketWithDerived) {
-  const pA = PRIORITY_WEIGHT[a.priority] || 1;
-  const pB = PRIORITY_WEIGHT[b.priority] || 1;
+  const pA = PRIORITY_WEIGHT[a.priority];
+  const pB = PRIORITY_WEIGHT[b.priority];
   if (pA !== pB) return pB - pA;
   
   return b.updatedAtMs - a.updatedAtMs;
