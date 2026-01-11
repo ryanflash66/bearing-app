@@ -1,0 +1,15 @@
+"use server";
+
+import { createClient } from "@/utils/supabase/server";
+import { updateGlobalUserRole } from "@/lib/super-admin-users";
+
+export async function updateUserRoleAction(targetId: string, newRole: "user" | "super_admin" | "support_agent") {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        return { success: false, error: "Not authenticated" };
+    }
+
+    return await updateGlobalUserRole(supabase, targetId, newRole, user.id);
+}

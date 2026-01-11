@@ -1,7 +1,7 @@
 # Story 4.1: Usage Guardrails & Upsell Workflow
 
 ## Status
-**Status:** Review
+**Status:** Done ✅
 
 ## Implementation Details
 - **Schema:** Added `usage_status` enum and `consecutive_overage_months` to `accounts` table.

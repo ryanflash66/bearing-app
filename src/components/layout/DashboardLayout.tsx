@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UpsellBanner from "@/components/dashboard/UpsellBanner";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface DashboardLayoutProps {
     displayName?: string | null;
     role?: string;
   };
+  usageStatus?: "good_standing" | "flagged" | "upsell_required" | string;
 }
 
 interface NavItem {
@@ -60,16 +62,32 @@ const navItems: NavItem[] = [
     ),
     adminOnly: true,
   },
+  {
+    name: "Support",
+    href: "/dashboard/support",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function DashboardLayout({ children, user, usageStatus }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isAdmin = user.role === "admin";
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
   const displayName = user.displayName || user.email.split("@")[0];
 
   // Filter nav items based on role
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || isAdmin);
+  // AC: Bifurcate UI - Admins shouldn't see Author tools
+  const visibleNavItems = navItems.filter((item) => {
+    // Hide Author-specific tools for Admins
+    if (isAdmin && (item.name === "Manuscripts" || item.name === "Brain")) return false;
+    
+    // Standard role filter
+    return !item.adminOnly || isAdmin;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -101,11 +119,23 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
         <nav className="mt-6 px-3">
           <ul className="space-y-1">
             {visibleNavItems.map((item) => {
-              const isActive = pathname === item.href;
+              // Redirect Super Admin to the Super Admin Dashboard
+              let finalHref = item.href;
+              let finalName = item.name;
+
+              if (item.name === "Admin" && user.role === "super_admin") {
+                finalHref = "/dashboard/admin/super";
+              }
+              
+              if (item.name === "Support" && user.role === "support_agent") {
+                finalName = "Support Queue";
+              }
+
+              const isActive = pathname === finalHref || (item.name === "Admin" && pathname.startsWith("/dashboard/admin"));
               return (
                 <li key={item.name}>
                   <Link
-                    href={item.href}
+                    href={finalHref}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-amber-500/10 text-amber-400"
@@ -113,7 +143,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
                     }`}
                   >
                     {item.icon}
-                    {item.name}
+                    {finalName}
                   </Link>
                 </li>
               );
@@ -154,6 +184,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open navigation menu"
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,6 +208,8 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
                   Admin
                 </span>
               )}
+              {/* Notification Bell */}
+              <NotificationBell />
             </div>
           </div>
         </header>
@@ -185,7 +218,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
         <main className="p-4 lg:p-8">
           {usageStatus && usageStatus !== "good_standing" && (
             <div className="mb-6">
-               <UpsellBanner status={usageStatus} />
+               <UpsellBanner status={usageStatus as "flagged" | "upsell_required"} />
             </div>
           )}
           {children}

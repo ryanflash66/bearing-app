@@ -34,41 +34,34 @@ export async function createAccount(
   ownerUserId: string
 ): Promise<{ account: Account | null; error: string | null }> {
   try {
-    // Create the account
-    const { data: account, error: accountError } = await supabase
-      .from("accounts")
-      .insert({ name, owner_user_id: ownerUserId })
-      .select()
-      .single();
+    // Use RPC to create account and membership atomically
+    // This adheres to the "RPC-First" security pattern (Story H.2)
+    const { data: accounts, error: rpcError } = await supabase.rpc('create_default_account', {
+      p_name: name,
+      p_owner_id: ownerUserId
+    });
 
-    if (accountError) {
-      console.error("Account creation error:", accountError);
+    if (rpcError) {
+      console.error("Account creation RPC error:", rpcError);
       return {
         account: null,
         error: "Failed to create account. Please try again.",
       };
     }
 
-    // Add owner as admin member
-    const { error: memberError } = await supabase
-      .from("account_members")
-      .insert({
-        account_id: account.id,
-        user_id: ownerUserId,
-        account_role: "admin",
-      });
+    const account = (accounts && accounts.length > 0) ? accounts[0] : null;
 
-    if (memberError) {
-      console.error("Member creation error:", memberError);
-      // Account was created but membership failed - try to clean up
-      await supabase.from("accounts").delete().eq("id", account.id);
+    if (!account) {
       return {
         account: null,
-        error: "Failed to set up account membership. Please try again.",
+        error: "Account creation failed (no data returned).",
       };
     }
 
+    // RPC handles membership creation automatically
     return { account: account as Account, error: null };
+
+
   } catch (err) {
     console.error("Account service error:", err);
     return {

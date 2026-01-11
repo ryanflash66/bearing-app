@@ -108,7 +108,15 @@ export class AdminController {
 
 ### Row-Level Security (RLS) in Postgres
 ```sql
--- Defense in depth: API guards + RLS policies
+-- Defense in depth: API guards + RLS policies + Security Definer RPCs
+
+### Provisioning (RPC Pattern)
+To handle privileged operations (like linking an `auth_id` to an existing email row created by an external trigger), we use **Security Definer RPCs**.
+
+1. **`claim_profile`**: Bypasses RLS to allow a newly authenticated user to "claim" their profile row if it exists without an `auth_id`.
+2. **`create_default_account`**: Ensures atomic creation of accounts and memberships to avoid "Empty Account" race conditions.
+
+**Requirement:** All future features involving workspace-level settings that touch multiple tables (e.g., Fine-Tuning controls, Team invites) MUST use the **RPC-First** pattern to avoid client-side RLS complexity.
 
 -- Manuscripts: authors can only view their own account's manuscripts
 create policy "Authors can view own account manuscripts"

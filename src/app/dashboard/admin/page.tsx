@@ -5,6 +5,10 @@ import { getUserAccounts } from "@/lib/account";
 import { getAdminStats } from "@/lib/admin";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
+import { getAccountUsageStats } from "@/lib/usage-admin";
+import UserUsageTable from "@/components/admin/UserUsageTable";
+import WaiveLimitsButton from "@/components/admin/WaiveLimitsButton";
+import JobMonitor from "@/components/admin/JobMonitor";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -29,6 +33,11 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  // Redirect Super Admins to the God Mode Dashboard
+  if (profile.role === "super_admin") {
+    redirect("/dashboard/admin/super");
+  }
+
   // Get user's account
   const { accounts } = await getUserAccounts(supabase, profile.id);
   const primaryAccount = accounts[0];
@@ -37,8 +46,16 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
+  // Security Check: Ensure user is admin
+  if (primaryAccount.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   // Get admin stats
   const stats = await getAdminStats(supabase, primaryAccount.id);
+
+  // Get usage stats
+  const { stats: usageStats } = await getAccountUsageStats(supabase, primaryAccount.id);
 
   return (
     <DashboardLayout
@@ -160,6 +177,22 @@ export default async function AdminPage() {
           </div>
         </div>
 
+        {/* Usage Stats & Controls - Story 4.2 */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+           <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Usage & Controls</h3>
+                <p className="text-sm text-slate-500">Monitor usage and manage access limits.</p>
+              </div>
+              <WaiveLimitsButton accountId={primaryAccount.id} usageStatus={primaryAccount.usage_status} />
+           </div>
+           
+           <UserUsageTable stats={usageStats} accountId={primaryAccount.id} />
+        </div>
+
+        {/* System Health Monitor - Story H.4 */}
+        <JobMonitor />
+
         {/* Quick access sections */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Members Section */}
@@ -252,22 +285,35 @@ export default async function AdminPage() {
             </div>
           </Link>
 
-          {/* Settings Section (Placeholder) */}
-          <div className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm opacity-60">
+          {/* Support Section */}
+          <Link
+            href="/dashboard/admin/support"
+            className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-rose-300 hover:shadow-md"
+          >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">
-                  Settings
+                <h3 className="text-lg font-semibold text-slate-900 group-hover:text-rose-600">
+                  Support
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Account settings (coming soon)
+                  Manage support tickets
                 </p>
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
-                Soon
-              </span>
+              <svg
+                className="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-rose-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Account info */}

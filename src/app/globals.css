@@ -28,7 +28,10 @@ body {
 
 /* Ensure form elements have visible text, especially in cards/white containers */
 input, textarea, select {
-  color: #1a1a1a; /* Default to high-contrast dark text */
+  background-color: #ffffff;
+  color: #1a1a1a;
+  /* Forms plugin handles most, but ensuring caret is black for visibility */
+  caret-color: #000000;
 }
 
 /* If you need specifically white text in dark inputs, you can override with .text-white */
@@ -75,6 +78,7 @@ input, textarea, select {
 }
 
 /* Ghost Text Styling (AC 2.3.6) */
+/* Ghost Text Styling (AC 2.3.6 & H.5.2) */
 .ghost-text-container {
   display: inline;
   position: relative;
@@ -82,9 +86,9 @@ input, textarea, select {
 
 .ghost-text-suggestion {
   font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
-  color: #9CA3AF; /* Muted gray-400 */
-  opacity: 0.7;
-  animation: ghost-text-fade-in 0.3s ease-out;
+  color: #78716C; /* Stone-500: Warmer "Graphite" tone for parchment */
+  opacity: 0.6;
+  animation: ghost-text-fade-in 0.4s ease-out, ghost-text-pulse-subtle 4s ease-in-out infinite;
   pointer-events: none;
   user-select: none;
 }
@@ -131,9 +135,9 @@ input, textarea, select {
 
 .ghost-text-overlay {
   font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
-  color: #9CA3AF;
-  opacity: 0.7;
-  animation: ghost-text-fade-in 0.3s ease-out;
+  color: #78716C; /* Stone-500 */
+  opacity: 0.6;
+  animation: ghost-text-fade-in 0.3s ease-out, ghost-text-pulse-subtle 4s ease-in-out infinite;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -144,9 +148,14 @@ input, textarea, select {
     transform: translateX(-4px);
   }
   to {
-    opacity: 0.7;
+    opacity: 0.6;
     transform: translateX(0);
   }
+}
+
+@keyframes ghost-text-pulse-subtle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.45; }
 }
 
 @keyframes ghost-text-pulse {

@@ -1,0 +1,14 @@
+[dotenv@17.2.3] injecting env (4) from .env.local -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (3) from .env -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+≡ƒÜº Testing Job Resilience...
+Created stale job: 288b133c-975c-40b2-949b-c397a258a5ae (created_at: 2026-01-05T03:30:20.343Z)
+Running recovery...
+Recovery Result: {
+  failedCount: 3,
+  jobIds: [
+    '8e09d4a4-881b-4269-9aad-a542f17f0acc',
+    '6566a2d3-28e5-479c-8974-dad05054f945',
+    '288b133c-975c-40b2-949b-c397a258a5ae'
+  ]
+}
+Γ£à PASS: Job marked as failed correctly.

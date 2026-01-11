@@ -94,7 +94,7 @@ Accounts support multiple roles (Author, Admin) with enforced permissions and ac
 **Acceptance Criteria**
 - **AC 1.3.1:** Given admin user, when accessing admin dashboard, then role is verified via JWT
 - **AC 1.3.2:** Given author user, when attempting admin routes, then 403 Forbidden returned
-- **AC 1.3.3:** Given role assignment, when saved to database, then RLS policies enforce visibility
+- **AC 1.3.3:** Given role assignment, when saved to database, then RLS policies enforce visibility using optimized helper functions (e.g., `is_account_admin`) to prevent performance overhead
 - **AC 1.3.4:** Given audit log, when admin action occurs, then event recorded with timestamp + user ID
 
 **Effort:** 22 hours  
@@ -113,8 +113,8 @@ Accounts support multiple roles (Author, Admin) with enforced permissions and ac
 All manuscript and user data is private by default using Supabase RLS policies. Authors can only access their own data; admins can access all data but only for authorized actions.
 
 **Acceptance Criteria**
-- **AC 1.4.1:** Given author A with manuscript, when author B queries database, then no rows returned (RLS blocks)
-- **AC 1.4.2:** Given admin user, when querying any author's data, then RLS policy allows (admin bypass with audit)
+- **AC 1.4.1:** Given author A with manuscript, when author B queries database, then no rows returned (RLS blocks using consolidated `select` policies)
+- **AC 1.4.2:** Given admin user, when querying any author's data, then RLS policy allows (admin bypass via explicit `admin_or_owner` policies)
 - **AC 1.4.3:** Given manuscript stored, when encryption enabled, then storage encrypted at rest (AES-256)
 - **AC 1.4.4:** Given API call, when transmitted over network, then TLS 1.2+ enforced (no HTTP)
 - **AC 1.4.5:** Given data breach risk, when audit logs checked, then all access recorded

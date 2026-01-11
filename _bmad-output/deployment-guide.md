@@ -9,9 +9,13 @@ The application consists of two primary components:
 ## Deployment Steps
 
 ### 1. Database (Supabase)
+> [!IMPORTANT]
+> **Database Sync MUST happen before Code Push.** Since Vercel auto-deploys on git push, ensure the database schema is updated first to prevent runtime errors.
+
 1. Link project: `npx supabase link --project-ref <project-id>`
 2. Push migrations: `npx supabase db push`
 3. Push seed data: `npx supabase db reset --linked` (CAUTION: Resets remote DB - usually use explicit seed scripts for prod).
+
 
 ### 2. Application (Vercel)
 1. Connect GitHub repository to Vercel.

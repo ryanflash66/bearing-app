@@ -29,12 +29,51 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
     );
   };
 
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
+
   const setupMFA = async () => {
     setSetupError(null);
     try {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("No user found");
+
+      // Step 0: Force session refresh to ensure we see the latest factors
+      await supabase.auth.refreshSession();
+
+      // Step 1: List existing factors
+      const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+      if (listError) throw listError;
+
+      // Guard: Check for VERIFIED factors
+      const mfaData = factors as any;
+      const totpFactors = (mfaData?.totp || []) as any[];
+
+      const hasVerified = totpFactors.some(f => f.status === 'verified');
+      if (hasVerified) {
+          setIsAlreadyEnrolled(true);
+          if (onEnrolled) onEnrolled();
+          return;
+      }
+
+      // Step 2: Clean up ANY existing TOTP factors that are not verified
+      const unverifiedFactors = totpFactors.filter(f => f.status === 'unverified');
+      
+      for (const factor of unverifiedFactors) {
+         console.log("Cleaning up unverified factor:", factor.id);
+         await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      }
+
+      // Step 3: Enroll new factor with UNIQUE name to prevent collisions
+      // We append a short suffix to ensure uniqueness even if cleanup failed (race condition)
+      const uniqueSuffix = new Date().getTime().toString().slice(-4); 
+      const friendlyName = `Bearing App (${user.email}) - ${uniqueSuffix}`;
+      
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
+        friendlyName, 
+        issuer: "Bearing App",
       });
 
       if (error) {
@@ -46,6 +85,7 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       setSecret(data.totp.secret);
       setQrCodeData(data.totp.qr_code);
     } catch (err) {
+      console.error("MFA Setup Error:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to setup MFA";
       setSetupError(errorMessage);
@@ -96,6 +136,7 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
           email: user?.email ?? undefined,
         });
         if (onEnrolled) onEnrolled();
+        setIsAlreadyEnrolled(true); // Show success state immediately
       }
     } catch (err) {
       const errorMessage =
@@ -115,6 +156,17 @@ export default function MFAEnrollment({ onEnrolled }: { onEnrolled?: () => void 
       Try again
     </button>
   );
+
+  if (isAlreadyEnrolled) {
+      return (
+        <div className="space-y-4 max-w-sm mx-auto p-4 border rounded bg-emerald-50 border-emerald-200">
+          <h3 className="text-lg font-bold text-emerald-800">Two-Factor Authentication Enabled</h3>
+          <p className="text-sm text-emerald-700">
+            Your account is secured with 2FA.
+          </p>
+        </div>
+      );
+  }
 
   if (setupError) {
     return (

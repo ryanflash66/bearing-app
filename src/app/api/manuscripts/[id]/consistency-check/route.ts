@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { initiateConsistencyCheck } from "@/lib/gemini";
 
@@ -49,13 +49,44 @@ export async function POST(
       );
     }
 
-    // Initiate consistency check (async, returns immediately)
-    const result = await initiateConsistencyCheck(supabase, {
-      manuscriptId,
-      userId: user.id,
-    });
+    // Story 4.3/5.1 Fix: Get the public.users profile ID
+    // The RLS policy requires created_by to match the Profile ID (get_current_user_id()), not Auth ID
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_id", user.id)
+      .single();
 
-    return NextResponse.json(result, { status: 202 }); // 202 Accepted for async operations
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: "User profile not found. Please log out and back in." },
+        { status: 404 }
+      );
+    }
+
+    // Initiate consistency check (async, returns immediately)
+    // Pass profile.id as userId (which becomes created_by)
+    // Initiate consistency check (async, returns immediately)
+    // Pass profile.id as userId (which becomes created_by)
+    // Use 'after' to ensure background task completes even after response is sent
+    const { jobId, estimatedTokens, status, cached } = await initiateConsistencyCheck(
+      supabase, 
+      {
+        manuscriptId,
+        userId: profile.id,
+      },
+      (backgroundTask) => {
+        // This callback allows us to wrap the task in 'after'
+        after(backgroundTask);
+      }
+    );
+
+    return NextResponse.json({
+      jobId, 
+      status: status || "queued", 
+      estimatedTokens, 
+      cached: !!cached
+    }, { status: 202 });
   } catch (error) {
     console.error("Error initiating consistency check:", error);
     

@@ -381,13 +381,16 @@ export default function MagicIngest({ accountId, user, onUploadComplete }: Magic
                                  </button>
                              )}
                          </div>
-                         {/* Terminal / Typewriter Log */}
-                         <div className="mt-2 h-32 overflow-y-auto rounded bg-slate-900 p-2 font-mono text-xs text-green-400">
+                         {/* Terminal / Typewriter Log (Parchment Style) */}
+                         <div className="mt-2 h-32 overflow-y-auto rounded-md bg-stone-50 border border-stone-200 p-2 font-mono text-xs text-stone-700 shadow-inner">
                               {logs.map((log, i) => (
-                                  <div key={i}>{`> ${log}`}</div>
+                                  <div key={i} className="flex gap-2">
+                                    <span className="text-stone-400 select-none">›</span>
+                                    <span>{log}</span>
+                                  </div>
                               ))}
                               {status !== "success" && (
-                                 <div className="animate-pulse">_</div>
+                                 <div className="animate-pulse text-stone-400 ml-3">_</div>
                               )}
                         </div>
                     </div>

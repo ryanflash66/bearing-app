@@ -103,6 +103,12 @@ Completed and verified with all tests passing.
 - New: `NEXT_PUBLIC_SITE_URL` (optional, for ranking)
 - Deprecated: `GEMINI_API_KEY`, `MODAL_LLAMA_URL`, `MODAL_API_TOKEN`
 
+### Stability & Observability Upgrade (Jan 2026)
+- **Lifecycle Hardening**: Integrated Next.js `after()` API to ensure background consistency checks complete even after the HTTP response is sent.
+- **Service Security**: Switched background workers to a dedicated "Service Role" Supabase client to prevent auth-token expiration during long-running AI calls.
+- **Live Progress Logging**: Added stateful progress updates to the `error_message` column (e.g., "Analysing chunk N of M...") to provide visual feedback during processing.
+- **API Guardrails**: Implemented a mandatory 60-second timeout on all OpenRouter fetch calls to prevent hanging jobs and improved 4xx/5xx error reporting to the database.
+
 ### Debug Log
 
 No blocking issues encountered. Build passes successfully.
@@ -129,4 +135,9 @@ No blocking issues encountered. Build passes successfully.
 - Migrated Llama suggestions to OpenRouter (llama-3.1-8b)
 - Updated environment variable documentation
 - Build verified passing
+
+**2026-01-04:**
+- **Stability Upgrade**: Resolved inconsistency check "hangs" by implementing Next.js `after()` lifecycle hook.
+- **Model Maintenance**: Updated outdated model IDs to `google/gemini-3-flash-preview` to resolve 404 errors.
+- **Observability**: Added real-time progress reporting to the database.
 

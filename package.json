@@ -13,7 +13,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "validate-env": "node scripts/validate-env.js",
+    "verify-rls": "npx tsx scripts/verify-rls.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +30,7 @@
     "@types/pdfkit": "^0.17.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "docx": "^9.5.1",
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
@@ -37,12 +40,15 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "resend": "^6.6.0",
     "tailwind-merge": "^3.4.0",
     "typescript": "^5.9.3",
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.57.0",
+    "@tailwindcss/forms": "^0.5.11",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",

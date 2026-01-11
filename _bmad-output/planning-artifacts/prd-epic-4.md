@@ -117,6 +117,7 @@ Authors can send support messages from within the app (simple form, no threaded 
 - **AC 4.3.3:** Given admin reply in email or dashboard, then author sees notification in app ("Your support request has been answered")
 - **AC 4.3.4:** Given user views support inbox, then all past messages shown in reverse chronological order
 - **AC 4.3.5:** Given message sent, then transcript is logged for compliance/audit
+- **AC 4.3.6:** Given support queries, RLS policies must use cached auth lookups (via `is_platform_support`) to avoid "Auth RLS Init Plan" performance warnings
 
 **Effort:** 12 hours  
 **Dependencies:** 1.1 (Auth to identify author)

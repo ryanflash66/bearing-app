@@ -11,6 +11,7 @@ import {
   OPENROUTER_MODELS,
   OpenRouterError,
 } from "./openrouter";
+import { createClient } from "@supabase/supabase-js";
 
 // Types
 export interface ConsistencyIssue {
@@ -338,8 +339,9 @@ Return ONLY a valid JSON object with this exact structure (no markdown code bloc
     return report;
   } catch (error) {
     if (error instanceof OpenRouterError) {
-      console.error("OpenRouter API error:", error.getUserFriendlyMessage());
-      throw new Error(error.getUserFriendlyMessage());
+      const detailedError = `OpenRouter API error (${error.statusCode}): ${error.message}`;
+      console.error(detailedError);
+      throw new Error(detailedError);
     }
     console.error("Error calling OpenRouter API:", error);
     throw error;
@@ -358,6 +360,7 @@ export async function processConsistencyCheckJob(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const startTime = performance.now();
     // Update status to running
     const { error: updateError } = await supabase
       .from("consistency_checks")
@@ -375,6 +378,14 @@ export async function processConsistencyCheckJob(
 
     // Process each chunk
     for (let i = 0; i < chunks.length; i++) {
+      // Update progress
+      await supabase
+        .from("consistency_checks")
+        .update({ 
+          error_message: `Analysing chunk ${i + 1} of ${chunks.length}...` // Temporary status update
+        })
+        .eq("id", jobId);
+
       const chunk = chunks[i];
       try {
         const report = await analyzeConsistencyWithGemini(chunk, i, chunks.length);
@@ -409,6 +420,7 @@ export async function processConsistencyCheckJob(
         report_json: finalReport,
         tokens_actual: tokensActual,
         completed_at: new Date().toISOString(),
+        error_message: null,
       })
       .eq("id", jobId);
 
@@ -425,6 +437,10 @@ export async function processConsistencyCheckJob(
       .eq("id", manuscriptId)
       .single();
     
+    // Calculate latency
+    const endTime = performance.now();
+    const latencyMs = Math.round(endTime - startTime);
+
     if (manuscript) {
       await logUsageEvent(
         supabase,
@@ -433,7 +449,8 @@ export async function processConsistencyCheckJob(
         "consistency_check",
         "gemini-pro",
         inputTokens, // estimated
-        tokensActual // actual
+        tokensActual, // actual
+        latencyMs // latency
       );
     }
 
@@ -460,7 +477,8 @@ export async function processConsistencyCheckJob(
  */
 export async function initiateConsistencyCheck(
   supabase: SupabaseClient,
-  input: CreateConsistencyCheckInput
+  input: CreateConsistencyCheckInput,
+  scheduleBackgroundWork?: (work: () => Promise<void>) => void
 ): Promise<ConsistencyCheckResult> {
   const { manuscriptId, userId } = input;
 
@@ -519,10 +537,25 @@ export async function initiateConsistencyCheck(
     throw new Error(error);
   }
 
-  // 7. Process asynchronously
-  processConsistencyCheckJob(supabase, jobId, manuscriptId, content, userId).catch((err) => {
-    console.error("Error processing consistency check job:", err);
-  });
+  // 7. Process asynchronously using a fresh client to avoid request-context expiration
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const backgroundClient = createClient(supabaseUrl, supabaseServiceKey);
+
+  const backgroundTask = async () => {
+    try {
+      await processConsistencyCheckJob(backgroundClient, jobId, manuscriptId, content, userId);
+    } catch (err) {
+      console.error("Error processing consistency check job:", err);
+    }
+  };
+
+  if (scheduleBackgroundWork) {
+    scheduleBackgroundWork(backgroundTask);
+  } else {
+    // Fallback for environments without 'after' support
+    backgroundTask();
+  }
 
   return {
     jobId,

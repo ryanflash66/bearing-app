@@ -80,10 +80,12 @@ workflow_status:
         note: "Found 4 epics with 13 stories total"
         
       - id: "test-design"
-        status: "recommended"
+        status: "done"
+        artifact_path: "_bmad-output/test-design-epic-4.md"
         agent: "tea"
         command: "testarch-test-design"
-        note: "System-level testability review - recommended before implementation"
+        completed: "2026-01-10"
+        note: "Epic-level test plan for Story 4.3 completed with risk assessment."
         
       - id: "validate-architecture"
         status: "optional"
@@ -110,10 +112,10 @@ workflow_status:
         stories:
           - id: "story-1.1"
             name: "Email + MFA Authentication"
-            status: "completed"
-            completed: "2024-12-22"
+            status: "_bmad-output/implementation-artifacts/auth-hardening-walkthrough.md"
+            completed: "2026-01-03"
             qa_passed: true
-            notes: "QA Passed (report found)"
+            notes: "STABILITY UPGRADE: Replaced client-side provisioning with RPCs (claim_profile, create_default_account) and hardened MFA enrollment (unique names, session refresh)."
           - id: "story-1.2"
             name: "Author Dashboard Skeleton"
             status: "completed"
@@ -189,14 +191,46 @@ workflow_status:
             status: "completed"
             completed: "2026-01-01"
             notes: "Implemented Consistency Badges with real-time updates and interactive filtering."
+          - id: "story-4.0"
+            name: "Magic Ingest Stability (Retry/Error logic)"
+            status: "completed"
+            completed: "2026-01-02"
+            notes: "Technical debt repayment for import resilience."
+          - id: "story-4.1"
+            name: "Admin Role Architecture (RBAC)"
+            status: "docs/story4.1.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: super_admin role, verifyAdminAccess utility, and RPC-First pattern enforcement."
+          - id: "story-4.2"
+            name: "Support Ticket Engine (State Machine)"
+            status: "docs/story4.2.md"
+            completed: "2026-01-05"
+            notes: "IMPLEMENTED: create_ticket and reply_to_ticket RPCs with atomic status transitions."
+          - id: "story-4.3"
+            name: "User Support Console (Frontend)"
+            status: "_bmad-output/implementation-artifacts/story4.3.md"
+            completed: "2026-01-11"
+            notes: "IMPLEMENTED: User-facing ticket list and detail pages with real-time notifications and accessibility fixes."
+          - id: "story-4.4"
+            name: "Support Agent Dashboard"
+            status: "required"
+            notes: "PENDING: Stale ticket detection (48h), PII masking, and User Context Snapshot."
+          - id: "story-4.5"
+            name: "Super Admin Dashboard"
+            status: "required"
+            notes: "PENDING: Global metrics (tokens, users, tickets) and user override links."
+          - id: "story-4.6"
+            name: "Critical Notification System"
+            status: "required"
+            notes: "PENDING: Email notifications for ticket updates."
 
 # Story Progress Summary
 story_progress:
   total: 21
-  completed: 14
+  completed: 19
   ux_rework: 0
   ready: 1
-  pending: 7
+  pending: 2
   
 epic_progress:
   - epic: 1
@@ -227,23 +261,54 @@ epic_progress:
     stories: 4
     completed: 4
     status: "completed"
-    notes: "Story 3.5 added for Consistency Badges. All stories complete."
+    notes: "Story 3.5 added for Consistency Badges. All stories complete. HARDENING (Jan 2026): Implemented Next.js 'after' lifecycle and real-time progress logging to resolve OpenRouter integration hangs."
     story_list:
       - id: "story-3.5"
         name: "Consistency Badges in Binder"
         status: "completed"
         notes: "From UX spec - Visual feedback"
   - epic: 4
-    name: "Support & Admin"
-    stories: 3
-    completed: 0
-    status: "pending"
-  - epic: 5
-    name: "UX Enhancements"
+    name: "Support & Admin (Emergency Rework)"
+    stories: 6
+    completed: 3
+    status: "in-progress"
+    notes: "Emergency rework for scale and security. Stories 4.1-4.3 completed."
+    story_list:
+      - id: "story-4.1"
+        name: "Admin Role Architecture (RBAC)"
+        status: "completed"
+      - id: "story-4.2"
+        name: "Support Ticket Engine (State Machine)"
+        status: "completed"
+      - id: "story-4.3"
+        name: "User Support Console (Frontend)"
+        status: "completed"
+      - id: "story-4.4"
+        name: "Support Agent Dashboard"
+        status: "required"
+      - id: "story-4.5"
+        name: "Super Admin Dashboard"
+        status: "required"
+      - id: "story-4.6"
+        name: "Critical Notification System"
+        status: "backlog"
+
+# Next Action
+# Next Action
+next_workflow:
+  id: "story-4.4"
+  name: "Story 4.4: Support Agent Dashboard"
+  agent: "dev"
+  command: "/bmad-bmm-workflows-dev-story 4.4"
+  description: "Implement stale ticket detection (48h), PII masking, and User Context Snapshot for agents."
+  priority: "high"
+  reason: "Next step in the Support & Admin epic."
+- epic: 5
+    name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
     completed: 0
     status: "backlog"
-    notes: "Derived from UX Design Specification"
+    notes: "Pushed back after Stabilization and Publication epics."
     story_list:
       - id: "story-5.1"
         name: "Integrate Custom Fine-Tuned Models"
@@ -251,22 +316,59 @@ epic_progress:
       - id: "story-5.2"
         name: "Cmd+K Commander Pattern"
         status: "backlog"
-        notes: "From UX spec - Novel UX Patterns"
       - id: "story-5.3"
         name: "Voice-to-Text Dictation"
         status: "backlog"
-        notes: "From UX spec - Accessibility"
       - id: "story-5.4"
         name: "Mobile Responsive Layout"
         status: "backlog"
-        notes: "From UX spec - Review-on-Mobile"
+  - epic: 6
+    name: "Publication & Beta Distribution"
+    stories: 4
+    completed: 0
+    status: "backlog"
+    story_list:
+      - id: "story-6.1"
+        name: "Beta Reader Access & Commenting"
+        status: "backlog"
+      - id: "story-6.2"
+        name: "WYSIWYG Export Previewer"
+        status: "backlog"
+      - id: "story-6.3"
+        name: "Publication Metadata & Blurb Hub"
+        status: "backlog"
+      - id: "story-6.4"
+        name: "Public Coming Soon Pages"
+        status: "backlog"
+  - epic: 0.5
+    name: "Stabilization & Hardening"
+    stories: 5
+    completed: 0
+    status: "backlog"
+    story_list:
+      - id: "story-h.1"
+        name: "Model & Service Governance"
+        status: "backlog"
+      - id: "story-h.2"
+        name: "Security & RLS Hardening"
+        status: "backlog"
+      - id: "story-h.3"
+        name: "Performance & Latency Baseline"
+        status: "backlog"
+      - id: "story-h.4"
+        name: "Job Resilience & Observability"
+        status: "backlog"
+      - id: "story-h.5"
+        name: "Visual & UX Polish Sweep"
+        status: "backlog"
 
 # Next Action
 next_workflow:
-  id: "story-5.2"
-  name: "Story 5.2: Cmd+K Commander Pattern"
+  id: "story-h.1"
+  name: "Story H.1: Model & Service Governance"
   agent: "dev"
-  command: "/dev-story story5.2"
-  description: "Implement global command palette"
-  priority: "medium"
-  reason: "Next UX feature"
+  command: "/dev-story H.1"
+  description: "Centralize and formalize AI model configuration to avoid hardcoding and drift."
+  priority: "high"
+  reason: "First story of the Stabilization & Hardening epic (Sprint 0.5)"
+

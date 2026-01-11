@@ -11,18 +11,21 @@
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 
 // Model mapping: abstract names → OpenRouter model IDs
+import { AI_MODELS, DEFAULT_MODELS } from "./config/ai-models";
+
+// Model mapping: abstract names → OpenRouter model IDs
 export const OPENROUTER_MODELS = {
   // Gemini models (for consistency checks)
-  "gemini-pro": "google/gemini-pro",
-  "gemini-flash": "google/gemini-flash-1.5",
-  "gemini-flash-8b": "google/gemini-flash-1.5-8b",
+  "gemini-pro": AI_MODELS.gemini.pro,
+  "gemini-flash": AI_MODELS.gemini.flash, // Updated to stable 1.5
+  "gemini-flash-8b": AI_MODELS.gemini.flash_8b,
   // Llama models (for suggestions)
-  "llama-8b": "meta-llama/llama-3-8b-instruct",
-  "llama-70b": "meta-llama/llama-3-70b-instruct",
-  "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
+  "llama-8b": AI_MODELS.llama["3.1_8b"],
+  "llama-70b": AI_MODELS.llama["3.1_70b"],
+  "llama-3.1-8b": AI_MODELS.llama["3.1_8b"], // Legacy alias
   // Default fallbacks
-  default_consistency: "google/gemini-flash-1.5",
-  default_suggestion: "meta-llama/llama-3.1-8b-instruct",
+  default_consistency: DEFAULT_MODELS.consistency,
+  default_suggestion: DEFAULT_MODELS.suggestion,
 } as const;
 
 export type OpenRouterModelKey = keyof typeof OPENROUTER_MODELS;
@@ -144,31 +147,45 @@ export async function openRouterChat(
     ...options,
   };
 
-  const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": getSiteUrl(),
-      "X-Title": "Bearing - AI Writing Assistant",
-    },
-    body: JSON.stringify(requestBody),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(
-      `OpenRouter API error: ${response.status} ${response.statusText}`,
-      errorText
-    );
-    throw new OpenRouterError(
-      `OpenRouter API error: ${response.status} - ${errorText}`,
-      response.status
-    );
+  try {
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": getSiteUrl(),
+        "X-Title": "Bearing - AI Writing Assistant",
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `OpenRouter API error: ${response.status} ${response.statusText}`,
+        errorText
+      );
+      throw new OpenRouterError(
+        `OpenRouter API error: ${response.status} - ${errorText}`,
+        response.status
+      );
+    }
+
+    const data: OpenRouterResponse = await response.json();
+    return data;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new OpenRouterError("Request timed out after 60 seconds", 408);
+    }
+    throw err;
   }
-
-  const data: OpenRouterResponse = await response.json();
-  return data;
 }
 
 /**
