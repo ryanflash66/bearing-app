@@ -1,5 +1,0 @@
-
-> bearing-app@1.0.0 lint
-> next lint
-
-Invalid project directory provided, no such directory: R:\Dropbox\_Code\Projects\bearing\bearing-app\lint
