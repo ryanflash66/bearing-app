@@ -80,10 +80,12 @@ workflow_status:
         note: "Found 4 epics with 13 stories total"
         
       - id: "test-design"
-        status: "recommended"
+        status: "done"
+        artifact_path: "_bmad-output/test-design-epic-4.md"
         agent: "tea"
         command: "testarch-test-design"
-        note: "System-level testability review - recommended before implementation"
+        completed: "2026-01-10"
+        note: "Epic-level test plan for Story 4.3 completed with risk assessment."
         
       - id: "validate-architecture"
         status: "optional"

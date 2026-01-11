@@ -203,7 +203,8 @@ export default function TicketConversation({
               name="message"
               rows={2}
               required
-              className="block w-full rounded-md border-gray-300 shadow-sm text-gray-900 caret-black focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm resize-none"
+              aria-label="Reply message"
+              className="block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm resize-none relative z-0"
               placeholder="Type your reply... (Enter to send, Shift+Enter for new line)"
               onKeyDown={handleMessageKeyDown}
             />

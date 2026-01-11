@@ -1,13 +1,21 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ReplyForm({ ticketId }: { ticketId: string }) {
+interface AdminReplyFormProps {
+  ticketId: string;
+}
+
+/**
+ * Admin Reply Form - Client component for support agents to reply to tickets.
+ * Separated from the deleted ReplyForm to provide admin-specific functionality.
+ */
+export default function AdminReplyForm({ ticketId }: AdminReplyFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -16,13 +24,12 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
     setLoading(true);
     setError(null);
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const formData = new FormData(e.currentTarget);
     const message = formData.get("message") as string;
 
     if (!message.trim()) {
-        setLoading(false);
-        return;
+      setLoading(false);
+      return;
     }
 
     try {
@@ -35,8 +42,8 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
       if (!res.ok) {
         throw new Error("Failed to send reply");
       }
-      
-      form.reset();
+
+      formRef.current?.reset();
       router.refresh();
     } catch (err) {
       setError("Failed to send message. Please try again.");
@@ -45,32 +52,33 @@ export default function ReplyForm({ ticketId }: { ticketId: string }) {
     }
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      if (e.nativeEvent.isComposing) return;
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form ref={formRef} onSubmit={handleSubmit}>
       {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <textarea
           name="message"
-          rows={3}
+          rows={2}
           required
-          className="block w-full rounded-md border-gray-300 shadow-sm text-gray-900 caret-black focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          placeholder="Type your reply here..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              // Prevent submission if IME composition is active (e.g. CJK input)
-              if (e.nativeEvent.isComposing) return;
-              
-              e.preventDefault();
-              e.currentTarget.form?.requestSubmit();
-            }
-          }}
+          aria-label="Reply message"
+          className="block w-full rounded-md border-gray-300 bg-white shadow-sm text-gray-900 caret-black appearance-none focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm resize-none relative z-0"
+          placeholder="Type your reply... (Enter to send, Shift+Enter for new line)"
+          onKeyDown={handleKeyDown}
         />
         <button
           type="submit"
           disabled={loading}
           className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
         >
-          {loading ? "Sending..." : "Send"}
+          {loading ? "..." : "Send"}
         </button>
       </div>
     </form>

@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
-import ReplyForm from "@/components/support/ReplyForm";
+import AdminReplyForm from "@/components/admin/AdminReplyForm";
 import TicketStatusSelect from "@/components/admin/TicketStatusSelect";
 import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
 import { formatDate } from "@/components/support/SupportShared";
@@ -83,7 +83,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
           {/* Reply Form */}
           <div className="px-4 py-5 sm:p-6 bg-slate-50 border-b border-slate-200">
              <h4 className="text-sm font-medium text-slate-900 mb-2">Reply to author</h4>
-             <ReplyForm ticketId={ticket.id} />
+             <AdminReplyForm ticketId={ticket.id} />
           </div>
 
           <div className="px-4 py-5 sm:p-6">

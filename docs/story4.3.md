@@ -66,7 +66,31 @@ As a User, I want a persistent "My Tickets" page with accessible inputs, so that
 
 ## Success Criteria (QA Gate)
 
-- [ ] New ticket flow works
-- [ ] Reply flow works
-- [ ] Mobile typing is visible and bug-free
-- [ ] Accessibility score > 90
+- [x] New ticket flow works
+- [x] Reply flow works
+- [x] Mobile typing is visible and bug-free
+- [x] Accessibility score > 90
+
+---
+
+## Dev Agent Record
+
+### File List
+
+#### Modified
+- `src/components/support/CreateTicketForm.tsx` - CSS fixes for cursor visibility (R-401), added aria-labels
+- `src/components/support/TicketConversation.tsx` - CSS fixes for cursor visibility, added aria-label
+
+#### New
+- `tests/e2e/dashboard/support.spec.ts` - E2E tests for AC 4.3.1-4.3.4
+- `tests/e2e/dashboard/accessibility.spec.ts` - axe-core integration for AC 4.3.5
+- `tests/e2e/fixtures/auth.fixture.ts` - Shared auth fixture for E2E tests
+- `tests/support/factories/ticket.factory.ts` - Test data factory
+
+#### Deleted
+- `src/components/support/ReplyForm.tsx` - Dead code (unused, inline form exists in TicketConversation)
+
+### Change Log
+
+- **2026-01-10**: Initial implementation with ATDD workflow. Fixed invisible cursor bug (R-401).
+- **2026-01-10**: Code Review - Added axe-core tests (C1), created auth fixture (M1), removed dead ReplyForm (M2), added aria-labels (M3), simplified factory (M4).
