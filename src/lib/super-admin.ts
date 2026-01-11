@@ -71,6 +71,11 @@ export async function getGlobalMetrics(
       .select("*", { count: "exact", head: true })
       .neq("status", "resolved");
 
+    // 4. Total Users (for context)
+    const { count: totalUsers } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true });
+
     // 5. AI Error Rate (failures / total requests in last 30 days)
     // NOTE: Current schema doesn't have an explicit 'error' column in ai_usage_events.
     // In Story 4.5+ we might add this. For now, we'll return 0 as a placeholder 
@@ -96,6 +101,7 @@ export async function getGlobalMetrics(
         activeUserCount: 0,
         openTicketCount: 0,
         totalUsers: 0,
+        aiErrorRate: 0,
         revenueEstimate: null,
       },
       error: err.message,
