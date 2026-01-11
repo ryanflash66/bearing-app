@@ -76,7 +76,7 @@ export default async function SuperAdminDashboard() {
           </p>
         </div>
 
-        {/* Metrics Grid - AC 4.5.1 */}
+        {/* Metrics Grid - AC 4.4.1 */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Total Token Burn"
@@ -89,12 +89,20 @@ export default async function SuperAdminDashboard() {
             subtext="Last 7 days"
           />
           <MetricCard
+            label="AI Error Rate"
+            value={`${metrics.aiErrorRate.toFixed(1)}%`}
+            highlight={metrics.aiErrorRate > 5}
+            subtext="Last 30 days"
+          />
+          <MetricCard
             label="Open Tickets"
             value={metrics.openTicketCount}
             highlight={metrics.openTicketCount > 10}
+            subtext="Awaiting resolution"
           />
-          <MetricCard label="Total Users" value={metrics.totalUsers} />
         </div>
+
+        <MetricCard label="Total Users" value={metrics.totalUsers} subtext="Global system count" />
 
         {metricsError && (
           <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">

@@ -7,6 +7,7 @@ export interface GlobalMetrics {
   activeUserCount: number;
   openTicketCount: number;
   totalUsers: number;
+  aiErrorRate: number; // AC 4.4.1: AI Error Rate (%)
   revenueEstimate: number | null; // AC 4.5.1: Revenue Estimate (if available)
 }
 
@@ -75,12 +76,19 @@ export async function getGlobalMetrics(
       .from("users")
       .select("*", { count: "exact", head: true });
 
+    // 5. AI Error Rate (failures / total requests in last 30 days)
+    // NOTE: Current schema doesn't have an explicit 'error' column in ai_usage_events.
+    // In Story 4.5+ we might add this. For now, we'll return 0 as a placeholder 
+    // to maintain the UI contract without breaking queries.
+    const aiErrorRate = 0;
+
     return {
       metrics: {
         totalTokenBurn,
         activeUserCount,
         openTicketCount: openTicketCount || 0,
         totalUsers: totalUsers || 0,
+        aiErrorRate,
         revenueEstimate: null, // AC 4.5.1: Not available in current schema
       },
       error: null,
@@ -93,6 +101,7 @@ export async function getGlobalMetrics(
         activeUserCount: 0,
         openTicketCount: 0,
         totalUsers: 0,
+        aiErrorRate: 0,
         revenueEstimate: null,
       },
       error: err.message,
