@@ -2,34 +2,46 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isSuperAdmin, getMaintenanceStatus } from "@/lib/super-admin";
 
 export async function updateProfileName(formData: FormData) {
   const supabase = await createClient();
-  const displayName = formData.get("displayName") as string;
+  const rawDisplayName = formData.get("displayName") as string;
+
+  // Validate and sanitize input
+  if (!rawDisplayName) {
+    return { error: "Display name is required." };
+  }
+
+  const displayName = rawDisplayName.trim();
+
+  if (displayName.length === 0) {
+    return { error: "Display name cannot be empty." };
+  }
+
+  if (displayName.length > 100) {
+    return { error: "Display name must be 100 characters or less." };
+  }
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Unauthorized");
+    return { error: "Unauthorized" };
   }
 
   // Check Maintenance Mode
   // If maintenance is enabled, Middleware (or RLS) should catch it, 
   // but explicitly checking here ensures the UI receives the correct error for better UX.
-  const { data: setting } = await supabase
-    .from("system_settings")
-    .select("value")
-    .eq("key", "maintenance_mode")
-    .single();
+  const status = await getMaintenanceStatus(supabase);
     
-  if (setting?.value?.enabled) {
-      // Check if user is super admin to bypass
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      if (profile?.role !== 'super_admin') {
-          return { error: setting.value.message || "System is under maintenance." };
-      }
+  if (status.enabled) {
+    // Check if user is super admin to bypass
+    const isSuper = await isSuperAdmin(supabase);
+    if (!isSuper) {
+      return { error: status.message || "System is under maintenance." };
+    }
   }
 
   const { error } = await supabase
