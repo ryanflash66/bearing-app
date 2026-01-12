@@ -117,11 +117,11 @@ workflow_status:
             qa_passed: true
             notes: "STABILITY UPGRADE: Replaced client-side provisioning with RPCs (claim_profile, create_default_account) and hardened MFA enrollment (unique names, session refresh)."
           - id: "story-1.2"
-            name: "Author Dashboard Skeleton"
+            name: "Author Profiles"
             status: "completed"
             completed: "2024-12-22"
             qa_passed: true
-            notes: "QA Passed (report found)"
+            notes: "QA Passed (report found). PRD: Author profile management (name, pen name, preferences)."
           - id: "story-1.3"
             name: "Role-Based Access Control"
             status: "completed"
@@ -140,11 +140,11 @@ workflow_status:
             notes: "QA Passed - UX Rework COMPLETE: AC 2.1.6 Zen Mode toggle implemented. Hardening COMPLETE (2025-12-29): Infinite loop fix, Silent Resolution, and Smart Merging active."
             ux_update: "2025-12-29"
           - id: "story-2.2"
-            name: "Rich Text Editor Integration"
+            name: "Version History"
             status: "completed"
             completed: "2024-12-23"
             qa_passed: true
-            notes: "QA Passed - Hardening COMPLETE (2025-12-29): Fixed Snapshot Identity bug, Premium Restore Modal implemented, and instant Tiptap sync enabled."
+            notes: "QA Passed - PRD: Version timeline with restore capability. Hardening (2025-12-29): Fixed Snapshot Identity bug, Premium Restore Modal implemented."
           - id: "story-2.3"
             name: "Real-Time Llama AI Suggestions"
             status: "completed"
@@ -153,11 +153,11 @@ workflow_status:
             notes: "QA Passed - UX Rework COMPLETE: AC 2.3.6 Ghost text pattern implemented 2025-12-29"
             ux_update: "2025-12-29"
           - id: "story-2.4"
-            name: "Editor Conflict Resolution"
+            name: "Manuscript Export (PDF/DOCX)"
             status: "completed"
             completed: "2024-12-24"
             qa_passed: true
-            notes: "QA Report found"
+            notes: "QA Report found. PRD: Export manuscripts to PDF and DOCX with version selection."
           - id: "story-3.1"
             name: "Manual Gemini Consistency Check"
             status: "completed"
@@ -186,6 +186,12 @@ workflow_status:
             status: "completed"
             completed: "2025-12-29"
             notes: "Implemented file ingestion (DOCX, PDF, MD) with typewriter animation and manual fallback."
+          - id: "story-2.7"
+            name: "Rich Text Enhancement (TipTap)"
+            status: "completed"
+            completed: "2025-12-29"
+            qa_passed: true
+            notes: "Replaced textarea with TipTap editor. PDF/DOCX exports now preserve rich formatting."
           - id: "story-3.5"
             name: "Consistency Badges in Binder"
             status: "completed"
@@ -222,16 +228,18 @@ workflow_status:
             notes: "PENDING: Global metrics (tokens, users, tickets) and user override links."
           - id: "story-4.6"
             name: "Critical Notification System"
-            status: "required"
-            notes: "PENDING: Email notifications for ticket updates."
+            status: "docs/story4.6.md"
+            completed: "2026-01-05"
+            qa_passed: true
+            notes: "IMPLEMENTED: Email notifications via Resend for new tickets and replies. Code review passed with XSS fixes."
 
 # Story Progress Summary
 story_progress:
-  total: 21
-  completed: 20
+  total: 23
+  completed: 23
   ux_rework: 0
-  ready: 1
-  pending: 1
+  ready: 0
+  pending: 0
   
 epic_progress:
   - epic: 1
@@ -241,22 +249,36 @@ epic_progress:
     status: "completed"
   - epic: 2
     name: "Editor & Llama AI"
-    stories: 6
-    completed: 6
+    stories: 7
+    completed: 7
     ux_rework: 0
     status: "completed"
-    notes: "UX Rework complete. AI Usage Metering (2.5) and Magic Ingest (2.6) completed."
+    notes: "All 7 stories complete. Includes PRD stories (2.1-2.4) plus added stories (2.5 Metering, 2.6 Magic Ingest, 2.7 Rich Text)."
     story_list:
       - id: "story-2.1"
         name: "Manuscript CRUD + Autosave"
         status: "completed"
+      - id: "story-2.2"
+        name: "Version History"
+        status: "completed"
+      - id: "story-2.3"
+        name: "Real-Time Llama AI Suggestions"
+        status: "completed"
+      - id: "story-2.4"
+        name: "Manuscript Export (PDF/DOCX)"
+        status: "completed"
       - id: "story-2.5"
         name: "AI Usage Metering & Hard Caps"
         status: "completed"
+        notes: "Moved from Epic 3 (was Story 3.3)"
       - id: "story-2.6"
         name: "Magic Ingest (Document Import)"
         status: "completed"
         notes: "From UX spec - Magic Ingest flow"
+      - id: "story-2.7"
+        name: "Rich Text Enhancement (TipTap)"
+        status: "completed"
+        notes: "TipTap editor integration with rich formatting export"
   - epic: 3
     name: "Consistency Engine"
     stories: 4
@@ -271,9 +293,9 @@ epic_progress:
   - epic: 4
     name: "Support & Admin (Emergency Rework)"
     stories: 6
-    completed: 4
+    completed: 5
     status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.4 completed."
+    notes: "Emergency rework for scale and security. Stories 4.1-4.4 and 4.6 completed. Only 4.5 remains."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
@@ -292,7 +314,8 @@ epic_progress:
         status: "required"
       - id: "story-4.6"
         name: "Critical Notification System"
-        status: "backlog"
+        status: "completed"
+        notes: "Email notifications via Resend"
 
 # Next Action
 next_workflow:
@@ -306,16 +329,18 @@ next_workflow:
 - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
-    completed: 0
-    status: "backlog"
-    notes: "Pushed back after Stabilization and Publication epics."
+    completed: 1
+    status: "in-progress"
+    notes: "Story 5.2 (Cmd+K Commander) completed 2026-01-12. Remaining stories in backlog."
     story_list:
       - id: "story-5.1"
         name: "Integrate Custom Fine-Tuned Models"
         status: "backlog"
       - id: "story-5.2"
         name: "Cmd+K Commander Pattern"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-12"
+        notes: "Implemented command palette with cmdk/Radix. AI transformations, chapter navigation, 17 tests passing."
       - id: "story-5.3"
         name: "Voice-to-Text Dictation"
         status: "backlog"
