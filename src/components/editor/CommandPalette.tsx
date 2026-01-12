@@ -21,7 +21,7 @@ interface CommandPaletteProps {
   onOpenChange: (open: boolean) => void;
   commands: CommandItem[];
   placeholder?: string;
-  onNavigate?: (chapterIndex: number) => void;
+  onNavigate?: (target: number | string) => void;
   chapters?: { title: string; index: number }[];
   characters?: { name: string; firstMention: number }[];
   isLoading?: boolean;
@@ -319,9 +319,13 @@ export default function CommandPalette({
                   {chapters.map((chapter, idx) => (
                     <Command.Item
                       key={`chapter-${idx}`}
+                      // Use header content for navigation search for reliability
                       value={`chapter ${idx + 1} ${chapter.title}`}
                       onSelect={() => {
-                        onNavigate?.(chapter.index);
+                        // Pass unique identifier if possible, else title. 
+                        // For chapters, we construct the likely header string to search for:
+                        const headerText = `${"#".repeat(1)} ${chapter.title}`;
+                        onNavigate?.(chapter.title); 
                         setNavigationConfirmation(`Navigated to Chapter ${idx + 1}: ${chapter.title}`);
                       }}
                       className="command-palette-item"
@@ -353,7 +357,8 @@ export default function CommandPalette({
                         key={`character-${idx}`}
                         value={`find character ${char.name}`}
                         onSelect={() => {
-                          onNavigate?.(char.firstMention);
+                          // Search for character name
+                          onNavigate?.(char.name);
                           setNavigationConfirmation(`Found "${char.name}" - navigated to first mention`);
                         }}
                         className="command-palette-item"

@@ -18,6 +18,7 @@ import TiptapEditor from "../editor/TiptapEditor";
 import { Editor } from "@tiptap/react";
 import CommandPalette from "../editor/CommandPalette";
 import { useCommandPalette } from "@/lib/useCommandPalette";
+import { extractCharacters, saveSelection, restoreSelection, findFirstOccurrence } from "@/lib/manuscript-utils";
 
 
 interface ManuscriptEditorProps {
@@ -185,55 +186,15 @@ export default function ManuscriptEditor({
   }, [content]);
 
   // Extract character names from content (capitalized words that appear multiple times)
-  const characters = useMemo(() => {
-    if (!content) return [];
-    // Match capitalized words that look like names (2+ chars, not common words)
-    const commonWords = new Set([
-      "The", "This", "That", "These", "Those", "What", "When", "Where", "Which", "Who",
-      "How", "Why", "Chapter", "Part", "Section", "Book", "Story", "Page", "Monday",
-      "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "January",
-      "February", "March", "April", "May", "June", "July", "August", "September",
-      "October", "November", "December", "I", "He", "She", "It", "They", "We", "You"
-    ]);
-
-    const namePattern = /\b([A-Z][a-z]{2,})\b/g;
-    const nameCounts = new Map<string, { count: number; firstMention: number }>();
-
-    let match;
-    while ((match = namePattern.exec(content)) !== null) {
-      const name = match[1];
-      if (commonWords.has(name)) continue;
-
-      const existing = nameCounts.get(name);
-      if (existing) {
-        existing.count++;
-      } else {
-        nameCounts.set(name, { count: 1, firstMention: match.index });
-      }
-    }
-
-    // Return names that appear 3+ times (likely characters)
-    return Array.from(nameCounts.entries())
-      .filter(([, data]) => data.count >= 3)
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 50) // Limit to top 50
-      .map(([name, data]) => ({
-        name,
-        firstMention: data.firstMention,
-      }));
-  }, [content]);
+  // Extract character names from content
+  const characters = useMemo(() => extractCharacters(content), [content]);
 
   // Store cursor position for restoration after command palette closes
   const savedCursorPosition = useRef<number | null>(null);
 
   // Handle command palette close - restore focus to editor
   const handleCommandPaletteClose = useCallback(() => {
-    if (editor) {
-      editor.view.focus();
-      if (savedCursorPosition.current !== null) {
-        editor.commands.setTextSelection(savedCursorPosition.current);
-      }
-    }
+    restoreSelection(editor, savedCursorPosition);
   }, [editor]);
 
   // Handle AI transformation from Command Palette
@@ -315,20 +276,36 @@ export default function ManuscriptEditor({
     enabled: true,
     onTransform: async (instruction, text) => {
       // Save cursor position before transformation
-      if (editor) {
-        savedCursorPosition.current = editor.state.selection.from;
-      }
+      saveSelection(editor, savedCursorPosition);
       await handleCommandTransform(instruction, text);
     },
-    onNavigate: (chapterIndex) => {
+    onNavigate: (target) => {
       if (editor) {
-        editor.commands.setTextSelection(chapterIndex);
-        editor.view.focus();
-        const { node } = editor.view.domAtPos(chapterIndex);
-        if (node && node instanceof Element) {
-          node.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else if (node && node.parentElement) {
-          node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        let pos: number | null = null;
+        
+        if (typeof target === 'string') {
+          // Search for first occurrence of the text (name or chapter title)
+          pos = findFirstOccurrence(editor, target);
+        } else {
+          // Fallback for number (though discouraged due to drift)
+          pos = target;
+        }
+
+        if (pos !== null) {
+          editor.commands.setTextSelection(pos);
+          editor.view.focus();
+          
+          // Try to scroll into view (robustly)
+          try {
+            const { node } = editor.view.domAtPos(pos);
+            if (node instanceof Element) {
+              node.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else if (node.parentElement) {
+              node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          } catch (e) {
+            // Ignore scroll errors if DOM pos not ready
+          }
         }
       }
     },
@@ -1239,24 +1216,36 @@ export default function ManuscriptEditor({
       <CommandPalette
         open={commandPalette.isOpen}
         onOpenChange={(open) => {
-          // Save cursor position when opening
-          if (open && editor) {
-            savedCursorPosition.current = editor.state.selection.from;
-          }
-          commandPalette.setIsOpen(open);
-        }}
+              if (open) {
+                saveSelection(editor, savedCursorPosition);
+              }
+              commandPalette.setIsOpen(open);
+            }}
         commands={commandPalette.commands}
         chapters={chapters}
         characters={characters}
-        onNavigate={(chapterIndex) => {
+        onNavigate={(target) => {
           if (editor) {
-            editor.commands.setTextSelection(chapterIndex);
-            editor.view.focus();
-            const { node } = editor.view.domAtPos(chapterIndex);
-            if (node && node instanceof Element) {
-              node.scrollIntoView({ behavior: "smooth", block: "start" });
-            } else if (node && node.parentElement) {
-              node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            let pos: number | null = null;
+            if (typeof target === 'string') {
+              pos = findFirstOccurrence(editor, target);
+            } else {
+              pos = target;
+            }
+
+            if (pos !== null) {
+              editor.commands.setTextSelection(pos);
+              editor.view.focus();
+              try {
+                const { node } = editor.view.domAtPos(pos);
+                if (node instanceof Element) {
+                  node.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else if (node.parentElement) {
+                  node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              } catch (e) {
+                // Ignore scroll errors
+              }
             }
           }
         }}

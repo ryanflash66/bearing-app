@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { CommandItem } from "@/components/editor/CommandPalette";
 
 interface UseCommandPaletteOptions {
   enabled?: boolean;
   onTransform?: (instruction: string, selectedText: string) => Promise<void>;
-  onNavigate?: (chapterIndex: number) => void;
+  onNavigate?: (target: number | string) => void;
   onClose?: () => void; // Called when palette closes to restore editor focus
   selectedText?: string;
   chapters?: { title: string; index: number }[];
@@ -32,12 +32,29 @@ export function useCommandPalette({
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   // Wrapper to handle close with callback
   const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);
     if (!open && onClose) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
       // Small delay to ensure dialog animation completes
-      setTimeout(() => onClose(), 50);
+      timeoutRef.current = setTimeout(() => {
+        onClose();
+        timeoutRef.current = null;
+      }, 50);
     }
   }, [onClose]);
 
