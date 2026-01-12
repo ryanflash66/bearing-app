@@ -4,11 +4,10 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
-import AdminReplyForm from "@/components/admin/AdminReplyForm";
 import TicketStatusSelect from "@/components/admin/TicketStatusSelect";
 import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
-import { formatDate } from "@/components/support/SupportShared";
 import { getAdminAwareClient } from "@/lib/supabase-admin";
+import TicketConversation from "@/components/support/TicketConversation";
 
 export default async function AdminTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -50,7 +49,7 @@ export default async function AdminTicketDetailPage({ params }: { params: Promis
     .from("support_messages")
     .select("*")
     .eq("ticket_id", id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true }); // Chat order for TicketConversation
 
   return (
     <DashboardLayout
@@ -90,50 +89,13 @@ export default async function AdminTicketDetailPage({ params }: { params: Promis
             </div>
           </div>
           
-          {/* Reply Form */}
-          <div className="px-4 py-5 sm:p-6 bg-slate-50 border-b border-slate-200">
-             <h4 className="text-sm font-medium text-slate-900 mb-2">Reply to author</h4>
-             <AdminReplyForm ticketId={ticket.id} />
-          </div>
-
-          <div className="px-4 py-5 sm:p-6">
-            <ul role="list" className="space-y-8">
-              {messages && messages.map((message: any) => {
-                 // Determine sender
-                 // If sender_user_id === ticket.user.id -> Author
-                 // Else -> Support/Admin
-                 const isAuthor = message.sender_user_id === ticket.user.id;
-                 const isMe = message.sender_user_id === profile?.id; // If I replied
-                 
-                 return (
-                  <li key={message.id} className={`flex ${isMe ? 'justify-end' : ''}`}>
-                    <div className={`relative max-w-xl rounded-lg px-4 py-3 shadow-sm ${
-                        isMe ? 'bg-indigo-50 text-slate-900' : 
-                        isAuthor ? 'bg-white border border-slate-200 text-slate-700' :
-                        'bg-amber-50 border border-amber-200 text-amber-800' // Other admins?
-                    }`}>
-                        <div className="flex items-center justify-between space-x-2 mb-1">
-                            <span className="text-xs font-semibold">
-                                {isMe ? "You" : isAuthor ? "Author" : "Support"}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                                {formatDate(message.created_at)}
-                            </span>
-                        </div>
-                      <div className="text-sm whitespace-pre-wrap">
-                        {message.message}
-                      </div>
-                      {message.is_internal && (
-                          <div className="mt-2 text-xs text-red-500 font-medium border-t border-red-100 pt-1">
-                              Internal Note
-                          </div>
-                      )}
-                    </div>
-                  </li>
-                 );
-              })}
-            </ul>
-          </div>
+          <TicketConversation
+            ticketId={ticket.id}
+            initialMessages={messages || []}
+            currentUserId={profile?.id || ""}
+            ticketOwnerId={ticket.user_id}
+            isAdmin={true}
+          />
         </div>
         </div>
         
