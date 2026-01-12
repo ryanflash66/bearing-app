@@ -33,7 +33,7 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  // Redirect Super Admins to the God Mode Dashboard
+  // Redirect Super Admins to the Super Admin Dashboard
   if (profile.role === "super_admin") {
     redirect("/dashboard/admin/super");
   }
