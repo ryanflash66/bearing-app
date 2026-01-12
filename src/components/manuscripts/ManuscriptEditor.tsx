@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAutosave, AutosaveState } from "@/lib/useAutosave";
 import { createClient } from "@/utils/supabase/client";
@@ -16,6 +16,8 @@ import { useGhostText } from "@/lib/useGhostText";
 import { GhostTextOverlay } from "./GhostTextDisplay";
 import TiptapEditor from "../editor/TiptapEditor";
 import { Editor } from "@tiptap/react";
+import CommandPalette from "../editor/CommandPalette";
+import { useCommandPalette } from "@/lib/useCommandPalette";
 
 
 interface ManuscriptEditorProps {
