@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { getOrCreateProfile } from "@/lib/profile";
+import { ProfileForm } from "./profile-form";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -77,6 +78,3 @@ export default async function SettingsPage() {
     </DashboardLayout>
   );
 }
-
-import { updateProfileName } from "./actions";
-import { ProfileForm } from "./profile-form";
