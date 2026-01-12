@@ -23,6 +23,7 @@ interface CommandPaletteProps {
   placeholder?: string;
   onNavigate?: (chapterIndex: number) => void;
   chapters?: { title: string; index: number }[];
+  characters?: { name: string; firstMention: number }[];
   isLoading?: boolean;
   loadingMessage?: string;
 }
@@ -34,6 +35,7 @@ export default function CommandPalette({
   placeholder = "Type a command or search...",
   onNavigate,
   chapters = [],
+  characters = [],
   isLoading = false,
   loadingMessage = "Processing...",
 }: CommandPaletteProps) {
@@ -89,6 +91,46 @@ export default function CommandPalette({
     return null;
   }, []);
 
+  // Parse character search commands like "find character John" or "find John"
+  const parseCharacterCommand = useCallback((input: string): string | null => {
+    const patterns = [
+      /^find\s+character\s+(.+)$/i,
+      /^find\s+(.+)$/i,
+      /^character\s+(.+)$/i,
+      /^search\s+(.+)$/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = input.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+    return null;
+  }, []);
+
+  // Handle character navigation
+  const handleCharacterNavigation = useCallback((characterName: string) => {
+    if (characters.length === 0) {
+      setNavigationConfirmation("No characters detected in manuscript");
+      return;
+    }
+
+    // Find matching character (case-insensitive partial match)
+    const matchedChar = characters.find(c =>
+      c.name.toLowerCase().includes(characterName.toLowerCase())
+    );
+
+    if (!matchedChar) {
+      setNavigationConfirmation(`Character "${characterName}" not found`);
+      return;
+    }
+
+    onNavigate?.(matchedChar.firstMention);
+    setNavigationConfirmation(`Found "${matchedChar.name}" - navigated to first mention`);
+    setSearch("");
+  }, [characters, onNavigate]);
+
   // Handle navigation command
   const handleNavigation = useCallback((chapterNum: number) => {
     if (chapters.length === 0) {
@@ -116,10 +158,18 @@ export default function CommandPalette({
         if (chapterNum !== null) {
           e.preventDefault();
           handleNavigation(chapterNum);
+          return;
+        }
+
+        const characterName = parseCharacterCommand(search.trim());
+        if (characterName !== null) {
+          e.preventDefault();
+          handleCharacterNavigation(characterName);
+          return;
         }
       }
     },
-    [search, onNavigate, parseNavigationCommand, handleNavigation]
+    [search, onNavigate, parseNavigationCommand, handleNavigation, parseCharacterCommand, handleCharacterNavigation]
   );
 
   // Group commands by category
