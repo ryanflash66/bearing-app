@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Command } from "cmdk";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 export interface CommandItem {
   id: string;
@@ -107,13 +108,19 @@ export default function CommandPalette({
     setSearch("");
   }, [chapters, onNavigate]);
 
-  // Check for navigation command on search change
-  useEffect(() => {
-    const chapterNum = parseNavigationCommand(search.trim());
-    if (chapterNum !== null && onNavigate) {
-      handleNavigation(chapterNum);
-    }
-  }, [search, parseNavigationCommand, handleNavigation, onNavigate]);
+  // Handle key down events for explicit navigation
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && onNavigate) {
+        const chapterNum = parseNavigationCommand(search.trim());
+        if (chapterNum !== null) {
+          e.preventDefault();
+          handleNavigation(chapterNum);
+        }
+      }
+    },
+    [search, onNavigate, parseNavigationCommand, handleNavigation]
+  );
 
   // Group commands by category
   const aiCommands = commands.filter(c => c.category === "ai");
@@ -126,9 +133,15 @@ export default function CommandPalette({
         <Dialog.Overlay className="command-palette-overlay" />
         <Dialog.Content
           className="command-palette-content"
-          aria-label="Command palette"
+          aria-describedby={undefined}
           onEscapeKeyDown={() => onOpenChange(false)}
         >
+          <VisuallyHidden.Root>
+            <Dialog.Title>Command palette</Dialog.Title>
+            <Dialog.Description>
+              Search and execute commands using keyboard navigation
+            </Dialog.Description>
+          </VisuallyHidden.Root>
           <Command
             className="command-palette"
             shouldFilter={true}
@@ -139,6 +152,7 @@ export default function CommandPalette({
                 ref={inputRef}
                 value={search}
                 onValueChange={setSearch}
+                onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 className="command-palette-input"
                 aria-label="Search commands"

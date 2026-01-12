@@ -236,9 +236,9 @@ workflow_status:
 # Story Progress Summary
 story_progress:
   total: 23
-  completed: 22
+  completed: 23
   ux_rework: 0
-  ready: 1
+  ready: 0
   pending: 0
   
 epic_progress:
@@ -329,16 +329,18 @@ next_workflow:
 - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
-    completed: 0
-    status: "backlog"
-    notes: "Pushed back after Stabilization and Publication epics."
+    completed: 1
+    status: "in-progress"
+    notes: "Story 5.2 (Cmd+K Commander) completed 2026-01-12. Remaining stories in backlog."
     story_list:
       - id: "story-5.1"
         name: "Integrate Custom Fine-Tuned Models"
         status: "backlog"
       - id: "story-5.2"
         name: "Cmd+K Commander Pattern"
-        status: "ready-for-dev"
+        status: "completed"
+        completed: "2026-01-12"
+        notes: "Implemented command palette with cmdk/Radix. AI transformations, chapter navigation, 17 tests passing."
       - id: "story-5.3"
         name: "Voice-to-Text Dictation"
         status: "backlog"
