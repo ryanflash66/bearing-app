@@ -95,5 +95,43 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
+  // Story 4.5: Global Maintenance Mode Check
+  // Block write operations (POST, PUT, DELETE, PATCH) when maintenance is enabled
+  const isWriteMethod = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
+  
+  // Allowlist for system routes that must bypass maintenance
+  const isBypassedPath = [
+    "/api/auth",      // Auth flows (login/logout)
+    "/api/webhooks",  // External webhooks
+    "/api/internal",  // Internal system jobs
+  ].some(prefix => pathname.startsWith(prefix));
+
+  if (isWriteMethod && !isBypassedPath) {
+    try {
+      // Use shared helper to get status (AC 4.5.3)
+      const { getMaintenanceStatus, isSuperAdmin } = await import("@/lib/super-admin");
+      const status = await getMaintenanceStatus(supabase);
+
+      if (status.enabled) {
+        // exempt super admins
+        let isSuper = false;
+        if (user) {
+          isSuper = await isSuperAdmin(supabase);
+        }
+
+        if (!isSuper) {
+          return NextResponse.json(
+            { error: status.message || "System is under maintenance. Please try again later." },
+            { status: 503 }
+          );
+        }
+      }
+    } catch (err) {
+      // CODE REVIEW FIX: Fail open. 
+      // If DB check fails, we assume maintenance is OFF to prevent accidental lockout.
+      console.error("Maintenance check failed in middleware (failing open):", err);
+    }
+  }
+
   return response;
 }
