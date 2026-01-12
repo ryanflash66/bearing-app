@@ -107,8 +107,10 @@ export async function getGlobalMetrics(
       error: err.message,
     };
   }
+}
 
-  }
+
+
 
 
 /**

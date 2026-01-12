@@ -3,11 +3,9 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import Link from "next/link";
-// ... existing imports
 import MaintenanceCallout from "@/components/admin/MaintenanceCallout";
 import MaintenanceToggle from "@/components/admin/MaintenanceToggle";
 import { isSuperAdmin, getGlobalMetrics, getMaintenanceStatus } from "@/lib/super-admin";
-// ... existing imports
 
 
 export default async function SuperAdminDashboard() {
@@ -57,7 +55,6 @@ export default async function SuperAdminDashboard() {
         <MaintenanceCallout enabled={maintenanceStatus.enabled} message={maintenanceStatus.message} />
 
         {/* Metrics Grid - AC 4.4.1 */}
-        {/* ... (rest of the grid code) ... */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Total Token Burn"

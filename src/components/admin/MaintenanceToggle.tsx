@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toggleMaintenanceModeAction } from "@/actions/super-admin-actions";
 import { useRouter } from "next/navigation";
 
@@ -10,9 +10,8 @@ interface MaintenanceToggleProps {
 
 export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleProps) {
   const [enabled, setEnabled] = useState(initialEnabled);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
-
 
   const handleToggle = async () => {
     if (!confirm(
@@ -23,17 +22,16 @@ export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleP
       return;
     }
 
-    setLoading(true);
-    try {
-      await toggleMaintenanceModeAction(!enabled);
-      setEnabled(!enabled);
-      // router.refresh(); // Action already revalidates
-    } catch (error) {
-      console.error("Failed to toggle maintenance mode:", error);
-      alert("Failed to update maintenance mode. See console for details.");
-    } finally {
-      setLoading(false);
-    }
+    startTransition(async () => {
+      try {
+        await toggleMaintenanceModeAction(!enabled);
+        setEnabled(!enabled);
+        // Action already revalidates, but we can keep client state in sync
+      } catch (error) {
+        console.error("Failed to toggle maintenance mode:", error);
+        alert("Failed to update maintenance mode. See console for details.");
+      }
+    });
   };
 
   return (
@@ -47,7 +45,7 @@ export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleP
         </div>
         <button
           onClick={handleToggle}
-          disabled={loading}
+          disabled={isPending}
           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
             enabled ? "bg-amber-600" : "bg-slate-200"
           }`}
