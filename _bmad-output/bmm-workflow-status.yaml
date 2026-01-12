@@ -338,7 +338,7 @@ next_workflow:
         status: "backlog"
       - id: "story-5.2"
         name: "Cmd+K Commander Pattern"
-        status: "backlog"
+        status: "ready-for-dev"
       - id: "story-5.3"
         name: "Voice-to-Text Dictation"
         status: "backlog"

@@ -86,7 +86,7 @@ As an author, I can open a quick-action command palette using `Cmd+K` (Mac) or `
 
 ## Status
 
-**backlog**
+**ready-for-dev**
 
 ---
 
