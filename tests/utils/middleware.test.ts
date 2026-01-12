@@ -4,7 +4,7 @@
  */
 
 import { updateSession } from "@/utils/supabase/middleware";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Mock dependencies
@@ -20,6 +20,14 @@ jest.mock("next/server", () => ({
     },
     NextRequest: jest.fn(),
 }));
+
+// Mock the dynamic import module at top level
+jest.mock("@/lib/super-admin", () => ({
+    getMaintenanceStatus: jest.fn(),
+    isSuperAdmin: jest.fn(),
+}));
+
+import { getMaintenanceStatus, isSuperAdmin } from "@/lib/super-admin";
 
 describe("Middleware updateSession", () => {
     let mockSupabase: any;
@@ -52,54 +60,22 @@ describe("Middleware updateSession", () => {
         };
 
         (createServerClient as jest.Mock).mockReturnValue(mockSupabase);
+        
+        // Default mock behaviors
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: false });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
     });
 
     it("allows request when maintenance is disabled", async () => {
-        // Mock system_settings = { enabled: false }
-        mockSupabase.from.mockImplementation((table: string) => {
-            if (table === "system_settings") {
-                return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ data: { value: { enabled: false } } }),
-                        }),
-                    }),
-                };
-            }
-            return { select: jest.fn() };
-        });
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: false });
 
         const response = await updateSession(mockRequest as any);
-        // Should be NextResponse.next() which we mocked
         expect(NextResponse.next).toHaveBeenCalled();
-        // Check status is undefined (default next()) or we check strict equality if we mocked it return obj
     });
 
     it("blocks POST request when maintenance is enabled and user is not super admin", async () => {
-        // Maintenance enabled
-         mockSupabase.from.mockImplementation((table: string) => {
-            if (table === "system_settings") {
-                return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ 
-                                data: { value: { enabled: true, message: "Down for maintenance" } } 
-                            }),
-                        }),
-                    }),
-                };
-            }
-            if (table === "users") { // Role check
-                 return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ data: { role: "user" } }),
-                        }),
-                    }),
-                };
-            }
-            return { select: jest.fn() };
-        });
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true, message: "Down for maintenance" });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
 
         const response = await updateSession(mockRequest as any);
         
@@ -110,55 +86,36 @@ describe("Middleware updateSession", () => {
     });
 
     it("allows POST request when maintenance is enabled if user IS super admin", async () => {
-        // Maintenance enabled
-         mockSupabase.from.mockImplementation((table: string) => {
-            if (table === "system_settings") {
-                return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ 
-                                data: { value: { enabled: true } } 
-                            }),
-                        }),
-                    }),
-                };
-            }
-            if (table === "users") { // Role check
-                 return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ data: { role: "super_admin" } }),
-                        }),
-                    }),
-                };
-            }
-            return { select: jest.fn() };
-        });
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(true);
 
         const response = await updateSession(mockRequest as any);
         expect(NextResponse.next).toHaveBeenCalled();
     });
 
-     it("allows GET request even if maintenance is enabled", async () => {
-        mockRequest.method = "GET";
-         mockSupabase.from.mockImplementation((table: string) => {
-            if (table === "system_settings") {
-                return {
-                    select: jest.fn().mockReturnValue({
-                        eq: jest.fn().mockReturnValue({
-                            single: jest.fn().mockResolvedValue({ 
-                                data: { value: { enabled: true } } 
-                            }),
-                        }),
-                    }),
-                };
-            }
-             return { select: jest.fn() };
-        });
+     it("allows POST request to allowlisted path even when maintenance is enabled", async () => {
+        // Even if enabled...
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
 
+        mockRequest.nextUrl.pathname = "/api/webhooks/stripe";
+        mockRequest.url = "http://localhost/api/webhooks/stripe";
+        
         const response = await updateSession(mockRequest as any);
         expect(NextResponse.next).toHaveBeenCalled();
-        // Should NOT have checked users/role because maintenance check skipped for GET
-        expect(mockSupabase.from).not.toHaveBeenCalledWith("users");
+        
+        // Should NOT have called getMaintenanceStatus because it matches allowlist
+        expect(getMaintenanceStatus).not.toHaveBeenCalled();
+    });
+
+    it("fails open (allows request) if maintenance check throws error", async () => {
+         (getMaintenanceStatus as jest.Mock).mockRejectedValue(new Error("DB Error"));
+
+        // Trigger maintenance check
+        mockRequest.nextUrl.pathname = "/api/protected/action";
+        
+        const response = await updateSession(mockRequest as any);
+        // Should catch error and proceed
+        expect(NextResponse.next).toHaveBeenCalled();
     });
 });

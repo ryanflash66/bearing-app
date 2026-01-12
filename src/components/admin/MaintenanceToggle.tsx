@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { toggleMaintenanceMode } from "@/lib/super-admin";
+import { toggleMaintenanceModeAction } from "@/actions/super-admin-actions";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 
 interface MaintenanceToggleProps {
   initialEnabled: boolean;
@@ -13,7 +12,7 @@ export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleP
   const [enabled, setEnabled] = useState(initialEnabled);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+
 
   const handleToggle = async () => {
     if (!confirm(
@@ -26,9 +25,9 @@ export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleP
 
     setLoading(true);
     try {
-      await toggleMaintenanceMode(supabase, !enabled);
+      await toggleMaintenanceModeAction(!enabled);
       setEnabled(!enabled);
-      router.refresh();
+      // router.refresh(); // Action already revalidates
     } catch (error) {
       console.error("Failed to toggle maintenance mode:", error);
       alert("Failed to update maintenance mode. See console for details.");

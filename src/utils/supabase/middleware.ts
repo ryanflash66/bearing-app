@@ -97,44 +97,39 @@ export async function updateSession(request: NextRequest) {
 
   // Story 4.5: Global Maintenance Mode Check
   // Block write operations (POST, PUT, DELETE, PATCH) when maintenance is enabled
-  // Exemptions:
-  // 1. Super Admins
-  // 2. Auth routes (/api/auth/*) which are needed for login/logout
   const isWriteMethod = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
   
-  if (isWriteMethod && !pathname.startsWith("/api/auth")) {
-    try {
-      const { data: setting } = await supabase
-        .from("system_settings")
-        .select("value")
-        .eq("key", "maintenance_mode")
-        .single();
-        
-      // Explicitly cast to unknown then to expected type to avoid TS errors if value is Json
-      const maintenance = setting?.value as unknown as { enabled: boolean; message?: string } | undefined;
+  // Allowlist for system routes that must bypass maintenance
+  const isBypassedPath = [
+    "/api/auth",      // Auth flows (login/logout)
+    "/api/webhooks",  // External webhooks
+    "/api/internal",  // Internal system jobs
+  ].some(prefix => pathname.startsWith(prefix));
 
-      if (maintenance?.enabled) {
-        // Allow Super Admins to bypass
-        let isSuperAdmin = false;
+  if (isWriteMethod && !isBypassedPath) {
+    try {
+      // Use shared helper to get status (AC 4.5.3)
+      const { getMaintenanceStatus, isSuperAdmin } = await import("@/lib/super-admin");
+      const status = await getMaintenanceStatus(supabase);
+
+      if (status.enabled) {
+        // exempt super admins
+        let isSuper = false;
         if (user) {
-          const { data: profile } = await supabase
-            .from("users")
-            .select("role")
-            .eq("auth_id", user.id)
-            .single();
-          isSuperAdmin = profile?.role === "super_admin";
+          isSuper = await isSuperAdmin(supabase);
         }
 
-        if (!isSuperAdmin) {
+        if (!isSuper) {
           return NextResponse.json(
-            { error: maintenance.message || "System is under maintenance. Please try again later." },
+            { error: status.message || "System is under maintenance. Please try again later." },
             { status: 503 }
           );
         }
       }
     } catch (err) {
-      // Fail open: If DB check fails, assume maintenance is OFF to prevent lockout
-      console.error("Maintenance check failed in middleware:", err);
+      // CODE REVIEW FIX: Fail open. 
+      // If DB check fails, we assume maintenance is OFF to prevent accidental lockout.
+      console.error("Maintenance check failed in middleware (failing open):", err);
     }
   }
 
