@@ -21,6 +21,7 @@ interface TicketConversationProps {
   initialMessages: SupportMessage[];
   currentUserId: string;
   ticketOwnerId: string; // The user who created the ticket
+  isAdmin?: boolean; // New prop
 }
 
 // Extracted keyboard handler (per code review)
@@ -37,6 +38,7 @@ export default function TicketConversation({
   initialMessages,
   currentUserId,
   ticketOwnerId,
+  isAdmin = false,
 }: TicketConversationProps) {
   const [messages, setMessages] = useState<SupportMessage[]>(initialMessages);
   const [loading, setLoading] = useState(false);
@@ -57,11 +59,17 @@ export default function TicketConversation({
 
   async function fetchMessages() {
     setFetchError(null);
-    const { data, error: supabaseError } = await supabase
+    let query = supabase
       .from("support_messages")
       .select("*")
-      .eq("ticket_id", ticketId)
-      .eq("is_internal", false)
+      .eq("ticket_id", ticketId);
+      
+    // Only filter out internal messages if NOT admin
+    if (!isAdmin) {
+      query = query.eq("is_internal", false);
+    }
+
+    const { data, error: supabaseError } = await query
       .order("created_at", { ascending: true }); // Chronological: oldest first
 
     if (supabaseError) {
@@ -125,7 +133,8 @@ export default function TicketConversation({
         },
         (payload) => {
           const newMessage = payload.new as SupportMessage;
-          if (!newMessage.is_internal) {
+          // Show message if Admin OR if it's not internal
+          if (isAdmin || !newMessage.is_internal) {
             setMessages((prev) => {
               if (prev.some((m) => m.id === newMessage.id)) return prev;
               return [...prev, newMessage];
