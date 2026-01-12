@@ -26,6 +26,20 @@ All production environment variables must be manually mirrored in the Vercel Das
 - `src/proxy.ts`: Next.js Middleware (renamed from `middleware.ts` in Next.js 16+).
 - `_bmad-output/bmm-workflow-status.yaml`: Current project progress.
 
+## Critical Technical Lessons (Added 2026-01-11)
+
+### 1. Next.js 15+ Async Params
+*   **Issue:** Route parameters (`params`) in server components are now PROMISES. Accessing them synchronously (e.g., `params.id`) causes `undefined` errors or `invalid input syntax for type uuid`.
+*   **Fix:** ALWAYS await params: `const { id } = await params;` regarding of what the types say (types might lag).
+
+### 2. Supabase Ambiguous Foreign Keys (`PGRST201`)
+*   **Issue:** If a table has multiple FKs to the same target (e.g., `support_tickets` has `user_id` -> `users` AND `assigned_to` -> `users`), a simple `.select('*, user:users(...)')` WILL FAIL.
+*   **Fix:** You MUST specify the constraint name: `.select('*, user:users!support_tickets_user_id_fkey(...)')`.
+
+### 3. Service Role Bypass for Admins
+*   **Issue:** Complex RLS policies can sometimes produce "Phantom 404s" for Admins if the policy logic checks a relation that RLS itself blocks access to (infinite recursion or circular dependency).
+*   **Fix:** For Super Admin features, use `getAdminAwareClient` (from `src/lib/supabase-admin.ts`) which cleanly bypasses RLS using the Service Role key when appropriate.
+
 ## ⚠️ Known Warnings
 The following build/install warnings are known and safe to ignore for production:
 - **`inflight@1.0.6` (Memory Leak)**: Transitive dependency via `ts-jest` -> `babel-plugin-istanbul`. Only affects test execution, not the production build.
