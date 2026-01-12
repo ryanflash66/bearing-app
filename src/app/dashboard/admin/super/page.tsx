@@ -2,13 +2,32 @@ import { createClient } from "@/utils/supabase/server";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
+import Link from "next/link";
 // ... existing imports
 import MaintenanceCallout from "@/components/admin/MaintenanceCallout";
 import MaintenanceToggle from "@/components/admin/MaintenanceToggle";
 import { isSuperAdmin, getGlobalMetrics, getMaintenanceStatus } from "@/lib/super-admin";
 // ... existing imports
 
-// ... existing code ...
+
+export default async function SuperAdminDashboard() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
+
+  const isSuper = await isSuperAdmin(supabase);
+  if (!isSuper) {
+    redirect("/dashboard");
+  }
+
 
   // Fetch metrics
   const { metrics, error: metricsError } = await getGlobalMetrics(supabase);
@@ -136,5 +155,35 @@ import { isSuperAdmin, getGlobalMetrics, getMaintenanceStatus } from "@/lib/supe
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  subtext,
+  highlight = false,
+}: {
+  label: string;
+  value: string | number;
+  subtext?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg border p-6 ${
+        highlight ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"
+      }`}
+    >
+      <p className="text-sm font-medium text-slate-500">{label}</p>
+      <p
+        className={`mt-2 text-3xl font-semibold ${
+          highlight ? "text-red-700" : "text-slate-900"
+        }`}
+      >
+        {value}
+      </p>
+      {subtext && <p className="mt-1 text-xs text-slate-500">{subtext}</p>}
+    </div>
   );
 }

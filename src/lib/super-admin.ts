@@ -107,20 +107,9 @@ export async function getGlobalMetrics(
       error: err.message,
     };
   }
-// ... existing code ...
-    return {
-      metrics: {
-        totalTokenBurn: 0,
-        activeUserCount: 0,
-        openTicketCount: 0,
-        totalUsers: 0,
-        aiErrorRate: 0,
-        revenueEstimate: null,
-      },
-      error: err.message,
-    };
+
   }
-}
+
 
 /**
  * Get system maintenance mode status
