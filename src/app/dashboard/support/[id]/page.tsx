@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
+import { getAdminAwareClient } from "@/lib/supabase-admin";
 
 import { headers } from "next/headers";
 import ResolveTicketButton from "@/components/support/ResolveTicketButton";
@@ -38,65 +39,23 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
   // NUCLEAR FIX: Bypass RLS for Super Admins
-  const isSuper = profile?.role === "super_admin";
-  
-  let ticketData = null;
-  let ticketErrorVal = null;
+  // Use shared helper to get admin-aware client (Standard or Service Role)
+  const client = getAdminAwareClient(supabase, profile);
 
-  if (isSuper) {
-      // Use Service Role to bypass RLS entirely
-      // This solves the "Phantom Ticket" 404 issue once and for all for Admins
-      const { createClient: createServiceClient } = require("@supabase/supabase-js");
-      const serviceClient = createServiceClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-      
-      const { data, error } = await serviceClient
-        .from("support_tickets")
-        .select("*")
-        .eq("id", id)
-        .single();
-        
-      ticketData = data;
-      ticketErrorVal = error;
-  } else {
-      // Standard RLS fetch for users/others
-      const { data, error } = await supabase
-        .from("support_tickets")
-        .select("*")
-        .eq("id", id)
-        .single();
-        
-      ticketData = data;
-      ticketErrorVal = error;
-  }
+  // Fetch ticket
+  const { data: ticket, error: ticketError } = await client
+    .from("support_tickets")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (ticketErrorVal || !ticketData) {
+  if (ticketError || !ticket) {
     notFound();
   }
-  
-  const ticket = ticketData;
 
   // Fetch messages
-  // AC 4.3.4: "Messages are shown in reverse chronological order"
-  // Usually for chat, we want oldest first (chronological).
-  // "Reverse chronological" implies newest first.
-  // If the requirement explicitly says "reverse chronological order", I should follow it.
-  // This means newest messages at TOP? Or standard email thread (newest at top).
-  // I'll sort by `created_at` DESC.
-  
-  // Use Service Role for messages too if Super Admin
-  const messagesClient = isSuper ? 
-    (function(){
-      const { createClient: createServiceClient } = require("@supabase/supabase-js");
-      return createServiceClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-    })() : supabase;
-
-  const { data: messages } = await messagesClient
+  // (Client is already admin-aware, so reuse it)
+  const { data: messages } = await client 
     .from("support_messages")
     .select("*")
     .eq("ticket_id", id)
