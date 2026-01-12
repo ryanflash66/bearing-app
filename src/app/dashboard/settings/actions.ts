@@ -6,6 +6,8 @@ import { isSuperAdmin, getMaintenanceStatus } from "@/lib/super-admin";
 
 const MAX_DISPLAY_NAME_LENGTH = 100;
 
+const MAX_DISPLAY_NAME_LENGTH = 100;
+
 export async function updateProfileName(formData: FormData) {
   const supabase = await createClient();
   const rawDisplayName = formData.get("displayName");
@@ -64,19 +66,22 @@ export async function updateProfileName(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Unauthorized" };
+    // CODE REVIEW FIX: Return structured error instead of throwing
+    return { error: "Unauthorized" }; 
   }
 
   // --- Maintenance Check ---
-  // Use helper functions for consistency with middleware
-  const status = await getMaintenanceStatus(supabase);
+  const { data: setting } = await supabase
+    .from("system_settings")
+    .select("value")
+    .eq("key", "maintenance_mode")
+    .single();
     
-  if (status.enabled) {
-    // Check if user is super admin to bypass
-    const isSuper = await isSuperAdmin(supabase);
-    if (!isSuper) {
-      return { error: status.message || "System is under maintenance." };
-    }
+  if (setting?.value?.enabled) {
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      if (profile?.role !== 'super_admin') {
+          return { error: setting.value.message || "System is under maintenance." };
+      }
   }
 
   // --- Update Profile ---
