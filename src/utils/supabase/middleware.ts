@@ -102,6 +102,7 @@ export async function updateSession(request: NextRequest) {
   // Allowlist for system routes that must bypass maintenance
   const isBypassedPath = [
     "/api/auth",      // Auth flows (login/logout)
+    "/auth",          // Auth callback/signout routes
     "/api/webhooks",  // External webhooks
     "/api/internal",  // Internal system jobs
   ].some(prefix => pathname.startsWith(prefix));
