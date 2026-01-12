@@ -36,6 +36,11 @@ export default async function DashboardPage() {
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const hasMFA = factors?.totp?.some((f) => f.status === "verified");
 
+  // Story 4.5: Super Admins should be on their own dashboard
+  if (profile?.role === "super_admin") {
+    redirect("/dashboard/admin/super");
+  }
+
   // Fetch manuscript stats and AI usage
   let manuscriptCount = 0;
   let totalWordCount = 0;

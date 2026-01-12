@@ -73,21 +73,61 @@ const navItems: NavItem[] = [
   },
 ];
 
+// Helper to filter nav items
+function getVisibleNavItems(items: NavItem[], isAdmin: boolean) {
+  return items.filter((item) => {
+    // Hide Author tools from Admins
+    const isAuthorTool = item.name === "Manuscripts" || item.name === "Brain";
+    if (isAdmin && isAuthorTool) {
+      return false;
+    }
+
+    // Hide Admin tools from Non-Admins
+    if (item.adminOnly && !isAdmin) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
 export default function DashboardLayout({ children, user, usageStatus }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isAdmin = user.role === "admin" || user.role === "super_admin";
   const displayName = user.displayName || user.email.split("@")[0];
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
+  
+  // State for maintenance mode
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message?: string } | null>(
+    null
+  );
 
-  // Filter nav items based on role
-  // AC: Bifurcate UI - Admins shouldn't see Author tools
-  const visibleNavItems = navItems.filter((item) => {
-    // Hide Author-specific tools for Admins
-    if (isAdmin && (item.name === "Manuscripts" || item.name === "Brain")) return false;
-    
-    // Standard role filter
-    return !item.adminOnly || isAdmin;
-  });
+  useEffect(() => {
+    // Fetch maintenance status
+    const fetchMaintenance = async () => {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "maintenance_mode")
+          .single();
+
+        const value = data?.value as { enabled: boolean; message: string };
+        if (value?.enabled) {
+          setMaintenance(value);
+        }
+      } catch (err) {
+        // Silent fail for UI enhancement
+        console.error("Failed to check maintenance mode", err);
+      }
+    };
+    fetchMaintenance();
+  }, []);
+
+  // Filter nav items
+  const visibleNavItems = getVisibleNavItems(navItems, isAdmin);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -216,6 +256,36 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
 
         {/* Page content */}
         <main className="p-4 lg:p-8">
+          {maintenance?.enabled && (
+             <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+               <div className="flex items-start gap-3">
+                 <div className="flex-shrink-0">
+                   <svg
+                     className="h-5 w-5 text-amber-400"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24"
+                   >
+                     <path
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       strokeWidth={2}
+                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                     />
+                   </svg>
+                 </div>
+                 <div>
+                   <h3 className="text-sm font-medium text-amber-800">
+                     System Maintenance
+                   </h3>
+                   <div className="mt-1 text-sm text-amber-700">
+                     {maintenance.message}
+                   </div>
+                 </div>
+               </div>
+             </div>
+          )}
+
           {usageStatus && usageStatus !== "good_standing" && (
             <div className="mb-6">
                <UpsellBanner status={usageStatus as "flagged" | "upsell_required"} />
