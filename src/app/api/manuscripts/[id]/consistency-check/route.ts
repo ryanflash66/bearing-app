@@ -34,6 +34,8 @@ export async function POST(
       );
     }
 
+
+
     // Verify manuscript exists and user has access
     const { data: manuscript, error: manuscriptError } = await supabase
       .from("manuscripts")

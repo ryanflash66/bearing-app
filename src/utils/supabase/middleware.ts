@@ -95,5 +95,48 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
+  // Story 4.5: Global Maintenance Mode Check
+  // Block write operations (POST, PUT, DELETE, PATCH) when maintenance is enabled
+  // Exemptions:
+  // 1. Super Admins
+  // 2. Auth routes (/api/auth/*) which are needed for login/logout
+  const isWriteMethod = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
+  
+  if (isWriteMethod && !pathname.startsWith("/api/auth")) {
+    try {
+      const { data: setting } = await supabase
+        .from("system_settings")
+        .select("value")
+        .eq("key", "maintenance_mode")
+        .single();
+        
+      // Explicitly cast to unknown then to expected type to avoid TS errors if value is Json
+      const maintenance = setting?.value as unknown as { enabled: boolean; message?: string } | undefined;
+
+      if (maintenance?.enabled) {
+        // Allow Super Admins to bypass
+        let isSuperAdmin = false;
+        if (user) {
+          const { data: profile } = await supabase
+            .from("users")
+            .select("role")
+            .eq("auth_id", user.id)
+            .single();
+          isSuperAdmin = profile?.role === "super_admin";
+        }
+
+        if (!isSuperAdmin) {
+          return NextResponse.json(
+            { error: maintenance.message || "System is under maintenance. Please try again later." },
+            { status: 503 }
+          );
+        }
+      }
+    } catch (err) {
+      // Fail open: If DB check fails, assume maintenance is OFF to prevent lockout
+      console.error("Maintenance check failed in middleware:", err);
+    }
+  }
+
   return response;
 }

@@ -1,4 +1,4 @@
-"use server";
+
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -107,4 +107,70 @@ export async function getGlobalMetrics(
       error: err.message,
     };
   }
+// ... existing code ...
+    return {
+      metrics: {
+        totalTokenBurn: 0,
+        activeUserCount: 0,
+        openTicketCount: 0,
+        totalUsers: 0,
+        aiErrorRate: 0,
+        revenueEstimate: null,
+      },
+      error: err.message,
+    };
+  }
+}
+
+/**
+ * Get system maintenance mode status
+ * AC 4.5.3
+ */
+export async function getMaintenanceStatus(supabase: SupabaseClient) {
+  try {
+    const { data, error } = await supabase
+      .from("system_settings")
+      .select("value")
+      .eq("key", "maintenance_mode")
+      .single();
+
+    if (error) throw error;
+
+    return {
+      enabled: data?.value?.enabled || false,
+      message: data?.value?.message || "System is under maintenance.",
+    };
+  } catch (err) {
+    console.error("getMaintenanceStatus error:", err);
+    // Default to false on error to prevent accidental lockout
+    return { enabled: false, message: "" };
+  }
+}
+
+/**
+ * Toggle maintenance mode
+ * AC 4.5.3
+ */
+export async function toggleMaintenanceMode(
+  supabase: SupabaseClient,
+  enabled: boolean,
+  message?: string
+) {
+  // Double check super admin
+  const isSuper = await isSuperAdmin(supabase);
+  if (!isSuper) {
+    throw new Error("Unauthorized");
+  }
+
+  const { error } = await supabase.from("system_settings").upsert({
+    key: "maintenance_mode",
+    value: {
+      enabled,
+      message: message || "System is under maintenance. Please try again later.",
+    },
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) throw error;
+  return true;
 }

@@ -17,6 +17,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+
+
   const json = await request.json();
   const { subject, message, priority = "medium" } = json;
 
