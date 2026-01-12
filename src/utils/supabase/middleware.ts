@@ -100,10 +100,13 @@ export async function updateSession(request: NextRequest) {
   const isWriteMethod = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
   
   // Allowlist for system routes that must bypass maintenance
-  const apiBypassPaths = ["/api/auth", "/api/webhooks", "/api/internal"];
-  const isBypassedPath = apiBypassPaths.some(prefix => 
-    pathname === prefix || pathname.startsWith(prefix + "/")
-  ) || pathname === "/auth" || pathname.startsWith("/auth/"); // Auth callback/signout routes
+  // Use regex for precise matching to avoid prefix collisions (e.g. /auth-debug)
+  const isBypassedPath = [
+    /^\/api\/auth(\/|$)/,      // /api/auth or /api/auth/*
+    /^\/auth(\/|$)/,           // /auth or /auth/*
+    /^\/api\/webhooks(\/|$)/,  // /api/webhooks or /api/webhooks/*
+    /^\/api\/internal(\/|$)/,  // /api/internal or /api/internal/*
+  ].some(regex => regex.test(pathname));
 
   if (isWriteMethod && !isBypassedPath) {
     try {

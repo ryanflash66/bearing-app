@@ -14,11 +14,16 @@ export function ProfileForm({ initialDisplayName, email }: { initialDisplayName:
     try {
       const result = await updateProfileName(formData);
       if (result?.error) {
-        setMessage({ type: "error", text: result.error });
+        if (result.error === "Unauthorized") {
+           setMessage({ type: "error", text: "Your session has expired. Please sign in again." });
+        } else {
+           setMessage({ type: "error", text: result.error });
+        }
       } else {
         setMessage({ type: "success", text: "Profile updated successfully." });
       }
     } catch (e) {
+      // Fallback for unexpected failures (e.g. network)
       setMessage({ type: "error", text: "An unexpected error occurred." });
     } finally {
       setLoading(false);

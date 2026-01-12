@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAutosave, AutosaveState } from "@/lib/useAutosave";
 import { createClient } from "@/utils/supabase/client";
@@ -16,6 +16,8 @@ import { useGhostText } from "@/lib/useGhostText";
 import { GhostTextOverlay } from "./GhostTextDisplay";
 import TiptapEditor from "../editor/TiptapEditor";
 import { Editor } from "@tiptap/react";
+import CommandPalette from "../editor/CommandPalette";
+import { useCommandPalette } from "@/lib/useCommandPalette";
 
 
 interface ManuscriptEditorProps {
@@ -166,6 +168,115 @@ export default function ManuscriptEditor({
 
   // Initialize Zen Mode
   const zenMode = useZenMode();
+
+  // Extract chapters from content for navigation (same logic as Binder)
+  const chapters = useMemo(() => {
+    if (!content) return [];
+    const regex = /^\s*(#{1,2})\s+(.+)$/gm;
+    const matches: { title: string; index: number }[] = [];
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      matches.push({
+        title: match[2],
+        index: match.index,
+      });
+    }
+    return matches;
+  }, [content]);
+
+  // Handle AI transformation from Command Palette
+  const handleCommandTransform = useCallback(async (instruction: string, text: string) => {
+    if (!text.trim()) return;
+
+    setIsLoadingSuggestion(true);
+    setSuggestionError(null);
+
+    try {
+      const response = await fetch(`/api/manuscripts/${manuscriptId}/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selectionText: text,
+          instruction,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Failed to transform text" }));
+        throw new Error(errorData.error || "Failed to transform text");
+      }
+
+      // Handle SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new Error("Response body is not readable");
+
+      let streamingSuggestion = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (!data.trim()) continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === "chunk") {
+                streamingSuggestion += parsed.text;
+                setSuggestion({
+                  suggestion: streamingSuggestion,
+                  confidence: 0.75,
+                  originalText: text,
+                });
+              } else if (parsed.type === "complete") {
+                setSuggestion({
+                  suggestion: parsed.suggestion || streamingSuggestion,
+                  rationale: parsed.rationale,
+                  confidence: parsed.confidence,
+                  originalText: text,
+                });
+              }
+            } catch (e) {
+              if (e instanceof SyntaxError) continue;
+              throw e;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Transform error:", error);
+      setSuggestionError(error instanceof Error ? error.message : "Failed to transform text");
+    } finally {
+      setIsLoadingSuggestion(false);
+    }
+  }, [manuscriptId]);
+
+  // Command Palette
+  const commandPalette = useCommandPalette({
+    enabled: true,
+    onTransform: handleCommandTransform,
+    onNavigate: (chapterIndex) => {
+      if (editor) {
+        editor.commands.setTextSelection(chapterIndex);
+        editor.view.focus();
+        const { node } = editor.view.domAtPos(chapterIndex);
+        if (node && node instanceof Element) {
+          node.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else if (node && node.parentElement) {
+          node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    },
+    selectedText,
+    chapters,
+  });
 
   // Track cursor position for ghost text
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -1048,8 +1159,13 @@ export default function ManuscriptEditor({
         <div>
           {wordCount.toLocaleString()} words
         </div>
-        <div>
-          Press <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">Ctrl+S</kbd> to save immediately
+        <div className="flex items-center gap-4">
+          <span>
+            <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">⌘K</kbd> commands
+          </span>
+          <span>
+            <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">⌘S</kbd> save
+          </span>
         </div>
       </div>
 
@@ -1058,6 +1174,29 @@ export default function ManuscriptEditor({
         isOpen={showConflictModal}
         onResolve={handleConflictResolve}
         onClose={() => setShowConflictModal(false)}
+      />
+
+      {/* Command Palette (Cmd+K) */}
+      <CommandPalette
+        open={commandPalette.isOpen}
+        onOpenChange={commandPalette.setIsOpen}
+        commands={commandPalette.commands}
+        chapters={chapters}
+        onNavigate={(chapterIndex) => {
+          if (editor) {
+            editor.commands.setTextSelection(chapterIndex);
+            editor.view.focus();
+            const { node } = editor.view.domAtPos(chapterIndex);
+            if (node && node instanceof Element) {
+              node.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else if (node && node.parentElement) {
+              node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        }}
+        isLoading={commandPalette.isLoading}
+        loadingMessage={commandPalette.loadingMessage}
+        placeholder="Type a command (e.g., 'make concise', 'go to chapter 3')..."
       />
 
        {/* Version History Sidebar */}

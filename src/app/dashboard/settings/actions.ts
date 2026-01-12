@@ -4,21 +4,61 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isSuperAdmin, getMaintenanceStatus } from "@/lib/super-admin";
 
+const MAX_DISPLAY_NAME_LENGTH = 100;
+
 export async function updateProfileName(formData: FormData) {
   const supabase = await createClient();
-  const rawDisplayName = formData.get("displayName") as string;
+  const rawDisplayName = formData.get("displayName");
 
-  // Validate and sanitize input
-  const displayName = rawDisplayName?.trim() || "";
+  // --- Input Validation ---
+  if (typeof rawDisplayName !== "string") {
+    return { error: "Invalid display name format." };
+  }
 
-  if (displayName.length === 0) {
+  const displayName = rawDisplayName.trim();
+
+  if (!displayName) {
     return { error: "Display name cannot be empty." };
   }
 
-  if (displayName.length > 100) {
-    return { error: "Display name must be 100 characters or less." };
+  if (displayName.length > MAX_DISPLAY_NAME_LENGTH) {
+    return { 
+      error: `Display name must be at most ${MAX_DISPLAY_NAME_LENGTH} characters long.` 
+    };
   }
 
+  // Normalize input
+  const normalizedDisplayName = displayName.normalize('NFKC');
+
+  // Reject control characters and other non-printable characters or bad formatting codes
+  // Using explicit blocklist check as fallback for runtime/build compatibility.
+  for (const ch of normalizedDisplayName) {
+    const code = ch.charCodeAt(0);
+    // Blocklist:
+    // 0x0000 - 0x001F (C0 control)
+    // 0x007F - 0x009F (Delete + C1 control)
+    // 0x200B (Zero width space)
+    // 0x200C (Zero width non-joiner)
+    // 0x200D (Zero width joiner)
+    // 0xFEFF (Zero width no-break space / BOM)
+    // 0x202A - 0x202E (Bidi controls)
+    // 0x2066 - 0x2069 (Bidi isolate controls)
+    
+    if (
+      (code >= 0x0000 && code <= 0x001F) ||
+      (code >= 0x007F && code <= 0x009F) ||
+      code === 0x200B ||
+      code === 0x200C ||
+      code === 0x200D ||
+      code === 0xFEFF ||
+      (code >= 0x202A && code <= 0x202E) ||
+      (code >= 0x2066 && code <= 0x2069)
+    ) {
+       return { error: "Display name contains invalid control or formatting characters." };
+    }
+  }
+
+  // --- Auth Check ---
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -27,9 +67,8 @@ export async function updateProfileName(formData: FormData) {
     return { error: "Unauthorized" };
   }
 
-  // Check Maintenance Mode
-  // If maintenance is enabled, Middleware (or RLS) should catch it, 
-  // but explicitly checking here ensures the UI receives the correct error for better UX.
+  // --- Maintenance Check ---
+  // Use helper functions for consistency with middleware
   const status = await getMaintenanceStatus(supabase);
     
   if (status.enabled) {
@@ -40,9 +79,10 @@ export async function updateProfileName(formData: FormData) {
     }
   }
 
+  // --- Update Profile ---
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: displayName, updated_at: new Date().toISOString() })
+    .update({ display_name: normalizedDisplayName, updated_at: new Date().toISOString() })
     .eq("id", user.id);
 
   if (error) {
@@ -50,6 +90,6 @@ export async function updateProfileName(formData: FormData) {
   }
 
   revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard"); // To update default layout header
+  revalidatePath("/dashboard"); 
   return { success: true };
 }
