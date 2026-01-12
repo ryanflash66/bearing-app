@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-const MAX_DISPLAY_NAME_LENGTH = 100;
+const DISPLAY_NAME_MAX_LENGTH = 100;
 
 export async function updateProfileName(formData: FormData) {
   const supabase = await createClient();
@@ -20,9 +20,9 @@ export async function updateProfileName(formData: FormData) {
     return { error: "Display name cannot be empty." };
   }
 
-  if (displayName.length > MAX_DISPLAY_NAME_LENGTH) {
+  if (displayName.length > DISPLAY_NAME_MAX_LENGTH) {
     return { 
-      error: `Display name must be at most ${MAX_DISPLAY_NAME_LENGTH} characters long.` 
+      error: `Display name must be at most ${DISPLAY_NAME_MAX_LENGTH} characters long.` 
     };
   }
 
