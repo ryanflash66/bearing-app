@@ -161,8 +161,12 @@ export default function DashboardLayout({ children, user, usageStatus, initialMa
               let finalName = item.name;
 
               // Force redirect if user is admin and clicks Dashboard
-              if (item.name === "Dashboard" && user.role === "super_admin") {
-                finalHref = "/dashboard/admin/super";
+              if (item.name === "Dashboard") {
+                if (user.role === "super_admin") {
+                  finalHref = "/dashboard/admin/super";
+                } else if (user.role === "admin") {
+                  finalHref = "/dashboard/admin";
+                }
               }
               
               if (item.name === "Support" && user.role === "support_agent") {
