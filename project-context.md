@@ -40,6 +40,15 @@ All production environment variables must be manually mirrored in the Vercel Das
 *   **Issue:** Complex RLS policies can sometimes produce "Phantom 404s" for Admins if the policy logic checks a relation that RLS itself blocks access to (infinite recursion or circular dependency).
 *   **Fix:** For Super Admin features, use `getAdminAwareClient` (from `src/lib/supabase-admin.ts`) which cleanly bypasses RLS using the Service Role key when appropriate.
 
+### 4. Git & PR Workflow
+*   **Rule:** Every logical set of commits MUST have a corresponding Pull Request (PR) created via `gh pr create`.
+*   **Workflow:**
+    1.  Create/Switch to feature branch.
+    2.  Make changes and `git commit`.
+    3.  `git push`.
+    4.  IMMEDIATELY create PR: `gh pr create --title "feat/fix: description" --body "Details..."`.
+    5.  Do not leave branches without PRs.
+
 ## ⚠️ Known Warnings
 The following build/install warnings are known and safe to ignore for production:
 - **`inflight@1.0.6` (Memory Leak)**: Transitive dependency via `ts-jest` -> `babel-plugin-istanbul`. Only affects test execution, not the production build.

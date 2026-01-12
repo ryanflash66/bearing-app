@@ -213,8 +213,9 @@ workflow_status:
             notes: "IMPLEMENTED: User-facing ticket list and detail pages with real-time notifications and accessibility fixes."
           - id: "story-4.4"
             name: "Support Agent Dashboard"
-            status: "required"
-            notes: "PENDING: Stale ticket detection (48h), PII masking, and User Context Snapshot."
+            status: "docs/story4.4.md"
+            completed: "2026-01-11"
+            notes: "IMPLEMENTED: Stale ticket detection (48h), PII masking (email masking), and User Context Snapshot for agents. Verified with realtime support."
           - id: "story-4.5"
             name: "Super Admin Dashboard"
             status: "required"
@@ -227,10 +228,10 @@ workflow_status:
 # Story Progress Summary
 story_progress:
   total: 21
-  completed: 19
+  completed: 20
   ux_rework: 0
   ready: 1
-  pending: 2
+  pending: 1
   
 epic_progress:
   - epic: 1
@@ -270,9 +271,9 @@ epic_progress:
   - epic: 4
     name: "Support & Admin (Emergency Rework)"
     stories: 6
-    completed: 3
+    completed: 4
     status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.3 completed."
+    notes: "Emergency rework for scale and security. Stories 4.1-4.4 completed."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
@@ -285,7 +286,7 @@ epic_progress:
         status: "completed"
       - id: "story-4.4"
         name: "Support Agent Dashboard"
-        status: "required"
+        status: "completed"
       - id: "story-4.5"
         name: "Super Admin Dashboard"
         status: "required"
@@ -294,13 +295,12 @@ epic_progress:
         status: "backlog"
 
 # Next Action
-# Next Action
 next_workflow:
-  id: "story-4.4"
-  name: "Story 4.4: Support Agent Dashboard"
+  id: "story-4.5"
+  name: "Story 4.5: Super Admin Dashboard"
   agent: "dev"
-  command: "/bmad-bmm-workflows-dev-story 4.4"
-  description: "Implement stale ticket detection (48h), PII masking, and User Context Snapshot for agents."
+  command: "/bmad-bmm-workflows-dev-story 4.5"
+  description: "Implement global metrics (tokens, users, tickets) and user override links for Super Admins."
   priority: "high"
   reason: "Next step in the Support & Admin epic."
 - epic: 5
