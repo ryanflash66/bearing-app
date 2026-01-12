@@ -15,7 +15,7 @@ export function getServiceSupabaseClient() {
   if (!serviceRoleKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is missing. Please ensure it is set in your environment variables.");
   }
-
+  
   return createSupabaseClient(supabaseUrl, serviceRoleKey);
 }
 

@@ -31,7 +31,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
     .from("support_tickets")
     .select(`
         *,
-        user:users(id, email, display_name)
+        user:users!support_tickets_user_id_fkey(id, email, display_name)
     `)
     .eq("id", params.id)
     .single();
