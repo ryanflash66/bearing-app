@@ -9,11 +9,7 @@ export async function updateProfileName(formData: FormData) {
   const rawDisplayName = formData.get("displayName") as string;
 
   // Validate and sanitize input
-  if (!rawDisplayName) {
-    return { error: "Display name is required." };
-  }
-
-  const displayName = rawDisplayName.trim();
+  const displayName = rawDisplayName?.trim() || "";
 
   if (displayName.length === 0) {
     return { error: "Display name cannot be empty." };
