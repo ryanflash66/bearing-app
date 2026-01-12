@@ -105,6 +105,8 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
   useEffect(() => {
     // Read maintenance status from public environment variable
     // This avoids RLS issues since all users need to see the banner
+    // Note: NEXT_PUBLIC_* variables are replaced at build time by Next.js
+    // To update maintenance mode, rebuild the app or set the variable in Vercel dashboard
     try {
       const raw = process.env.NEXT_PUBLIC_MAINTENANCE_MODE;
       
