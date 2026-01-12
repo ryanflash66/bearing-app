@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
     role?: string;
   };
   usageStatus?: "good_standing" | "flagged" | "upsell_required" | string;
+  initialMaintenanceStatus?: { enabled: boolean; message?: string } | null;
 }
 
 interface NavItem {
@@ -21,6 +22,7 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  authorOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -41,6 +43,7 @@ const navItems: NavItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
+    authorOnly: true,
   },
   {
     name: "Settings",
@@ -73,21 +76,65 @@ const navItems: NavItem[] = [
   },
 ];
 
-export default function DashboardLayout({ children, user, usageStatus }: DashboardLayoutProps) {
+// Helper to filter nav items
+function getVisibleNavItems(items: NavItem[], isAdmin: boolean) {
+  return items.filter((item) => {
+    // Hide Author tools from Admins
+    if (isAdmin && item.authorOnly) {
+      return false;
+    }
+
+    // Hide Admin tools from Non-Admins
+    if (item.adminOnly && !isAdmin) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export default function DashboardLayout({ children, user, usageStatus, initialMaintenanceStatus }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isAdmin = user.role === "admin" || user.role === "super_admin";
   const displayName = user.displayName || user.email.split("@")[0];
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
+  
+  // State for maintenance mode - initialize with prop if available
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message?: string } | null>(
+    initialMaintenanceStatus || null
+  );
 
-  // Filter nav items based on role
-  // AC: Bifurcate UI - Admins shouldn't see Author tools
-  const visibleNavItems = navItems.filter((item) => {
-    // Hide Author-specific tools for Admins
-    if (isAdmin && (item.name === "Manuscripts" || item.name === "Brain")) return false;
-    
-    // Standard role filter
-    return !item.adminOnly || isAdmin;
-  });
+  useEffect(() => {
+    // Skip client-side fetch if maintenance status was provided via props
+    if (initialMaintenanceStatus !== undefined) return;
+
+    // Fetch maintenance status
+    const fetchMaintenance = async () => {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "maintenance_mode")
+          .single();
+
+        const value = data?.value;
+        // Always normalize and set state (handles enabled=false case)
+        setMaintenance({
+          enabled: !!value?.enabled,
+          message: value?.message || "System is under maintenance."
+        });
+      } catch (err) {
+        // Silent fail for UI enhancement - logging as debug
+        console.debug("Failed to check maintenance mode via client", err);
+      }
+    };
+    fetchMaintenance();
+  }, [initialMaintenanceStatus]);
+
+  // Filter nav items
+  const visibleNavItems = getVisibleNavItems(navItems, isAdmin);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -216,6 +263,36 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
 
         {/* Page content */}
         <main className="p-4 lg:p-8">
+          {maintenance?.enabled && (
+             <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+               <div className="flex items-start gap-3">
+                 <div className="flex-shrink-0">
+                   <svg
+                     className="h-5 w-5 text-amber-400"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24"
+                   >
+                     <path
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       strokeWidth={2}
+                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                     />
+                   </svg>
+                 </div>
+                 <div>
+                   <h3 className="text-sm font-medium text-amber-800">
+                     System Maintenance
+                   </h3>
+                   <div className="mt-1 text-sm text-amber-700">
+                     {maintenance.message || "System is under maintenance."}
+                   </div>
+                 </div>
+               </div>
+             </div>
+          )}
+
           {usageStatus && usageStatus !== "good_standing" && (
             <div className="mb-6">
                <UpsellBanner status={usageStatus as "flagged" | "upsell_required"} />

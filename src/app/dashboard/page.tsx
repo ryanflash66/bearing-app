@@ -36,22 +36,37 @@ export default async function DashboardPage() {
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const hasMFA = factors?.totp?.some((f) => f.status === "verified");
 
-  // Fetch manuscript stats and AI usage
+  // Story 4.5: Super Admins should be on their own dashboard
+  if (profile?.role === "super_admin") {
+    redirect("/dashboard/admin/super");
+  }
+
+  // Fetch ecosystem data (Parallelized)
   let manuscriptCount = 0;
   let totalWordCount = 0;
   let aiUsage = { tokensUsed: 0, checkCount: 0 };
-  
+  let maintenanceStatus = null; // AC 4.5.3 (Server-side optimization)
+
   const { account } = await getFirstUserAccount(supabase, user.id);
+  
   if (account) {
-    // Parallel fetch for valid account
-    const [manuscriptsResult, usageResult] = await Promise.all([
+    // Shared import for maintenance logic
+    const { getMaintenanceStatus } = await import("@/lib/super-admin");
+
+    const [manuscriptsResult, usageResult, maintenanceResult] = await Promise.all([
       getManuscripts(supabase, account.id),
-      getMonthlyUsageStats(supabase, account.id)
+      getMonthlyUsageStats(supabase, account.id),
+      getMaintenanceStatus(supabase)
     ]);
     
     manuscriptCount = manuscriptsResult.manuscripts.length;
     totalWordCount = manuscriptsResult.manuscripts.reduce((sum, m) => sum + (m.word_count || 0), 0);
     aiUsage = usageResult;
+    maintenanceStatus = maintenanceResult;
+  } else {
+    // Fallback if no account (edge case), still check maintenance
+    const { getMaintenanceStatus } = await import("@/lib/super-admin");
+    maintenanceStatus = await getMaintenanceStatus(supabase);
   }
 
   return (
@@ -62,6 +77,7 @@ export default async function DashboardPage() {
         role: profile?.role,
       }}
       usageStatus={account?.usage_status}
+      initialMaintenanceStatus={maintenanceStatus}
     >
       <div className="space-y-6">
         {/* Error banner for profile fetch issues */}

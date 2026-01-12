@@ -35,7 +35,7 @@ export default function MaintenanceToggle({ initialEnabled }: MaintenanceToggleP
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6">
+    <div className="rounded-lg border border-slate-300 bg-slate-50 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-medium text-slate-900">Maintenance Mode</h3>
