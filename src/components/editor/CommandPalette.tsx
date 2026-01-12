@@ -21,7 +21,7 @@ interface CommandPaletteProps {
   onOpenChange: (open: boolean) => void;
   commands: CommandItem[];
   placeholder?: string;
-  onNavigate?: (chapterIndex: number) => void;
+  onNavigate?: (target: number | string) => void;
   chapters?: { title: string; index: number }[];
   characters?: { name: string; firstMention: number }[];
   isLoading?: boolean;
@@ -319,9 +319,13 @@ export default function CommandPalette({
                   {chapters.map((chapter, idx) => (
                     <Command.Item
                       key={`chapter-${idx}`}
+                      // Use header content for navigation search for reliability
                       value={`chapter ${idx + 1} ${chapter.title}`}
                       onSelect={() => {
-                        onNavigate?.(chapter.index);
+                        // Pass unique identifier if possible, else title. 
+                        // For chapters, we construct the likely header string to search for:
+                        const headerText = `${"#".repeat(1)} ${chapter.title}`;
+                        onNavigate?.(chapter.title); 
                         setNavigationConfirmation(`Navigated to Chapter ${idx + 1}: ${chapter.title}`);
                       }}
                       className="command-palette-item"
@@ -336,6 +340,42 @@ export default function CommandPalette({
                       </div>
                     </Command.Item>
                   ))}
+                </Command.Group>
+              )}
+
+              {/* Dynamic character search based on search */}
+              {characters.length > 0 && (search.toLowerCase().includes("find") || search.toLowerCase().includes("character")) && (
+                <Command.Group heading="Characters" className="command-palette-group">
+                  {characters
+                    .filter(char => {
+                      const searchTerm = parseCharacterCommand(search) || search;
+                      return char.name.toLowerCase().includes(searchTerm.toLowerCase());
+                    })
+                    .slice(0, 10) // Limit to 10 results
+                    .map((char, idx) => (
+                      <Command.Item
+                        key={`character-${idx}`}
+                        value={`find character ${char.name}`}
+                        onSelect={() => {
+                          // Search for character name
+                          onNavigate?.(char.name);
+                          setNavigationConfirmation(`Found "${char.name}" - navigated to first mention`);
+                        }}
+                        className="command-palette-item"
+                      >
+                        <span className="command-palette-icon" aria-hidden="true">
+                          👤
+                        </span>
+                        <div className="command-palette-item-content">
+                          <span className="command-palette-item-label">
+                            {char.name}
+                          </span>
+                          <span className="command-palette-item-description">
+                            Go to first mention
+                          </span>
+                        </div>
+                      </Command.Item>
+                    ))}
                 </Command.Group>
               )}
             </Command.List>
@@ -378,18 +418,18 @@ export default function CommandPalette({
         }
 
         .command-palette {
-          background: #FDF7E9;
+          background: var(--parchment-surface, #FDF7E9);
           border-radius: 12px;
           box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
           overflow: hidden;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          border: 1px solid var(--parchment-border, rgba(0, 0, 0, 0.1));
         }
 
         .command-palette-header {
           display: flex;
           align-items: center;
           padding: 16px;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          border-bottom: 1px solid var(--parchment-border, rgba(0, 0, 0, 0.1));
         }
 
         .command-palette-input {
@@ -399,25 +439,25 @@ export default function CommandPalette({
           outline: none;
           font-size: 16px;
           font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-          color: #1F2937;
+          color: var(--parchment-text, #1F2937);
         }
 
         .command-palette-input::placeholder {
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
         }
 
         .command-palette-loading {
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #4F46E5;
+          color: var(--parchment-accent, #4F46E5);
           font-size: 14px;
         }
 
         .command-palette-spinner {
           width: 16px;
           height: 16px;
-          border: 2px solid #4F46E5;
+          border: 2px solid var(--parchment-accent, #4F46E5);
           border-top-color: transparent;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
@@ -425,8 +465,8 @@ export default function CommandPalette({
 
         .command-palette-confirmation {
           padding: 8px 16px;
-          background: #ECFDF5;
-          color: #047857;
+          background: var(--parchment-success-bg, #ECFDF5);
+          color: var(--parchment-success, #047857);
           font-size: 14px;
           border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
@@ -440,7 +480,7 @@ export default function CommandPalette({
         .command-palette-empty {
           padding: 24px 16px;
           text-align: center;
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
           font-size: 14px;
         }
 
@@ -454,7 +494,7 @@ export default function CommandPalette({
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
         }
 
         .command-palette-item {
@@ -468,7 +508,7 @@ export default function CommandPalette({
         }
 
         .command-palette-item[data-selected="true"] {
-          background: rgba(79, 70, 229, 0.1);
+          background: var(--parchment-selected, rgba(79, 70, 229, 0.1));
         }
 
         .command-palette-item[data-disabled="true"] {
@@ -477,7 +517,7 @@ export default function CommandPalette({
         }
 
         .command-palette-item:hover:not([data-disabled="true"]) {
-          background: rgba(0, 0, 0, 0.05);
+          background: var(--parchment-hover, rgba(0, 0, 0, 0.05));
         }
 
         .command-palette-icon {
@@ -499,42 +539,42 @@ export default function CommandPalette({
           display: block;
           font-size: 14px;
           font-weight: 500;
-          color: #1F2937;
+          color: var(--parchment-text, #1F2937);
         }
 
         .command-palette-item-description {
           display: block;
           font-size: 12px;
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
           margin-top: 2px;
         }
 
         .command-palette-shortcut {
           font-size: 11px;
           font-family: SF Mono, Monaco, Consolas, monospace;
-          background: rgba(0, 0, 0, 0.08);
+          background: var(--parchment-hover, rgba(0, 0, 0, 0.08));
           padding: 2px 6px;
           border-radius: 4px;
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
         }
 
         .command-palette-footer {
           display: flex;
           gap: 16px;
           padding: 12px 16px;
-          border-top: 1px solid rgba(0, 0, 0, 0.1);
+          border-top: 1px solid var(--parchment-border, rgba(0, 0, 0, 0.1));
           background: rgba(0, 0, 0, 0.02);
         }
 
         .command-palette-hint {
           font-size: 12px;
-          color: #6B7280;
+          color: var(--parchment-text-muted, #6B7280);
         }
 
         .command-palette-hint kbd {
           font-family: SF Mono, Monaco, Consolas, monospace;
           font-size: 11px;
-          background: rgba(0, 0, 0, 0.08);
+          background: var(--parchment-hover, rgba(0, 0, 0, 0.08));
           padding: 2px 6px;
           border-radius: 4px;
           margin-right: 4px;

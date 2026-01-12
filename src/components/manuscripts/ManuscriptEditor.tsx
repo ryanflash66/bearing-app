@@ -18,6 +18,7 @@ import TiptapEditor from "../editor/TiptapEditor";
 import { Editor } from "@tiptap/react";
 import CommandPalette from "../editor/CommandPalette";
 import { useCommandPalette } from "@/lib/useCommandPalette";
+import { extractCharacters, saveSelection, restoreSelection, findFirstOccurrence } from "@/lib/manuscript-utils";
 
 
 interface ManuscriptEditorProps {
@@ -184,6 +185,18 @@ export default function ManuscriptEditor({
     return matches;
   }, [content]);
 
+  // Extract character names from content (capitalized words that appear multiple times)
+  // Extract character names from content
+  const characters = useMemo(() => extractCharacters(content), [content]);
+
+  // Store cursor position for restoration after command palette closes
+  const savedCursorPosition = useRef<number | null>(null);
+
+  // Handle command palette close - restore focus to editor
+  const handleCommandPaletteClose = useCallback(() => {
+    restoreSelection(editor, savedCursorPosition);
+  }, [editor]);
+
   // Handle AI transformation from Command Palette
   const handleCommandTransform = useCallback(async (instruction: string, text: string) => {
     if (!text.trim()) return;
@@ -261,19 +274,42 @@ export default function ManuscriptEditor({
   // Command Palette
   const commandPalette = useCommandPalette({
     enabled: true,
-    onTransform: handleCommandTransform,
-    onNavigate: (chapterIndex) => {
+    onTransform: async (instruction, text) => {
+      // Save cursor position before transformation
+      saveSelection(editor, savedCursorPosition);
+      await handleCommandTransform(instruction, text);
+    },
+    onNavigate: (target) => {
       if (editor) {
-        editor.commands.setTextSelection(chapterIndex);
-        editor.view.focus();
-        const { node } = editor.view.domAtPos(chapterIndex);
-        if (node && node instanceof Element) {
-          node.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else if (node && node.parentElement) {
-          node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        let pos: number | null = null;
+        
+        if (typeof target === 'string') {
+          // Search for first occurrence of the text (name or chapter title)
+          pos = findFirstOccurrence(editor, target);
+        } else {
+          // Fallback for number (though discouraged due to drift)
+          pos = target;
+        }
+
+        if (pos !== null) {
+          editor.commands.setTextSelection(pos);
+          editor.view.focus();
+          
+          // Try to scroll into view (robustly)
+          try {
+            const { node } = editor.view.domAtPos(pos);
+            if (node instanceof Element) {
+              node.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else if (node.parentElement) {
+              node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          } catch (e) {
+            // Ignore scroll errors if DOM pos not ready
+          }
         }
       }
     },
+    onClose: handleCommandPaletteClose,
     selectedText,
     chapters,
   });
@@ -1179,24 +1215,43 @@ export default function ManuscriptEditor({
       {/* Command Palette (Cmd+K) */}
       <CommandPalette
         open={commandPalette.isOpen}
-        onOpenChange={commandPalette.setIsOpen}
+        onOpenChange={(open) => {
+              if (open) {
+                saveSelection(editor, savedCursorPosition);
+              }
+              commandPalette.setIsOpen(open);
+            }}
         commands={commandPalette.commands}
         chapters={chapters}
-        onNavigate={(chapterIndex) => {
+        characters={characters}
+        onNavigate={(target) => {
           if (editor) {
-            editor.commands.setTextSelection(chapterIndex);
-            editor.view.focus();
-            const { node } = editor.view.domAtPos(chapterIndex);
-            if (node && node instanceof Element) {
-              node.scrollIntoView({ behavior: "smooth", block: "start" });
-            } else if (node && node.parentElement) {
-              node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            let pos: number | null = null;
+            if (typeof target === 'string') {
+              pos = findFirstOccurrence(editor, target);
+            } else {
+              pos = target;
+            }
+
+            if (pos !== null) {
+              editor.commands.setTextSelection(pos);
+              editor.view.focus();
+              try {
+                const { node } = editor.view.domAtPos(pos);
+                if (node instanceof Element) {
+                  node.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else if (node.parentElement) {
+                  node.parentElement.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              } catch (e) {
+                // Ignore scroll errors
+              }
             }
           }
         }}
         isLoading={commandPalette.isLoading}
         loadingMessage={commandPalette.loadingMessage}
-        placeholder="Type a command (e.g., 'make concise', 'go to chapter 3')..."
+        placeholder="Type a command (e.g., 'make concise', 'go to chapter 3', 'find John')..."
       />
 
        {/* Version History Sidebar */}
