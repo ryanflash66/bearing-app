@@ -120,13 +120,11 @@ export default function DashboardLayout({ children, user, usageStatus, initialMa
           .single();
 
         const value = data?.value;
-        if (value?.enabled) {
-          // Ensure we have a valid shape even if DB content is partial
-          setMaintenance({
-            enabled: true,
-            message: value.message || "System is under maintenance."
-          });
-        }
+        // Always normalize and set state (handles enabled=false case)
+        setMaintenance({
+          enabled: !!value?.enabled,
+          message: value?.message || "System is under maintenance."
+        });
       } catch (err) {
         // Silent fail for UI enhancement - logging as debug
         console.debug("Failed to check maintenance mode via client", err);
