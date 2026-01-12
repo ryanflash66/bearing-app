@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
     role?: string;
   };
   usageStatus?: "good_standing" | "flagged" | "upsell_required" | string;
+  initialMaintenanceStatus?: { enabled: boolean; message?: string } | null;
 }
 
 interface NavItem {
@@ -21,6 +22,7 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  authorOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -41,6 +43,7 @@ const navItems: NavItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
+    authorOnly: true,
   },
   {
     name: "Settings",
@@ -77,8 +80,7 @@ const navItems: NavItem[] = [
 function getVisibleNavItems(items: NavItem[], isAdmin: boolean) {
   return items.filter((item) => {
     // Hide Author tools from Admins
-    const isAuthorTool = item.name === "Manuscripts";
-    if (isAdmin && isAuthorTool) {
+    if (isAdmin && item.authorOnly) {
       return false;
     }
 
@@ -91,39 +93,45 @@ function getVisibleNavItems(items: NavItem[], isAdmin: boolean) {
   });
 }
 
-export default function DashboardLayout({ children, user, usageStatus }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, user, usageStatus, initialMaintenanceStatus }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName = user.displayName || user.email.split("@")[0];
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   
-  // State for maintenance mode
+  // State for maintenance mode - initialize with prop if available
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message?: string } | null>(
-    null
+    initialMaintenanceStatus || null
   );
 
   useEffect(() => {
-    // Read maintenance status from public environment variable
-    // This avoids RLS issues since all users need to see the banner
-    // Note: NEXT_PUBLIC_* variables are replaced at build time by Next.js
-    // To update maintenance mode, rebuild the app or set the variable in Vercel dashboard
-    try {
-      const raw = process.env.NEXT_PUBLIC_MAINTENANCE_MODE;
-      
-      if (!raw) {
-        return;
-      }
+    // Skip client-side fetch if maintenance status was provided via props
+    if (initialMaintenanceStatus !== undefined) return;
 
-      const value = JSON.parse(raw) as { enabled: boolean; message?: string };
-      
-      if (value?.enabled) {
-        setMaintenance(value);
+    // Fetch maintenance status
+    const fetchMaintenance = async () => {
+      try {
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("system_settings")
+          .select("value")
+          .eq("key", "maintenance_mode")
+          .single();
+
+        const value = data?.value;
+        // Always normalize and set state (handles enabled=false case)
+        setMaintenance({
+          enabled: !!value?.enabled,
+          message: value?.message || "System is under maintenance."
+        });
+      } catch (err) {
+        // Silent fail for UI enhancement - logging as debug
+        console.debug("Failed to check maintenance mode via client", err);
       }
-    } catch (err) {
-      // Silent fail for UI enhancement
-      console.error("Failed to check maintenance mode", err);
-    }
-  }, []);
+    };
+    fetchMaintenance();
+  }, [initialMaintenanceStatus]);
 
   // Filter nav items
   const visibleNavItems = getVisibleNavItems(navItems, isAdmin);
@@ -278,7 +286,7 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
                      System Maintenance
                    </h3>
                    <div className="mt-1 text-sm text-amber-700">
-                     {maintenance.message}
+                     {maintenance.message || "System is under maintenance."}
                    </div>
                  </div>
                </div>
