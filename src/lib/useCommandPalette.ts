@@ -7,6 +7,7 @@ interface UseCommandPaletteOptions {
   enabled?: boolean;
   onTransform?: (instruction: string, selectedText: string) => Promise<void>;
   onNavigate?: (chapterIndex: number) => void;
+  onClose?: () => void; // Called when palette closes to restore editor focus
   selectedText?: string;
   chapters?: { title: string; index: number }[];
 }
@@ -23,12 +24,22 @@ export function useCommandPalette({
   enabled = true,
   onTransform,
   onNavigate,
+  onClose,
   selectedText = "",
   chapters = [],
 }: UseCommandPaletteOptions): UseCommandPaletteReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
+
+  // Wrapper to handle close with callback
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (!open && onClose) {
+      // Small delay to ensure dialog animation completes
+      setTimeout(() => onClose(), 50);
+    }
+  }, [onClose]);
 
   // Handle keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -73,13 +84,15 @@ export function useCommandPalette({
         setLoadingMessage(`${label}...`);
         try {
           await onTransform(instruction, selectedText);
+          // Close palette after successful transformation
+          handleOpenChange(false);
         } finally {
           setIsLoading(false);
           setLoadingMessage("");
         }
       },
     }),
-    [selectedText, onTransform]
+    [selectedText, onTransform, handleOpenChange]
   );
 
   // Build command list
@@ -156,81 +169,14 @@ export function useCommandPalette({
       "🎬"
     ),
 
-    // Navigation Commands
-    {
-      id: "nav-next-chapter",
-      label: "Next Chapter",
-      description: "Jump to the next chapter",
-      icon: "⏭️",
-      category: "navigation",
-      disabled: !onNavigate || chapters.length === 0,
-      action: () => {
-        // This would need current chapter context
-        // For now, it's a placeholder
-      },
-    },
-    {
-      id: "nav-prev-chapter",
-      label: "Previous Chapter",
-      description: "Jump to the previous chapter",
-      icon: "⏮️",
-      category: "navigation",
-      disabled: !onNavigate || chapters.length === 0,
-      action: () => {
-        // This would need current chapter context
-      },
-    },
-
-    // Action Commands
-    {
-      id: "action-save-snapshot",
-      label: "Save Snapshot",
-      description: "Create a version snapshot",
-      icon: "📸",
-      category: "action",
-      action: () => {
-        // This would trigger version creation
-        // Placeholder for now
-      },
-    },
-    {
-      id: "action-run-consistency",
-      label: "Run Consistency Check",
-      description: "Analyze manuscript for inconsistencies",
-      icon: "🔍",
-      category: "action",
-      action: () => {
-        // This would trigger consistency check
-        // Placeholder for now
-      },
-    },
-    {
-      id: "action-export-pdf",
-      label: "Export PDF",
-      description: "Download manuscript as PDF",
-      icon: "📄",
-      category: "action",
-      action: () => {
-        // This would trigger PDF export
-        // Placeholder for now
-      },
-    },
-    {
-      id: "action-export-docx",
-      label: "Export DOCX",
-      description: "Download manuscript as Word document",
-      icon: "📝",
-      category: "action",
-      action: () => {
-        // This would trigger DOCX export
-        // Placeholder for now
-      },
-    },
+    // Note: Navigation commands (next/prev chapter) and action commands (export, snapshot)
+    // are intentionally omitted - they require additional integration work.
+    // Use "go to chapter N" or "find character X" for navigation instead.
   ];
 
   return {
     isOpen,
-    setIsOpen,
+    setIsOpen: handleOpenChange,
     commands,
     isLoading,
     loadingMessage,
