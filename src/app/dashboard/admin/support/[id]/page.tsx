@@ -10,7 +10,9 @@ import UserSnapshotPanel from "@/components/admin/UserSnapshotPanel";
 import { formatDate } from "@/components/support/SupportShared";
 import { getAdminAwareClient } from "@/lib/supabase-admin";
 
-export default async function AdminTicketDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,7 +35,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
         *,
         user:users!support_tickets_user_id_fkey(id, email, display_name)
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (ticketError || !ticket) {
@@ -47,7 +49,7 @@ export default async function AdminTicketDetailPage({ params }: { params: { id: 
   const { data: messages } = await client
     .from("support_messages")
     .select("*")
-    .eq("ticket_id", params.id)
+    .eq("ticket_id", id)
     .order("created_at", { ascending: false });
 
   return (
