@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
 function getVisibleNavItems(items: NavItem[], isAdmin: boolean) {
   return items.filter((item) => {
     // Hide Author tools from Admins
-    const isAuthorTool = item.name === "Manuscripts" || item.name === "Brain";
+    const isAuthorTool = item.name === "Manuscripts";
     if (isAdmin && isAuthorTool) {
       return false;
     }
@@ -103,27 +103,24 @@ export default function DashboardLayout({ children, user, usageStatus }: Dashboa
   );
 
   useEffect(() => {
-    // Fetch maintenance status
-    const fetchMaintenance = async () => {
-      try {
-        const { createClient } = await import("@/utils/supabase/client");
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("system_settings")
-          .select("value")
-          .eq("key", "maintenance_mode")
-          .single();
-
-        const value = data?.value as { enabled: boolean; message: string };
-        if (value?.enabled) {
-          setMaintenance(value);
-        }
-      } catch (err) {
-        // Silent fail for UI enhancement
-        console.error("Failed to check maintenance mode", err);
+    // Read maintenance status from public environment variable
+    // This avoids RLS issues since all users need to see the banner
+    try {
+      const raw = process.env.NEXT_PUBLIC_MAINTENANCE_MODE;
+      
+      if (!raw) {
+        return;
       }
-    };
-    fetchMaintenance();
+
+      const value = JSON.parse(raw) as { enabled: boolean; message?: string };
+      
+      if (value?.enabled) {
+        setMaintenance(value);
+      }
+    } catch (err) {
+      // Silent fail for UI enhancement
+      console.error("Failed to check maintenance mode", err);
+    }
   }, []);
 
   // Filter nav items
