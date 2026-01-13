@@ -15,6 +15,7 @@ import {
   getLlamaSuggestion,
 } from "@/lib/llama";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { OPENROUTER_MODELS } from "@/lib/openrouter";
 
 // Mock crypto for testing
 global.crypto = {
@@ -32,33 +33,25 @@ jest.mock("@/lib/ai-usage", () => ({
 }));
 
 // Mock openrouter to avoid actual API calls
-jest.mock("@/lib/openrouter", () => ({
-  openRouterChat: jest.fn().mockResolvedValue({
-    choices: [{ message: { content: "Mock improved text" } }],
-    usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
-  }),
-  openRouterChatStream: jest.fn().mockImplementation(async function* () {
-    yield "Mock ";
-    yield "improved ";
-    yield "text";
-    return { fullContent: "Mock improved text" };
-  }),
-  isOpenRouterConfigured: jest.fn().mockReturnValue(true),
-  getMockResponse: jest.fn().mockReturnValue("Mock suggestion response"),
-  OPENROUTER_MODELS: {
-    "gemini-pro": "google/gemini-pro-1.5",
-    "gemini-flash": "google/gemini-flash-1.5",
-    "llama-8b": "meta-llama/llama-3.1-8b-instruct",
-    "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
-    default_consistency: "google/gemini-flash-1.5",
-    default_suggestion: "meta-llama/llama-3.1-8b-instruct",
-  },
-  OpenRouterError: class OpenRouterError extends Error {
-    constructor(message: string, public statusCode: number) {
-      super(message);
-    }
-  },
-}));
+jest.mock("@/lib/openrouter", () => {
+  // Require the actual module to get the real constants
+  const originalModule = jest.requireActual("@/lib/openrouter");
+  return {
+    ...originalModule,
+    openRouterChat: jest.fn().mockResolvedValue({
+      choices: [{ message: { content: "Mock improved text" } }],
+      usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
+    }),
+    openRouterChatStream: jest.fn().mockImplementation(async function* () {
+      yield "Mock ";
+      yield "improved ";
+      yield "text";
+      return { fullContent: "Mock improved text" };
+    }),
+    isOpenRouterConfigured: jest.fn().mockReturnValue(true),
+    getMockResponse: jest.fn().mockReturnValue("Mock suggestion response"),
+  };
+});
 
 describe("Llama Service", () => {
   describe("estimateTokens", () => {

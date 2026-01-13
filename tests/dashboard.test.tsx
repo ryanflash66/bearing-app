@@ -66,6 +66,8 @@ describe("Dashboard", () => {
       
       expect(screen.getByText("Manuscripts")).toBeInTheDocument();
       expect(screen.getByText("Settings")).toBeInTheDocument();
+      expect(screen.getByText("Marketplace")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Marketplace/i })).toHaveAttribute("href", "/dashboard/marketplace");
       
       // Admin should NOT be visible for non-admin users
       expect(screen.queryByText("Admin")).not.toBeInTheDocument();

@@ -40,7 +40,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </svg>
             <span>Turnaround: <span className="font-medium text-slate-700">{service.turnaroundTime}</span></span>
           </div>
-          <button 
+          <button
             disabled
             className="text-slate-400 cursor-not-allowed"
             aria-label="Track order feature coming soon"
@@ -49,7 +49,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           </button>
         </div>
       </div>
-      
+
       <div className="mt-6 pt-4 border-t border-slate-100">
         <button
           onClick={handleRequest}

@@ -15,7 +15,7 @@ So that I can purchase the resources I need to publish my book.
     *   **Then** they see a "Task Board" view instead of a "Purchase" view (Future Scope prep).
 *   **Given** mobile view
     *   **When** accessed
-    *   **Then** the grid stacks responsive (1 column).
+    *   **Then** the grid stacks responsively (1 column).
 
 **Effort:** 8h
 **Dependencies:** Epic 1 (Auth)
@@ -36,7 +36,7 @@ So that I can purchase the resources I need to publish my book.
     - Added `MarketplacePage` with role-based view switching.
     - Implemented `support_agent` role mapping to "Designer" view.
     - Created `ServiceCard` and `ServiceGrid` components.
-    - Added mock data for 7 services (Cover, Editing, etc.).
+    - Added mock data for 8 services (Cover, Editing, etc.).
     - Added "Marketplace" navigation item.
     - Addressed Code Review findings: Added "Track Order" link placeholder and improved accessibility.
     - **Round 2 Updates**: Added empty state handling to `ServiceGrid`.

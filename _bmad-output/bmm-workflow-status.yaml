@@ -319,15 +319,7 @@ epic_progress:
         notes: "Email notifications via Resend"
 
 # Next Action
-next_workflow:
-  id: "story-h.1"
-  name: "Story H.1: Model & Service Governance"
-  agent: "dev"
-  command: "/bmad:bmm:workflows:dev-story H.1"
-  description: "Centralize and formalize AI model configuration to avoid hardcoding and drift."
-  priority: "high"
-  reason: "Epic 4 complete. Starting Stabilization & Hardening epic."
-- epic: 5
+  - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
     completed: 1
@@ -369,8 +361,9 @@ next_workflow:
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5
-    completed: 2
-    status: "in-progress"
+    completed: 5
+    status: "completed"
+    completed_date: "2026-01-13"
     story_list:
       - id: "story-h.1"
         name: "Model & Service Governance"
@@ -384,21 +377,29 @@ next_workflow:
         notes: "VERIFIED: RLS policies for suggestions/consistency_checks tables. verify-rls.ts script tests isolation. RPC-First pattern documented."
       - id: "story-h.3"
         name: "Performance & Latency Baseline"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-13"
+        notes: "VERIFIED: performance.ts utility with measurePromise, latency_ms column in ai_usage_events, gemini.ts and llama.ts instrumented."
       - id: "story-h.4"
         name: "Job Resilience & Observability"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-13"
+        notes: "VERIFIED: recover_stale_jobs RPC function, JobMonitor.tsx component, Server Action in admin/actions.ts."
       - id: "story-h.5"
         name: "Visual & UX Polish Sweep"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-13"
+        notes: "VERIFIED: Binder has backdrop-blur & transitions, GhostText uses SF Mono font with pulse animation, MagicIngest has loading spinners."
 
 # Next Action
 next_workflow:
-  id: "story-h.3"
-  name: "Story H.3: Performance & Latency Baseline"
+  id: "epic-5-continue"
+  name: "Continue Epic 5 - Intelligence Upgrade"
   agent: "dev"
-  command: "/dev-story H.3"
-  description: "Establish baseline performance metrics and latency monitoring."
-  priority: "high"
-  reason: "Third story of the Stabilization & Hardening epic (Sprint 0.5)"
+  command: "/dev-story"
+  description: "Epic 0.5 retrospective completed. Epic 5 has 3 remaining stories in backlog."
+  priority: "medium"
+  reason: "Story 5.2 complete. Proceed with Story 5.1, 5.3, or 5.4 based on priority."
+  retrospective_completed: "2026-01-13"
+  retrospective_artifact: "_bmad-output/implementation-artifacts/epic-0.5-retro-2026-01-13.md"
 
