@@ -35,3 +35,24 @@ Centralize and formalize AI model configuration to avoid hardcoding and drift. T
   - Flash: `google/gemini-flash-1.5`
   - Pro: `google/gemini-pro-1.5`
   - Llama: `meta-llama/llama-3.1-8b-instruct` (or similar, check current usage)
+
+## Dev Agent Record
+
+### Verification (2026-01-12)
+- **AC H.1.1**: Verified `src/lib/config/ai-models.ts` exists with all model IDs. Grep confirmed no hardcoded model strings outside centralized config.
+- **AC H.1.2**: Verified `src/lib/monitoring/service-status.ts` implements `checkOpenRouterHealth()` and `checkDatabaseHealth()` functions.
+- **AC H.1.3**: Verified `scripts/validate-env.js` validates required env vars (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENROUTER_API_KEY).
+
+### Completion Notes
+All acceptance criteria satisfied. Implementation was pre-existing and verified to be complete. Test suite passes (234/238 tests pass, 4 skipped).
+
+## File List
+- `src/lib/config/ai-models.ts` - Centralized AI model configuration
+- `src/lib/openrouter.ts` - OpenRouter adapter using centralized config
+- `src/lib/gemini.ts` - Gemini service using OPENROUTER_MODELS
+- `src/lib/llama.ts` - Llama service using OPENROUTER_MODELS
+- `src/lib/monitoring/service-status.ts` - Health check utilities
+- `scripts/validate-env.js` - CI environment validation script
+
+## Status
+**completed** - Verified 2026-01-12

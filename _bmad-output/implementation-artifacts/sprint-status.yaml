@@ -103,9 +103,9 @@ development_status:
   6-3-publication-metadata: backlog
   6-4-public-landing-pages: backlog
 
-  # Epic 5: Intelligence Upgrade (Pushed Back)
-  epic-5: backlog
-  5-1-integrate-custom-models: backlog
+  # Epic 5: Service Marketplace
+  epic-5: in-progress
+  5-1-service-marketplace-ui: done
   5-2-commander-pattern: backlog
   5-3-voice-dictation: backlog
   5-4-mobile-landscape: backlog

@@ -84,12 +84,14 @@ describe("Dashboard", () => {
         </DashboardLayout>
       );
 
-      // Admin should be visible for admin users (appears in nav and as badge)
+      // Admin badge should be visible for admin users
       const adminElements = screen.getAllByText("Admin");
       expect(adminElements.length).toBeGreaterThanOrEqual(1);
-      
-      // Verify the admin link exists
-      expect(screen.getByRole("link", { name: /Admin/i })).toBeInTheDocument();
+
+      // For admin users, Dashboard link redirects to admin dashboard
+      const dashboardLink = screen.getByRole("link", { name: /Dashboard/i });
+      expect(dashboardLink).toBeInTheDocument();
+      expect(dashboardLink).toHaveAttribute("href", "/dashboard/admin");
     });
 
     it("displays user email and display name", async () => {

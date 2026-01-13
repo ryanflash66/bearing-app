@@ -19,4 +19,24 @@ So that I can purchase the resources I need to publish my book.
 
 **Effort:** 8h
 **Dependencies:** Epic 1 (Auth)
-**Status:** Planned
+**Status:** Done
+
+## Dev Agent Record
+
+### File List
+- `src/app/dashboard/marketplace/page.tsx`
+- `src/components/marketplace/DesignerBoard.tsx`
+- `src/components/marketplace/ServiceCard.tsx`
+- `src/components/marketplace/ServiceGrid.tsx`
+- `src/lib/marketplace-data.ts`
+- `src/components/layout/DashboardLayout.tsx`
+
+### Change Log
+- **2026-01-13**: Implemented Service Marketplace UI.
+    - Added `MarketplacePage` with role-based view switching.
+    - Implemented `support_agent` role mapping to "Designer" view.
+    - Created `ServiceCard` and `ServiceGrid` components.
+    - Added mock data for 7 services (Cover, Editing, etc.).
+    - Added "Marketplace" navigation item.
+    - Addressed Code Review findings: Added "Track Order" link placeholder and improved accessibility.
+    - **Round 2 Updates**: Added empty state handling to `ServiceGrid`.
