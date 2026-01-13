@@ -224,8 +224,9 @@ workflow_status:
             notes: "IMPLEMENTED: Stale ticket detection (48h), PII masking (email masking), and User Context Snapshot for agents. Verified with realtime support."
           - id: "story-4.5"
             name: "Super Admin Dashboard"
-            status: "required"
-            notes: "PENDING: Global metrics (tokens, users, tickets) and user override links."
+            status: "docs/story4.5.md"
+            completed: "2026-01-12"
+            notes: "IMPLEMENTED: Global metrics dashboard, user management table, and override links for Super Admins."
           - id: "story-4.6"
             name: "Critical Notification System"
             status: "docs/story4.6.md"
@@ -235,8 +236,8 @@ workflow_status:
 
 # Story Progress Summary
 story_progress:
-  total: 23
-  completed: 23
+  total: 24
+  completed: 24
   ux_rework: 0
   ready: 0
   pending: 0
@@ -293,9 +294,9 @@ epic_progress:
   - epic: 4
     name: "Support & Admin (Emergency Rework)"
     stories: 6
-    completed: 5
-    status: "in-progress"
-    notes: "Emergency rework for scale and security. Stories 4.1-4.4 and 4.6 completed. Only 4.5 remains."
+    completed: 6
+    status: "completed"
+    notes: "Emergency rework for scale and security. All stories complete including Super Admin Dashboard."
     story_list:
       - id: "story-4.1"
         name: "Admin Role Architecture (RBAC)"
@@ -311,7 +312,7 @@ epic_progress:
         status: "completed"
       - id: "story-4.5"
         name: "Super Admin Dashboard"
-        status: "required"
+        status: "completed"
       - id: "story-4.6"
         name: "Critical Notification System"
         status: "completed"
@@ -319,13 +320,13 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-4.5"
-  name: "Story 4.5: Super Admin Dashboard"
+  id: "story-h.1"
+  name: "Story H.1: Model & Service Governance"
   agent: "dev"
-  command: "/bmad-bmm-workflows-dev-story 4.5"
-  description: "Implement global metrics (tokens, users, tickets) and user override links for Super Admins."
+  command: "/bmad:bmm:workflows:dev-story H.1"
+  description: "Centralize and formalize AI model configuration to avoid hardcoding and drift."
   priority: "high"
-  reason: "Next step in the Support & Admin epic."
+  reason: "Epic 4 complete. Starting Stabilization & Hardening epic."
 - epic: 5
     name: "Intelligence Upgrade (Pushed Back)"
     stories: 4
@@ -368,15 +369,19 @@ next_workflow:
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5
-    completed: 0
-    status: "backlog"
+    completed: 2
+    status: "in-progress"
     story_list:
       - id: "story-h.1"
         name: "Model & Service Governance"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-12"
+        notes: "VERIFIED: Centralized ai-models.ts config, service-status.ts health checks, validate-env.js script. All AC satisfied."
       - id: "story-h.2"
         name: "Security & RLS Hardening"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-12"
+        notes: "VERIFIED: RLS policies for suggestions/consistency_checks tables. verify-rls.ts script tests isolation. RPC-First pattern documented."
       - id: "story-h.3"
         name: "Performance & Latency Baseline"
         status: "backlog"
@@ -389,11 +394,11 @@ next_workflow:
 
 # Next Action
 next_workflow:
-  id: "story-h.1"
-  name: "Story H.1: Model & Service Governance"
+  id: "story-h.3"
+  name: "Story H.3: Performance & Latency Baseline"
   agent: "dev"
-  command: "/dev-story H.1"
-  description: "Centralize and formalize AI model configuration to avoid hardcoding and drift."
+  command: "/dev-story H.3"
+  description: "Establish baseline performance metrics and latency monitoring."
   priority: "high"
-  reason: "First story of the Stabilization & Hardening epic (Sprint 0.5)"
+  reason: "Third story of the Stabilization & Hardening epic (Sprint 0.5)"
 

@@ -36,3 +36,23 @@ Conduct a systematic verification of data isolation and privileged operations to
 ## Technical Notes
 - **Critical Tables**: `manuscripts`, `chapters`, `suggestions`, `consistency_checks`, `audit_logs`.
 - **Testing Strategy**: Create two test users in separate accounts. Attempt to fetch User B's resources using User A's client.
+
+## Dev Agent Record
+
+### Verification (2026-01-12)
+- **AC H.2.1**: Verified `scripts/verify-rls.ts` tests cross-account isolation for manuscripts. RLS policies use `is_account_member()` function to filter data.
+- **AC H.2.2**: Verified `suggestions` and `consistency_checks` tables have proper RLS policies that check manuscript ownership via account membership.
+- **AC H.2.3**: Verified `docs/architecture-security.md` documents RPC-First pattern (lines 109-133) with rationale for atomicity, validation, and privilege elevation.
+
+### Completion Notes
+All acceptance criteria satisfied. Implementation was pre-existing and verified to be complete. Test suite passes (234/238 tests pass, 4 skipped).
+
+## File List
+- `scripts/verify-rls.ts` - Cross-account isolation verification script
+- `supabase/migrations/20241225000000_create_suggestions_table.sql` - RLS policies for suggestions
+- `supabase/migrations/20241226000000_create_consistency_checks_table.sql` - RLS policies for consistency_checks
+- `tests/rls/consistency-check.test.ts` - RLS unit tests for consistency checks
+- `docs/architecture-security.md` - Security architecture with RPC-First documentation
+
+## Status
+**completed** - Verified 2026-01-12
