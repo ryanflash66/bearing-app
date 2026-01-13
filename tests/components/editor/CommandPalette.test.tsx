@@ -279,9 +279,10 @@ describe("CommandPalette", () => {
         />
       );
 
-      // Type "go to chapter 2"
+      // Type "go to chapter 2" and press Enter to trigger navigation
       const input = screen.getByPlaceholderText(/type a command/i);
       await user.type(input, "go to chapter 2");
+      await user.keyboard("{Enter}");
 
       // Should trigger navigation
       await waitFor(() => {
@@ -305,9 +306,11 @@ describe("CommandPalette", () => {
 
       const input = screen.getByPlaceholderText(/type a command/i);
       await user.type(input, "chapter 1");
+      await user.keyboard("{Enter}");
 
       await waitFor(() => {
-        expect(screen.getByText(/navigated to chapter 1/i)).toBeInTheDocument();
+        // Navigation message format: "Navigated to Chapter N: Title"
+        expect(screen.getByText(/Navigated to Chapter 1: Introduction/i)).toBeInTheDocument();
       });
     });
 
@@ -349,9 +352,11 @@ describe("CommandPalette", () => {
 
       const input = screen.getByPlaceholderText(/type a command/i);
       await user.type(input, "go to chapter 99");
+      await user.keyboard("{Enter}");
 
       await waitFor(() => {
-        expect(screen.getByText(/chapter 99 not found/i)).toBeInTheDocument();
+        // Actual message format: "Chapter 99 not found (1-4 available)"
+        expect(screen.getByText(/Chapter 99 not found/i)).toBeInTheDocument();
       });
       expect(onNavigate).not.toHaveBeenCalled();
     });

@@ -115,7 +115,9 @@ Implemented a full-featured command palette using `cmdk` (Vercel's command menu 
 
 2. **Navigation Commands:**
    - "go to chapter N" - Natural language chapter navigation
+   - "find character X" - Navigate to first mention of a character
    - Chapter list appears when typing "chapter"
+   - Character list appears when typing "find" or "character"
    - Confirmation message after navigation
 
 3. **Keyboard-First Design:**
@@ -138,8 +140,9 @@ Implemented a full-featured command palette using `cmdk` (Vercel's command menu 
 
 ### Tests
 
-- 17 unit tests covering all ACs
-- Tests for rendering, fuzzy search, command execution, navigation, escape handling, and accessibility
+- 31 unit tests total (17 component + 14 hook tests)
+- Component tests: rendering, fuzzy search, command execution, navigation, escape handling, accessibility
+- Hook tests: keyboard shortcuts, AI command generation/execution, loading states, onClose callback
 
 ---
 
@@ -150,12 +153,14 @@ Implemented a full-featured command palette using `cmdk` (Vercel's command menu 
 |------|-------------|
 | `src/components/editor/CommandPalette.tsx` | Main command palette component with Radix Dialog + cmdk |
 | `src/lib/useCommandPalette.ts` | Hook for keyboard shortcuts and command generation |
-| `tests/components/editor/CommandPalette.test.tsx` | Unit tests (17 tests) |
+| `tests/components/editor/CommandPalette.test.tsx` | Component tests (17 tests) |
+| `tests/lib/useCommandPalette.test.ts` | Hook tests (14 tests) |
 
 ### Modified Files
 | File | Description |
 |------|-------------|
-| `src/components/manuscripts/ManuscriptEditor.tsx` | Integrated CommandPalette, added chapter extraction, AI transform handler |
+| `src/components/manuscripts/ManuscriptEditor.tsx` | Integrated CommandPalette, added chapter/character extraction, cursor position restoration, AI transform handler |
+| `src/app/globals.css` | Added CSS variables for Parchment Design System (--parchment-surface, --parchment-text, etc.) |
 | `package.json` | Added dependencies: `cmdk`, `@radix-ui/react-dialog`, `@radix-ui/react-popover`, `@radix-ui/react-visually-hidden` |
 
 ---
@@ -165,3 +170,4 @@ Implemented a full-featured command palette using `cmdk` (Vercel's command menu 
 | Date | Change | Author |
 |------|--------|--------|
 | 2026-01-12 | Initial implementation complete | Dev Agent |
+| 2026-01-12 | Code review fixes: added character navigation, removed placeholder commands, cursor restoration, hook tests, CSS variables | Dev Agent |
