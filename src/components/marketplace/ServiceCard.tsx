@@ -10,13 +10,15 @@ interface ServiceCardProps {
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     setIsRequesting(true);
-    // Future integration: Open modal or navigate to request form
-    setTimeout(() => {
+    try {
+      // TODO: Replace with real backend request (e.g., API call or Supabase RPC)
+      // Future integration: Open modal or navigate to request form
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } finally {
       setIsRequesting(false);
-      console.log(`Request initiated for: ${service.title}`); // TODO: Connect to backend
-    }, 1000);
+    }
   };
 
   return (
@@ -38,7 +40,11 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </svg>
             <span>Turnaround: <span className="font-medium text-slate-700">{service.turnaroundTime}</span></span>
           </div>
-          <button className="text-blue-600 hover:text-blue-700 hover:underline">
+          <button 
+            disabled
+            className="text-slate-400 cursor-not-allowed"
+            aria-label="Track order feature coming soon"
+          >
             Track Order
           </button>
         </div>
