@@ -50,13 +50,15 @@ describe("ServiceGrid", () => {
   });
 
   it("displays empty state when services is null", () => {
-    render(<ServiceGrid services={null as any} />);
+    // @ts-expect-error Testing null handling
+    render(<ServiceGrid services={null} />);
     
     expect(screen.getByText(/no services available/i)).toBeInTheDocument();
   });
 
   it("displays empty state when services is undefined", () => {
-    render(<ServiceGrid services={undefined as any} />);
+    // @ts-expect-error Testing undefined handling
+    render(<ServiceGrid services={undefined} />);
     
     expect(screen.getByText(/no services available/i)).toBeInTheDocument();
   });

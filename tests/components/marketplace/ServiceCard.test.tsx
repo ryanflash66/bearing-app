@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ServiceItem } from "@/lib/marketplace-data";
 
+const ASYNC_TIMEOUT = 2000;
+
 describe("ServiceCard", () => {
   const mockService: ServiceItem = {
     id: "test-service",
@@ -58,7 +60,7 @@ describe("ServiceCard", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /request service/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /request service/i })).not.toBeDisabled();
-    }, { timeout: 2000 });
+    }, { timeout: ASYNC_TIMEOUT });
   });
 
   it("prevents multiple simultaneous requests", async () => {
