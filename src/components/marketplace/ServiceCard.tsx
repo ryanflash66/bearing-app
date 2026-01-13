@@ -1,7 +1,7 @@
 "use client";
 
 import { ServiceItem } from "@/lib/marketplace-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ServiceCardProps {
   service: ServiceItem;
@@ -9,14 +9,23 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [timeoutId]);
 
   const handleRequest = () => {
     setIsRequesting(true);
     // Future integration: Open modal or navigate to request form
-    setTimeout(() => {
+    const id = setTimeout(() => {
       setIsRequesting(false);
       console.log(`Request initiated for: ${service.title}`); // TODO: Connect to backend
     }, 1000);
+    setTimeoutId(id);
   };
 
   return (
