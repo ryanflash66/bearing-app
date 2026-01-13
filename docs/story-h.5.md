@@ -38,3 +38,22 @@ Finalize the "Modern Parchment" design language and improve user experience flow
 ## Technical Notes
 - **Design Tokens**: Ensure we are using Tailwind classes consistent with `index.css` / theme.
 - **Performance**: Blur effects can be expensive; ensure `backdrop-filter` usage is performant.
+
+## Dev Agent Record
+
+### Verification (2026-01-13)
+- **AC H.5.1**: Verified `Binder.tsx` uses `backdrop-blur-md`, `backdrop-blur-sm`, and `transition-all duration-300 ease-in-out` for "Liquid Glass" effect.
+- **AC H.5.2**: Verified `globals.css` defines `.ghost-text-suggestion` with `font-family: "SF Mono", monospace` and `ghost-text-pulse-subtle` animation. Color is Stone-500 (#78716C) for "Modern Parchment" theme.
+- **AC H.5.3**: Verified `MagicIngest.tsx` has `animate-spin` spinner (line 363) and `animate-pulse` loading indicator (line 393).
+
+### Completion Notes
+All acceptance criteria satisfied. Implementation was pre-existing and verified to be complete. Test suite passes (238/242 tests pass, 4 skipped).
+
+## File List
+- `src/components/manuscripts/Binder.tsx` - Backdrop-blur and transition effects
+- `src/components/manuscripts/GhostTextDisplay.tsx` - Ghost text component
+- `src/app/globals.css` - Ghost text CSS with SF Mono font and pulse animation (lines 91-179)
+- `src/components/manuscripts/MagicIngest.tsx` - Upload with loading states
+
+## Status
+**completed** - Verified 2026-01-13
