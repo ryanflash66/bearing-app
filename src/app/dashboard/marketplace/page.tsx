@@ -14,7 +14,10 @@ export default async function MarketplacePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (authError || !user) {
+    if (authError) {
+      console.error("Error fetching authenticated user in MarketplacePage:", authError);
+    }
     const returnUrl = encodeURIComponent("/dashboard/marketplace");
     return redirect(`/login?returnUrl=${returnUrl}`);
   }

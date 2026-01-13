@@ -6,6 +6,8 @@
 // Using a partial type definition based on usage if generated types aren't immediately obvious/available in context,
 // but usually they are in `@/types/supabase` or similar. I'll stick to a compatible interface.
 
+export type TicketPriority = 'low' | 'medium' | 'high' | 'critical';
+
 export interface SupportTicket {
   id: string;
   created_at: string;
@@ -13,7 +15,7 @@ export interface SupportTicket {
   subject: string;
   message: string;
   status: string;
-  priority: string;
+  priority: TicketPriority;
   user_id: string;
   // add other fields as needed
 }
@@ -23,7 +25,8 @@ export type TicketWithDerived = SupportTicket & {
   updatedAtMs: number;
 };
 
-const PRIORITY_WEIGHT: Record<string, number> = {
+const PRIORITY_WEIGHT: Record<TicketPriority, number> = {
+  critical: 4,
   high: 3,
   medium: 2,
   low: 1,
@@ -51,8 +54,8 @@ export function addDerivedFields(t: SupportTicket): TicketWithDerived {
  * Sort comparator for tickets: Priority (Desc) -> Date (Desc/Newest First)
  */
 export function compareTickets(a: TicketWithDerived, b: TicketWithDerived) {
-  const pA = PRIORITY_WEIGHT[a.priority] || 1;
-  const pB = PRIORITY_WEIGHT[b.priority] || 1;
+  const pA = PRIORITY_WEIGHT[a.priority];
+  const pB = PRIORITY_WEIGHT[b.priority];
   if (pA !== pB) return pB - pA;
   
   return b.updatedAtMs - a.updatedAtMs;

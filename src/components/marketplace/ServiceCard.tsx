@@ -1,7 +1,7 @@
 "use client";
 
 import { ServiceItem } from "@/lib/marketplace-data";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 
 interface ServiceCardProps {
   service: ServiceItem;
@@ -9,22 +9,16 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  const handleRequest = () => {
+  const handleRequest = async () => {
     setIsRequesting(true);
-    // Future integration: Open modal or navigate to request form
-    timeoutRef.current = setTimeout(() => {
+    try {
+      // TODO: Replace with real backend request (e.g., API call or Supabase RPC)
+      // Future integration: Open modal or navigate to request form
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } finally {
       setIsRequesting(false);
-      console.log(`Request initiated for: ${service.title}`); // TODO: Connect to backend
-    }, 1000);
+    }
   };
 
   return (
@@ -46,12 +40,16 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </svg>
             <span>Turnaround: <span className="font-medium text-slate-700">{service.turnaroundTime}</span></span>
           </div>
-          <button className="text-blue-600 hover:text-blue-700 hover:underline">
+          <button
+            disabled
+            className="text-slate-400 cursor-not-allowed"
+            aria-label="Track order feature coming soon"
+          >
             Track Order
           </button>
         </div>
       </div>
-      
+
       <div className="mt-6 pt-4 border-t border-slate-100">
         <button
           onClick={handleRequest}
