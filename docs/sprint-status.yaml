@@ -37,6 +37,8 @@ development_status:
   4-6-critical-notification-system: backlog
   epic-4-retrospective: optional
 
-  # Epic 5: Service Marketplace
+  # Epic 5: Service Marketplace & Intelligence
   epic-5: in-progress
   5-1-service-marketplace-ui: done
+  5-2-isbn-purchase-workflow: done
+  5-5-cmdk-commander-pattern: done

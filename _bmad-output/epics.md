@@ -53,7 +53,7 @@ NFR-08: **AI Quality**: Base model fine-tuned, Safety filters (PRD 6.1)
 - AR-07: **Roles**: Strict separation of Author, Admin, Support.
 
 **From UX:**
-- UR-01: **Visuals**: "Modern Parchment" theme (#FDF7E9 background).
+- UR-01: **Visuals**: "Modern Clean" theme (#FDF7E9 background optional, focus on clean typography).
 - UR-02: **Interactions**: "Ghost Text" for AI suggestions (SF Mono).
 - UR-03: **Consistency UI**: "Clarity Hub" with visual badges for issues.
 - UR-04: **Feedback**: 3s Autosave visual heartbeat.
@@ -87,8 +87,8 @@ NFR-08: **AI Quality**: Base model fine-tuned, Safety filters (PRD 6.1)
 **FRs covered:** FR-12 (Support System), FR-15 (Admin Dashboard), NFR-02 (Role Separation)
 
 ### Epic 5: Services & Monetization
-**Goal:** Enable revenue generation through seamless ISBN purchases and professional service requests.
-**FRs covered:** FR-10 (ISBN), FR-11 (Service Marketplace)
+**Goal:** Enable revenue generation through seamless ISBN purchases and professional service requests, while phasing in intelligence upgrades like dictation and custom models as secondary priorities.
+**FRs covered:** FR-10 (ISBN), FR-11 (Service Marketplace), FR-13 (AI Covers - partially moved)
 
 ### Epic 6: Creative Expansion
 **Goal:** Provide authors with marketing assets (AI Covers) and audience-building tools (Blogs).
@@ -162,7 +162,7 @@ So that I can focus purely on my creative flow.
 **Acceptance Criteria:**
 **Given** the editor view
 **When** loaded
-**Then** the background is #FDF7E9 (Parchment) and font is Merriweather
+**Then** the background is clean and font is Merriweather
 **And** the UI controls fade out when I start typing (Zen Mode)
 **And** the "Binder" sidebar lists all chapters (FR-05, UR-01, UR-05)
 
@@ -280,13 +280,26 @@ So that I can monitor platform stability.
 **Given** a Super Admin user
 **When** accessing the Admin Dashboard
 **Then** they see Global User Count, Active Tickets, and AI Error Rates
+**Then** they see Global User Count, Active Tickets, and AI Error Rates
 **And** Support Agents CANNOT access this view (FR-15)
+
+### Story 4.5: System Settings & Maintenance Mode
+As a Super Admin,
+I want to toggle maintenance mode and manage global system settings,
+So that I can safely deploy updates or freeze the system during emergencies.
+**Acceptance Criteria:**
+**Given** the Super Admin Settings page
+**When** checked
+**Then** I can see a "Maintenance Mode" toggle
+**And** toggling it blocks non-admin access to critical write operations
+**And** a global banner is displayed to all active users
+**And** Support Agents cannot access these settings
 
 ## Epic 5: Services & Monetization
 
 **Goal:** Enable revenue generation through seamless ISBN purchases and professional service requests.
 
-### Story 5.1: ISBN Purchase Workflow
+### Story 5.2: ISBN Purchase Workflow
 As an author,
 I want to buy an ISBN directly for my book,
 So that I can publish professionally without leaving the platform.
@@ -296,15 +309,11 @@ So that I can publish professionally without leaving the platform.
 **Then** a Stripe checkout session is initiated
 **And** upon success, an ISBN is assigned to the book metadata (FR-10)
 
-### Story 5.2: Service Marketplace UI
-As an author,
-I want to browse and request services like Editing or Cover Design,
-So that I can polish my book with professional help.
+### Story 5.5: Cmd+K Commander Pattern
 **Acceptance Criteria:**
-**Given** the Services tab
-**When** viewed
-**Then** I see cards for available services (Editing, Marketing, etc.)
-**And** "Request Quote" opens a specific form linked to my book (FR-11)
+**Given** the editor is active
+**When** I press Cmd+K
+**Then** the command palette appears with search, AI transformations, and navigation commands.
 
 ### Story 5.3: Order Management System
 As an Admin,
