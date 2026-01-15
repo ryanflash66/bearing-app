@@ -18,19 +18,28 @@ export type Database = {
         Row: {
           account_id: string
           account_role: string
+          ai_status: string
           created_at: string
+          internal_note: string | null
+          member_status: string
           user_id: string
         }
         Insert: {
           account_id: string
           account_role?: string
+          ai_status?: string
           created_at?: string
+          internal_note?: string | null
+          member_status?: string
           user_id: string
         }
         Update: {
           account_id?: string
           account_role?: string
+          ai_status?: string
           created_at?: string
+          internal_note?: string | null
+          member_status?: string
           user_id?: string
         }
         Relationships: [
@@ -92,6 +101,7 @@ export type Database = {
           cycle_id: string | null
           feature: string
           id: string
+          latency_ms: number | null
           model: string
           tokens_actual: number | null
           tokens_estimated: number
@@ -103,6 +113,7 @@ export type Database = {
           cycle_id?: string | null
           feature: string
           id?: string
+          latency_ms?: number | null
           model: string
           tokens_actual?: number | null
           tokens_estimated?: number
@@ -114,6 +125,7 @@ export type Database = {
           cycle_id?: string | null
           feature?: string
           id?: string
+          latency_ms?: number | null
           model?: string
           tokens_actual?: number | null
           tokens_estimated?: number
@@ -133,6 +145,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "billing_cycles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_events_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "user_current_usage"
+            referencedColumns: ["cycle_id"]
           },
           {
             foreignKeyName: "ai_usage_events_user_id_fkey"
@@ -289,6 +308,38 @@ export type Database = {
           },
         ]
       }
+      isbn_pool: {
+        Row: {
+          assigned_at: string | null
+          assigned_to_request_id: string | null
+          created_at: string
+          id: string
+          isbn: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_to_request_id?: string | null
+          created_at?: string
+          id?: string
+          isbn: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_to_request_id?: string | null
+          created_at?: string
+          id?: string
+          isbn?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "isbn_pool_assigned_to_request_id_fkey"
+            columns: ["assigned_to_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manuscript_versions: {
         Row: {
           content_json: Json
@@ -400,6 +451,103 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          manuscript_id: string | null
+          metadata: Json | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          status: Database["public"]["Enums"]["service_request_status"]
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          manuscript_id?: string | null
+          metadata?: Json | null
+          service_type: Database["public"]["Enums"]["service_type"]
+          status?: Database["public"]["Enums"]["service_request_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          manuscript_id?: string | null
+          metadata?: Json | null
+          service_type?: Database["public"]["Enums"]["service_type"]
+          status?: Database["public"]["Enums"]["service_request_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_manuscript_id_fkey"
+            columns: ["manuscript_id"]
+            isOneToOne: false
+            referencedRelation: "manuscripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestions: {
         Row: {
           confidence: number
@@ -460,6 +608,120 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          sender_user_id: string
+          ticket_id: string
+          ticket_owner_auth_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          sender_user_id: string
+          ticket_id: string
+          ticket_owner_auth_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          sender_user_id?: string
+          ticket_id?: string
+          ticket_owner_auth_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_sender_user_id_fkey"
+            columns: ["sender_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           auth_id: string
@@ -468,7 +730,7 @@ export type Database = {
           email: string
           id: string
           pen_name: string | null
-          role: string
+          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
         Insert: {
@@ -478,7 +740,7 @@ export type Database = {
           email: string
           id?: string
           pen_name?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Update: {
@@ -488,17 +750,77 @@ export type Database = {
           email?: string
           id?: string
           pen_name?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      user_current_usage: {
+        Row: {
+          account_id: string | null
+          cycle_id: string | null
+          cycle_start: string | null
+          last_activity: string | null
+          total_checks: number | null
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_cycles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_word_count: { Args: { content: string }; Returns: number }
+      claim_profile: {
+        Args: { p_auth_id: string; p_email: string }
+        Returns: {
+          auth_id: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          pen_name: string
+          role: string
+          updated_at: string
+        }[]
+      }
+      claim_ticket: { Args: { ticket_id: string }; Returns: undefined }
+      create_default_account: {
+        Args: { p_name: string; p_owner_id: string }
+        Returns: {
+          consecutive_overage_months: number
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+          usage_status: Database["public"]["Enums"]["usage_status_type"]
+        }[]
+      }
+      create_ticket: {
+        Args: {
+          message: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          subject: string
+        }
+        Returns: string
+      }
+      get_available_isbn_count: { Args: never; Returns: number }
       get_current_user_id: { Args: never; Returns: string }
       get_user_account_ids: { Args: never; Returns: string[] }
       is_account_admin: { Args: { check_account_id: string }; Returns: boolean }
@@ -514,12 +836,56 @@ export type Database = {
         Args: { check_account_id: string }
         Returns: boolean
       }
+      is_platform_support: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
+      is_support_agent: { Args: never; Returns: boolean }
       process_billing_cycle: {
         Args: { target_account_id: string }
         Returns: Json
       }
+      recover_stale_jobs: {
+        Args: { timeout_minutes?: number }
+        Returns: {
+          failed_count: number
+          job_ids: string[]
+        }[]
+      }
+      reply_to_ticket: {
+        Args: { content: string; ticket_id: string }
+        Returns: undefined
+      }
+      update_ticket_status: {
+        Args: {
+          new_status: Database["public"]["Enums"]["support_ticket_status"]
+          ticket_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
+      app_role: "user" | "support_agent" | "super_admin"
+      service_request_status:
+        | "pending"
+        | "paid"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "failed"
+      service_type:
+        | "isbn"
+        | "cover_design"
+        | "editing"
+        | "author_website"
+        | "marketing"
+        | "social_media"
+        | "publishing_help"
+        | "printing"
+      support_ticket_status:
+        | "open"
+        | "pending_user"
+        | "pending_support"
+        | "resolved"
+      ticket_priority: "low" | "medium" | "high" | "critical"
       usage_status_type: "good_standing" | "flagged" | "upsell_required"
     }
     CompositeTypes: {
@@ -648,6 +1014,32 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["user", "support_agent", "super_admin"],
+      service_request_status: [
+        "pending",
+        "paid",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "failed",
+      ],
+      service_type: [
+        "isbn",
+        "cover_design",
+        "editing",
+        "author_website",
+        "marketing",
+        "social_media",
+        "publishing_help",
+        "printing",
+      ],
+      support_ticket_status: [
+        "open",
+        "pending_user",
+        "pending_support",
+        "resolved",
+      ],
+      ticket_priority: ["low", "medium", "high", "critical"],
       usage_status_type: ["good_standing", "flagged", "upsell_required"],
     },
   },

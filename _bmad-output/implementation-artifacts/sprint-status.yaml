@@ -107,7 +107,7 @@ development_status:
   epic-5: in-progress
   5-1-service-marketplace-ui: done
   5-2-commander-pattern: backlog
-  5-3-voice-dictation: backlog
+  5-3-service-request-management: done
   5-4-mobile-landscape: backlog
   epic-5-retrospective: optional
 
