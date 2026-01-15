@@ -320,24 +320,36 @@ epic_progress:
 
 # Next Action
   - epic: 5
-    name: "Intelligence Upgrade (Pushed Back)"
-    stories: 4
-    completed: 1
+    name: "Services & Intelligence"
+    stories: 8
+    completed: 3
     status: "in-progress"
-    notes: "Story 5.2 (Cmd+K Commander) completed 2026-01-12. Remaining stories in backlog."
+    notes: "PIVOT: Services (ISBN, Marketplace) now prioritized over Custom AI per user mandate. Story 5.1 (UI) and Story 5.5 (Cmd+K) completed."
     story_list:
       - id: "story-5.1"
-        name: "Integrate Custom Fine-Tuned Models"
-        status: "backlog"
+        name: "Service Marketplace UI"
+        status: "completed"
       - id: "story-5.2"
+        name: "ISBN Purchase Workflow"
+        status: "_bmad-output/implementation-artifacts/story5.2.md"
+        completed: "2026-01-14"
+      - id: "story-5.3"
+        name: "Service Request Management"
+        status: "backlog"
+      - id: "story-5.4"
+        name: "Admin Fulfillment Dashboard"
+        status: "backlog"
+      - id: "story-5.5"
         name: "Cmd+K Commander Pattern"
         status: "completed"
         completed: "2026-01-12"
-        notes: "Implemented command palette with cmdk/Radix. AI transformations, chapter navigation, 17 tests passing."
-      - id: "story-5.3"
+      - id: "story-5.6"
+        name: "Integrate Custom Fine-Tuned Models"
+        status: "backlog"
+      - id: "story-5.7"
         name: "Voice-to-Text Dictation"
         status: "backlog"
-      - id: "story-5.4"
+      - id: "story-5.8"
         name: "Mobile Responsive Layout"
         status: "backlog"
   - epic: 6
@@ -393,13 +405,11 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "epic-5-continue"
-  name: "Continue Epic 5 - Intelligence Upgrade"
+  id: "story-5.3"
+  name: "Service Request Management"
   agent: "dev"
   command: "/dev-story"
-  description: "Epic 0.5 retrospective completed. Epic 5 has 3 remaining stories in backlog."
-  priority: "medium"
-  reason: "Story 5.2 complete. Proceed with Story 5.1, 5.3, or 5.4 based on priority."
-  retrospective_completed: "2026-01-13"
-  retrospective_artifact: "_bmad-output/implementation-artifacts/epic-0.5-retro-2026-01-13.md"
+  description: "Next priority in Services epic: Managing service requests and fulfillment."
+  priority: "high"
+  reason: "Sequential execution of Service Marketplace epic."
 

@@ -1,45 +1,108 @@
 
 > bearing-app@1.0.0 test
-> jest tests/api/tickets.test.ts
+> jest tests/components/ServiceCard.test.tsx
 
-FAIL tests/api/tickets.test.ts
-  POST /api/support/tickets
-    ΓêÜ should return 401 if user is not authenticated (3 ms)
-    ├ù should create a ticket and return 200 (1 ms)
-    ├ù should create an initial message in support_messages (1 ms)
+FAIL tests/components/ServiceCard.test.tsx
+  ServiceCard
+    ├ù renders service details correctly (1 ms)
+    ├ù renders 'Buy ISBN' button for ISBN service
+    ├ù renders 'Request Service' button for non-ISBN service
+    ├ù initiates Stripe checkout when Buy ISBN is clicked
+    ├ù shows pool warning modal when API returns poolWarning: true
+    ├ù handles API errors gracefully (1 ms)
 
-  ΓùÅ POST /api/support/tickets ΓÇ║ should create a ticket and return 200
+  ΓùÅ ServiceCard ΓÇ║ renders service details correctly
 
-    TypeError: supabase.rpc is not a function
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
 
-      30 |   // RPC-First: Use create_ticket function
-      31 |   // This handles: rate limiting, ticket creation, initial message creation
-    > 32 |   const { data: ticketId, error: rpcError } = await supabase.rpc("create_ticket", {
-         |                                                              ^
-      33 |     subject,
-      34 |     message,
-      35 |     priority,
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
 
-      at rpc (src/app/api/support/tickets/route.ts:32:62)
-      at Object.<anonymous> (tests/api/tickets.test.ts:91:17)
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
 
-  ΓùÅ POST /api/support/tickets ΓÇ║ should create an initial message in support_messages
+  ΓùÅ ServiceCard ΓÇ║ renders 'Buy ISBN' button for ISBN service
 
-    TypeError: supabase.rpc is not a function
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
 
-      30 |   // RPC-First: Use create_ticket function
-      31 |   // This handles: rate limiting, ticket creation, initial message creation
-    > 32 |   const { data: ticketId, error: rpcError } = await supabase.rpc("create_ticket", {
-         |                                                              ^
-      33 |     subject,
-      34 |     message,
-      35 |     priority,
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
 
-      at rpc (src/app/api/support/tickets/route.ts:32:62)
-      at Object.<anonymous> (tests/api/tickets.test.ts:142:5)
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
+
+  ΓùÅ ServiceCard ΓÇ║ renders 'Request Service' button for non-ISBN service
+
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
+
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
+
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
+
+  ΓùÅ ServiceCard ΓÇ║ initiates Stripe checkout when Buy ISBN is clicked
+
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
+
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
+
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
+
+  ΓùÅ ServiceCard ΓÇ║ shows pool warning modal when API returns poolWarning: true
+
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
+
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
+
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
+
+  ΓùÅ ServiceCard ΓÇ║ handles API errors gracefully
+
+    TypeError: Cannot redefine property: location
+        at Function.defineProperty (<anonymous>)
+
+      27 |     jest.clearAllMocks();
+      28 |     // Mock window.location.href
+    > 29 |     Object.defineProperty(window, "location", {
+         |            ^
+      30 |       writable: true,
+      31 |       value: { href: "" },
+      32 |     });
+
+      at Object.defineProperty (tests/components/ServiceCard.test.tsx:29:12)
 
 Test Suites: 1 failed, 1 total
-Tests:       2 failed, 1 passed, 3 total
+Tests:       6 failed, 6 total
 Snapshots:   0 total
-Time:        1.277 s
-Ran all test suites matching tests/api/tickets.test.ts.
+Time:        1.322 s
+Ran all test suites matching tests/components/ServiceCard.test.tsx.
