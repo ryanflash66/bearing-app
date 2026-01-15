@@ -322,7 +322,7 @@ epic_progress:
   - epic: 5
     name: "Services & Intelligence"
     stories: 8
-    completed: 2
+    completed: 3
     status: "in-progress"
     notes: "PIVOT: Services (ISBN, Marketplace) now prioritized over Custom AI per user mandate. Story 5.1 (UI) and Story 5.5 (Cmd+K) completed."
     story_list:

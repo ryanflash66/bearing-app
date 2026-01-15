@@ -8,7 +8,7 @@
 
 ## Summary
 
-Useable API coverage exists for all acceptance criteria, but lack of E2E/UI tests and a potential status state mismatch prevent a clean PASS.
+Usable API coverage exists for all acceptance criteria, but lack of E2E/UI tests and a potential status state mismatch prevent a clean PASS.
 
 ---
 

@@ -1,12 +1,20 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ServiceItem } from "@/lib/marketplace-data";
+import { navigateTo } from "@/lib/navigation";
 
 const ASYNC_TIMEOUT = 2000;
 
 // Mock fetch
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
+
+// Mock navigation module
+jest.mock("@/lib/navigation", () => ({
+  navigateTo: jest.fn(),
+}));
+
+const mockNavigateTo = navigateTo as jest.MockedFunction<typeof navigateTo>;
 
 describe("ServiceCard", () => {
   const mockService: ServiceItem = {
@@ -28,6 +36,7 @@ describe("ServiceCard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFetch.mockReset();
+    mockNavigateTo.mockReset();
   });
 
   it("renders service information correctly", () => {
@@ -197,7 +206,7 @@ describe("ServiceCard", () => {
       });
     });
 
-    it("attempts redirect to Stripe checkout when Continue to Payment is clicked", async () => {
+    it("navigates to Stripe checkout when Continue to Payment is clicked", async () => {
       const checkoutUrl = "https://checkout.stripe.com/pay/cs_test_continue";
 
       mockFetch.mockResolvedValueOnce({
@@ -219,17 +228,38 @@ describe("ServiceCard", () => {
         expect(screen.getByText(/ISBN Pool Notice/i)).toBeInTheDocument();
       });
 
-      // Click Continue to Payment - jsdom doesn't support navigation but we can verify the button works
-      const continueButton = screen.getByRole("button", { name: /continue to payment/i });
-      expect(continueButton).toBeInTheDocument();
+      // Verify navigateTo was NOT called yet (waiting for user confirmation)
+      expect(mockNavigateTo).not.toHaveBeenCalled();
 
-      // The button click will trigger navigation attempt (jsdom logs "not implemented" error)
-      // This verifies the button is wired up correctly
+      // Click Continue to Payment
+      const continueButton = screen.getByRole("button", { name: /continue to payment/i });
       fireEvent.click(continueButton);
 
-      // Modal should still be visible (navigation doesn't actually happen in jsdom)
-      // but the fact we got here without JS errors means the handler executed
-      expect(screen.getByText(/ISBN Pool Notice/i)).toBeInTheDocument();
+      // Verify navigateTo was called with the checkout URL
+      expect(mockNavigateTo).toHaveBeenCalledWith(checkoutUrl);
+    });
+
+    it("navigates directly to Stripe checkout when no pool warning", async () => {
+      const checkoutUrl = "https://checkout.stripe.com/pay/cs_test_direct";
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            url: checkoutUrl,
+            poolWarning: false,
+          }),
+      });
+
+      render(<ServiceCard service={mockISBNService} />);
+
+      const button = screen.getByRole("button", { name: /buy isbn/i });
+      fireEvent.click(button);
+
+      // Verify navigateTo was called directly (no modal shown)
+      await waitFor(() => {
+        expect(mockNavigateTo).toHaveBeenCalledWith(checkoutUrl);
+      });
     });
 
     it("displays error when checkout API fails", async () => {

@@ -19,7 +19,10 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    const returnUrl = encodeURIComponent("/dashboard/marketplace/success");
+    const returnPath = session_id
+      ? `/dashboard/marketplace/success?session_id=${session_id}`
+      : "/dashboard/marketplace/success";
+    const returnUrl = encodeURIComponent(returnPath);
     return redirect(`/login?returnUrl=${returnUrl}`);
   }
 

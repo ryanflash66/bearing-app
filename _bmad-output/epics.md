@@ -280,7 +280,6 @@ So that I can monitor platform stability.
 **Given** a Super Admin user
 **When** accessing the Admin Dashboard
 **Then** they see Global User Count, Active Tickets, and AI Error Rates
-**Then** they see Global User Count, Active Tickets, and AI Error Rates
 **And** Support Agents CANNOT access this view (FR-15)
 
 ### Story 4.5: System Settings & Maintenance Mode
@@ -310,6 +309,9 @@ So that I can publish professionally without leaving the platform.
 **And** upon success, an ISBN is assigned to the book metadata (FR-10)
 
 ### Story 5.5: Cmd+K Commander Pattern
+As an author,
+I want a Cmd+K command palette that shows search, AI transformations, and navigation commands,
+So that I can quickly find and run editor commands.
 **Acceptance Criteria:**
 **Given** the editor is active
 **When** I press Cmd+K

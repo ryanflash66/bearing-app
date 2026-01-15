@@ -143,7 +143,7 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
   }
 
   // Create a failed/expired record for tracking
-  await supabase.from("service_requests").insert({
+  const { error: insertError } = await supabase.from("service_requests").insert({
     user_id: userId,
     manuscript_id: session.metadata?.manuscript_id || null,
     service_type: serviceType,
@@ -154,4 +154,9 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
       failure_reason: "session_expired",
     },
   });
+
+  if (insertError) {
+    console.error("Error creating expired session record:", insertError);
+    throw insertError;
+  }
 }

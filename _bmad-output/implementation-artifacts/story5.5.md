@@ -6,34 +6,34 @@ As an author, I can open a quick-action command palette using `Cmd+K` (Mac) or `
 
 ## Acceptance Criteria (Gherkin Format)
 
-### AC 5.2.1
+### AC 5.5.1
 
 - **Given:** I am editing a manuscript
 - **When:** I press `Cmd+K` (Mac) or `Ctrl+K` (Windows)
 - **Then:** A floating command palette appears centered on screen with a search input
 - **And:** Focus is automatically placed in the search input
 
-### AC 5.2.2
+### AC 5.5.2
 
 - **Given:** The command palette is open
 - **When:** I type a command (e.g., "change tone to dark")
 - **Then:** Matching actions are filtered and displayed in real-time
 - **And:** Pressing `Enter` on a highlighted action executes it
 
-### AC 5.2.3
+### AC 5.5.3
 
 - **Given:** I have text selected in the editor
 - **When:** I invoke a transformation command (e.g., "make more concise")
 - **Then:** The AI processes the selected text and returns a suggestion
 - **And:** The suggestion is shown inline for acceptance/rejection (same as AC 2.3.2)
 
-### AC 5.2.4
+### AC 5.5.4
 
 - **Given:** The command palette is open
 - **When:** I press `Esc`
 - **Then:** The palette closes and focus returns to the editor at my previous cursor position
 
-### AC 5.2.5
+### AC 5.5.5
 
 - **Given:** The command palette is open
 - **When:** I type a navigation command (e.g., "go to chapter 3")

@@ -27,7 +27,7 @@ CREATE TYPE service_request_status AS ENUM (
 -- Create service_requests table
 CREATE TABLE service_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
   manuscript_id UUID REFERENCES manuscripts(id) ON DELETE SET NULL,
   service_type service_type NOT NULL,
   status service_request_status NOT NULL DEFAULT 'pending',
@@ -137,12 +137,16 @@ CREATE POLICY "Admins can update isbn pool"
 
 -- Create updated_at trigger function if not exists
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Add trigger for service_requests updated_at
 CREATE TRIGGER update_service_requests_updated_at

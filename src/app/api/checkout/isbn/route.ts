@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { stripe, SERVICE_PRICES, SERVICE_METADATA } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -41,11 +43,14 @@ export async function POST(request: NextRequest) {
       "get_available_isbn_count"
     );
 
-    if (poolError) {
-      console.error("Error checking ISBN pool:", poolError);
+    // If RPC fails or returns null, treat pool as potentially depleted
+    let poolWarning = false;
+    if (poolError || availableCount === null || availableCount === undefined) {
+      console.error("Error checking ISBN pool:", poolError || "availableCount is null/undefined");
+      poolWarning = true;
+    } else {
+      poolWarning = availableCount === 0;
     }
-
-    const poolWarning = availableCount === 0;
 
     // Get the base URL for redirects
     const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
