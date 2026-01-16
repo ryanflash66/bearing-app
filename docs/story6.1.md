@@ -1,6 +1,6 @@
 # Story 6.1: Blog Management (CMS)
 
-Status: ready-for-dev
+Status: Done
 
 ## Story
 
