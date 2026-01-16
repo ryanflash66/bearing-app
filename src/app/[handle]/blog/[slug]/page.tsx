@@ -1,10 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import type { Metadata } from "next";
 import { getPublicClient } from "@/lib/public-api";
-import { getPublicAuthorProfileByHandle } from "@/lib/public-profile";
-import { getPublishedBlogPostBySlug } from "@/lib/public-blog";
+import { getPublicAuthorProfileByHandle, PublicAuthorProfile } from "@/lib/public-profile";
+import { getPublishedBlogPostBySlug, PublicBlogPost } from "@/lib/public-blog";
 import BlogPostViewer from "@/components/blog/BlogPostViewer";
+
+// Cache data fetches to deduplicate between generateMetadata and page component
+const getCachedProfile = cache(async (handle: string) => {
+  const supabase = getPublicClient();
+  return getPublicAuthorProfileByHandle(supabase, handle);
+});
+
+const getCachedPost = cache(async (authorId: string, slug: string) => {
+  const supabase = getPublicClient();
+  return getPublishedBlogPostBySlug(supabase, authorId, slug);
+});
 
 function getDisplayName(handle: string, profile: { display_name: string | null; pen_name: string | null }) {
   return profile.display_name || profile.pen_name || handle;
@@ -29,14 +41,13 @@ export async function generateMetadata({
     return { title: "Post not found" };
   }
 
-  const supabase = getPublicClient();
-  const { profile } = await getPublicAuthorProfileByHandle(supabase, normalizedHandle);
+  const { profile } = await getCachedProfile(normalizedHandle);
 
   if (!profile) {
     return { title: "Author not found" };
   }
 
-  const { post } = await getPublishedBlogPostBySlug(supabase, profile.id, normalizedSlug);
+  const { post } = await getCachedPost(profile.id, normalizedSlug);
 
   if (!post) {
     return { title: "Post not found" };
@@ -46,6 +57,9 @@ export async function generateMetadata({
   const description = buildDescription(post.excerpt, post.content_text);
   const title = `${post.title} | ${authorName}`;
 
+  // Use author avatar as OG image, or fall back to default
+  const ogImage = profile.avatar_url || "/og-default.png";
+
   return {
     title,
     description,
@@ -54,11 +68,20 @@ export async function generateMetadata({
       description,
       type: "article",
       url: `/${profile.pen_name || normalizedHandle}/blog/${post.slug}`,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${post.title} by ${authorName}`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
@@ -76,14 +99,13 @@ export default async function PublicBlogPostPage({
     return notFound();
   }
 
-  const supabase = getPublicClient();
-  const { profile } = await getPublicAuthorProfileByHandle(supabase, normalizedHandle);
+  const { profile } = await getCachedProfile(normalizedHandle);
 
   if (!profile) {
     return notFound();
   }
 
-  const { post } = await getPublishedBlogPostBySlug(supabase, profile.id, normalizedSlug);
+  const { post } = await getCachedPost(profile.id, normalizedSlug);
 
   if (!post) {
     return notFound();

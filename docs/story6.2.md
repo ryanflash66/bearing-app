@@ -17,7 +17,7 @@ So that I can learn more about them and read their latest updates.
 
 **Effort:** 24h
 **Dependencies:** Story 6.1 (Content)
-**Status:** review
+**Status:** done
 
 ## Tasks
 - [x] **Infrastructure & Middleware**
@@ -58,6 +58,10 @@ So that I can learn more about them and read their latest updates.
 - `tests/lib/public-blog.test.ts`
 - `tests/components/blog/BlogCard.test.tsx`
 - `tests/components/layout/DashboardLayout.test.tsx`
+- `supabase/migrations/20260116180741_add_user_profile_fields.sql`
+- `docs/story6.1.md`
+- `docs/story6.2.md`
+- `_bmad-output/bmm-workflow-status.yaml`
 - `.eslintrc.json`
 - `.eslintignore`
 - `package.json`
@@ -81,6 +85,13 @@ So that I can learn more about them and read their latest updates.
 - Established a repo-wide ESLint baseline so lint runs (warnings only); configured lint script and eslint config.
 - Re-validated `DashboardLayout.test.tsx` Supabase mocking; targeted and full test suites pass.
 
+### Code Review Fixes (2026-01-16)
+- **HIGH**: Added OpenGraph image to blog post metadata (`generateMetadata` now includes `images` property with author avatar fallback)
+- **MEDIUM**: Added `avatar_url` and `bio` fields to users table via migration; updated `getPublicAuthorProfileByHandle` to fetch them
+- **MEDIUM**: Public profile page now displays actual avatar (with initials fallback) and bio (with placeholder fallback)
+- **MEDIUM**: Added React `cache()` to deduplicate profile/post fetches between `generateMetadata` and page component
+- All fixes verified with passing tests and successful build
+
 ### Change Log
 - **2026-01-16**: Initial task list created for development.
 - **2026-01-16**: Completed Infrastructure & Middleware task (public routes + public API helper).
@@ -89,3 +100,4 @@ So that I can learn more about them and read their latest updates.
 - **2026-01-16**: Completed Maintenance (Legacy) test updates (Supabase mocks + NotificationBell stub).
 - **2026-01-16**: Completed Public Blog Post (SSR metadata + viewer).
 - **2026-01-16**: Revalidated Maintenance task and established ESLint baseline (lint runs with warnings).
+- **2026-01-16**: Code review completed - fixed 4 issues: OpenGraph images, avatar/bio schema+display, fetch deduplication. Status → done.

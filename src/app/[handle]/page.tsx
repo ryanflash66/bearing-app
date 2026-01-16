@@ -34,16 +34,25 @@ export default async function PublicAuthorProfilePage({
 
   const displayName = profile.display_name || profile.pen_name || normalizedHandle;
   const initials = getInitials(displayName);
-  const bioText = "This author hasn't added a bio yet.";
+  const bioText = profile.bio || "This author hasn't added a bio yet.";
+  const avatarUrl = profile.avatar_url;
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
         <header className="flex flex-col gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-900 text-2xl font-semibold text-white">
-              {initials}
-            </div>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={`${displayName}'s avatar`}
+                className="h-20 w-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-900 text-2xl font-semibold text-white">
+                {initials}
+              </div>
+            )}
             <div>
               <h1 className="text-3xl font-bold text-slate-900">{displayName}</h1>
               <p className="mt-1 text-sm text-slate-500">@{profile.pen_name || normalizedHandle}</p>

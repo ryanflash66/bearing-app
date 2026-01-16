@@ -4,6 +4,8 @@ export interface PublicAuthorProfile {
   id: string;
   display_name: string | null;
   pen_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
 }
 
 export interface PublicAuthorProfileResult {
@@ -35,7 +37,7 @@ export async function getPublicAuthorProfileByHandle(
 
     const { data, error } = await supabase
       .from("users")
-      .select("id, display_name, pen_name")
+      .select("id, display_name, pen_name, avatar_url, bio")
       .eq("pen_name", normalizedHandle)
       .single();
 

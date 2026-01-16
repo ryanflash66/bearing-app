@@ -12,6 +12,8 @@ describe("public-profile", () => {
         id: "user-123",
         display_name: "Jane Doe",
         pen_name: "jane-doe",
+        avatar_url: "https://example.com/avatar.jpg",
+        bio: "Author biography here",
       };
 
       const mockSupabase = {
