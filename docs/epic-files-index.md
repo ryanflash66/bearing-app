@@ -13,8 +13,9 @@
 | `prd-epic-3.md` | Consistency Engine | Weeks 11-14 | 3.1-3.3 (3) | 66h | $1.35 |
 | `prd-epic-4.md` | Support & Admin | Weeks 14-16 | 4.1-4.3 (3) | 54h | $0 |
 | `epic-hardening.md` | Stabilization | Sprint 0.5 | H.1-H.5 (5) | 60h | $0 |
-| `prd-epic-6.md` | Publication | Weeks 17-19 | 6.1-6.4 (4) | 80h | $0 |
-| **TOTAL** | — | 22 weeks | 23 stories | **442h** | **$1.45/month** |
+| `prd-epic-6.md` | Blog & Content | Weeks 17-18 | 6.1-6.3 (3) | 60h | $0 |
+| `prd-epic-7.md` | Publication & Beta | Weeks 19-20 | 7.1-7.4 (4) | 80h | $0 |
+| **TOTAL** | — | 24 weeks | 27 stories | **582h** | **$1.45/month** |
 
 ---
 

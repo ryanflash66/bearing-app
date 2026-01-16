@@ -1,25 +1,23 @@
-# Story 6.1: AI Cover Generator
+# Story 6.1: Blog Management (CMS)
 
 **Description**
 As an Author,
-I want to generate visual cover concepts using AI,
-So that I can visualize my book's brand or create a placeholder cover.
+I want a dashboard to create, edit, and publish blog posts,
+So that I can build an audience and share updates about my writing journey.
 
 **Acceptance Criteria**
-*   **Given** the "Cover Lab" page
-    *   **When** inputting prompt (Title, Genre, Mood, Description)
-    *   **Then** the "Generate" button becomes active.
-*   **Given** Generate clicked
-    *   **When** processing
-    *   **Then** an async job calls Stable Diffusion (via Modal/API).
-    *   **And** 4 variation images are returned within 15 seconds.
-*   **Given** a selected image
-    *   **When** clicked "Save to Manuscript"
-    *   **Then** the image is uploaded to R2 and linked to the manuscript metadata.
-*   **Given** safety filter trigger
-    *   **When** prompt contains restricted words
-    *   **Then** the request is blocked before API call with a polite error.
+*   **Given** the "Marketing > Blog" dashboard
+    *   **When** I click "New Post"
+    *   **Then** a rich-text editor (TipTap) opens with fields for Title, Slug, and Content.
+*   **Given** a drafted post
+    *   **When** I click "Save Draft"
+    *   **Then** the post is saved but not visible publicly.
+*   **Given** a ready post
+    *   **When** I click "Publish"
+    *   **Then** the post becomes visible at `/[author_handle]/blog/[slug]`.
+*   **Given** the blog list view
+    *   **Then** I can see status (Draft/Published) and view metrics (views/reads).
 
-**Effort:** 24h
-**Dependencies:** Epic 2 (Manuscript), Modal API
+**Effort:** 32h
+**Dependencies:** Epic 1 (Auth), Epic 2 (TipTap)
 **Status:** Planned

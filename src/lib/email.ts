@@ -113,11 +113,11 @@ export async function notifyUserReply(ticketId: string, subject: string, userEma
 export async function notifyAdminReply(ticketId: string, subject: string, userEmail: string) {
      const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com";
      const ticketUrl = `${APP_URL}/dashboard/admin/support/${ticketId}`;
-     
+
      // Escape user-provided content to prevent XSS
      const safeSubject = escapeHtml(subject);
      const safeUserEmail = escapeHtml(userEmail);
-     
+
      const result = await sendEmail({
         to: adminEmail,
         subject: `[Support] New Reply on Ticket: ${subject}`,
@@ -127,11 +127,106 @@ export async function notifyAdminReply(ticketId: string, subject: string, userEm
             <p><a href="${ticketUrl}">View Ticket in Admin Dashboard</a></p>
         `
     });
-    
+
     if (!result.success) {
         console.error('[NOTIFY_ADMIN_REPLY_FAILED]', { ticketId, error: result.error });
     }
-    
+
+    return result;
+}
+
+/**
+ * AC 5.4.2: Notify user of service fulfillment (ISBN assigned)
+ * @returns Result from sendEmail for caller error handling
+ */
+export async function notifyServiceFulfilled(
+    userEmail: string,
+    serviceType: string,
+    isbn?: string
+) {
+    const ordersUrl = `${APP_URL}/dashboard/orders`;
+    const safeServiceType = escapeHtml(serviceType);
+
+    const isIsbnService = serviceType === 'isbn';
+    const subject = isIsbnService
+        ? 'Your ISBN is Ready!'
+        : `Your ${safeServiceType} Service is Complete`;
+
+    let textBody: string;
+    let htmlBody: string;
+
+    if (isIsbnService && isbn) {
+        const safeIsbn = escapeHtml(isbn);
+        textBody = `Great news! Your ISBN has been assigned.\n\nYour ISBN: ${isbn}\n\nYou can view this anytime in your orders: ${ordersUrl}`;
+        htmlBody = `
+            <p>Great news! Your ISBN has been assigned.</p>
+            <div style="background-color: #f0fdf4; border: 1px solid #86efac; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                <p style="margin: 0; font-size: 0.875rem; color: #166534;">Your ISBN</p>
+                <p style="margin: 0.5rem 0 0; font-size: 1.5rem; font-family: monospace; color: #1f2937;">
+                    ${safeIsbn}
+                </p>
+            </div>
+            <p><a href="${ordersUrl}">View in Your Orders</a></p>
+        `;
+    } else {
+        textBody = `Your ${serviceType} service request has been completed!\n\nView your orders: ${ordersUrl}`;
+        htmlBody = `
+            <p>Your <strong>${safeServiceType}</strong> service request has been completed!</p>
+            <p><a href="${ordersUrl}">View Your Orders</a></p>
+        `;
+    }
+
+    const result = await sendEmail({
+        to: userEmail,
+        subject,
+        text: textBody,
+        html: htmlBody,
+    });
+
+    if (!result.success) {
+        console.error('[NOTIFY_SERVICE_FULFILLED_FAILED]', { userEmail, serviceType, error: result.error });
+    }
+
+    return result;
+}
+
+/**
+ * AC 5.4.3: Notify user of service cancellation/refund
+ * @returns Result from sendEmail for caller error handling
+ */
+export async function notifyServiceCancelled(
+    userEmail: string,
+    serviceType: string,
+    reason: string,
+    refundInitiated: boolean
+) {
+    const ordersUrl = `${APP_URL}/dashboard/orders`;
+    const safeServiceType = escapeHtml(serviceType);
+    const safeReason = escapeHtml(reason);
+
+    const refundText = refundInitiated
+        ? 'A refund has been initiated and should appear in your account within 5-10 business days.'
+        : 'Please contact support if you have any questions about this cancellation.';
+
+    const result = await sendEmail({
+        to: userEmail,
+        subject: `Service Request Cancelled: ${safeServiceType}`,
+        text: `Your ${serviceType} service request has been cancelled.\n\nReason: ${reason}\n\n${refundText}\n\nView your orders: ${ordersUrl}`,
+        html: `
+            <p>Your <strong>${safeServiceType}</strong> service request has been cancelled.</p>
+            <div style="background-color: #fef3c7; border: 1px solid #fbbf24; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                <p style="margin: 0; font-size: 0.875rem; color: #92400e;"><strong>Reason:</strong></p>
+                <p style="margin: 0.5rem 0 0; color: #1f2937;">${safeReason}</p>
+            </div>
+            <p>${refundText}</p>
+            <p><a href="${ordersUrl}">View Your Orders</a></p>
+        `,
+    });
+
+    if (!result.success) {
+        console.error('[NOTIFY_SERVICE_CANCELLED_FAILED]', { userEmail, serviceType, error: result.error });
+    }
+
     return result;
 }
 
