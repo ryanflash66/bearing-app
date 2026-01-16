@@ -107,6 +107,10 @@ development_status:
   5-1-service-marketplace-ui: done
   5-2-commander-pattern: backlog
   5-3-service-request-management: done
+<<<<<<< HEAD
   5-4-admin-fulfillment: done
+=======
+  5-4-mobile-landscape: backlog
+>>>>>>> origin/main
   epic-5-retrospective: optional
 
