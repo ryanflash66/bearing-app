@@ -20,6 +20,9 @@ export default function FulfillmentDashboard({
   const [selectedRequest, setSelectedRequest] = useState<FulfillmentRequest | null>(null);
   const [isIsbnModalOpen, setIsIsbnModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // Sync local state with props when server data changes
   useEffect(() => {
     setRequests(initialRequests);
