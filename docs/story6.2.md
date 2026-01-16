@@ -17,4 +17,67 @@ So that I can learn more about them and read their latest updates.
 
 **Effort:** 24h
 **Dependencies:** Story 6.1 (Content)
-**Status:** Planned
+**Status:** review
+
+## Tasks
+- [x] **Infrastructure & Middleware**
+    - [x] Update `middleware.ts` to allow specific public routes matching `/:handle/*`.
+    - [x] Create `src/lib/public-api.ts` for privileged (admin-like) fetching of public data without user session.
+- [x] **Public Profile Page (`/[handle]`)**
+    - [x] Create `src/app/[handle]/page.tsx`.
+    - [x] Fetch Author Profile by handle (Bio, Avatar).
+    - [x] Fetch Published Books by AuthorID.
+    - [x] Render responsive profile layout.
+- [x] **Public Blog Index (`/[handle]/blog`)**
+    - [x] Create `src/app/[handle]/blog/page.tsx`.
+    - [x] Fetch published posts (paginated, 10 per page).
+    - [x] Render `BlogCard` component list.
+- [x] **Maintenance (Legacy)**
+    - [x] Fix `DashboardLayout.test.tsx` to mock Supabase instead of Env Vars (or remove obsolete tests).
+- [x] **Public Blog Post (`/[handle]/blog/[slug]`)**
+    - [x] Create `src/app/[handle]/blog/[slug]/page.tsx`.
+    - [x] Fetch single post by slug & author.
+    - [x] Render content (using TipTap viewer or sanitized HTML).
+    - [x] Implement `generateMetadata` for dynamic OpenGraph tags (Title, Description, Image).
+
+## Dev Agent Record
+
+### File List
+- `src/utils/supabase/middleware.ts`
+- `src/lib/public-api.ts`
+- `src/lib/public-profile.ts`
+- `src/app/[handle]/page.tsx`
+- `src/lib/public-blog.ts`
+- `src/components/blog/BlogCard.tsx`
+- `src/components/blog/BlogPostViewer.tsx`
+- `src/app/[handle]/blog/page.tsx`
+- `src/app/[handle]/blog/[slug]/page.tsx`
+- `tests/utils/middleware.test.ts`
+- `tests/lib/public-api.test.ts`
+- `tests/lib/public-profile.test.ts`
+- `tests/lib/public-blog.test.ts`
+- `tests/components/blog/BlogCard.test.tsx`
+- `tests/components/layout/DashboardLayout.test.tsx`
+
+### Implementation Plan
+- Add a public author route matcher in middleware to allow `/[handle]` and `/[handle]/blog` paths.
+- Create a service-role public client helper for server-side public data access.
+- Cover both with unit tests.
+- Add public blog data access helpers and a `BlogCard` component for SSR list rendering.
+
+### Completion Notes
+- Added public author route detection for `/[handle]` and `/[handle]/blog` paths and covered with unit tests.
+- Introduced `getPublicClient` helper for service-role public data access.
+- Built the public author profile page with server-side data fetching and published book listing.
+- Implemented public blog index page with pagination, `BlogCard` list, and public blog data helpers.
+- Updated maintenance banner tests to use Supabase-driven state and mocked NotificationBell.
+- Added public blog post page with SSR metadata, slug-based fetching, and a TipTap-based viewer.
+- Full test suite passes (console warnings remain in unrelated tests).
+
+### Change Log
+- **2026-01-16**: Initial task list created for development.
+- **2026-01-16**: Completed Infrastructure & Middleware task (public routes + public API helper).
+- **2026-01-16**: Completed Public Profile Page (SSR profile + published books).
+- **2026-01-16**: Completed Public Blog Index (pagination + BlogCard list).
+- **2026-01-16**: Completed Maintenance (Legacy) test updates (Supabase mocks + NotificationBell stub).
+- **2026-01-16**: Completed Public Blog Post (SSR metadata + viewer).

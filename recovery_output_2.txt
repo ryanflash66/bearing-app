@@ -1,3 +1,0 @@
-[dotenv@17.2.3] injecting env (4) from .env.local -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
-[dotenv@17.2.3] injecting env (3) from .env -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
-≡ƒÜº Testing Job Resilience...

@@ -4,6 +4,34 @@ import { type NextRequest, NextResponse } from "next/server";
 // Routes that don't require authentication
 const publicRoutes = ["/", "/login", "/signup", "/auth"];
 
+const reservedRoutePrefixes = [
+  "/api",
+  "/dashboard",
+  "/login",
+  "/signup",
+  "/auth",
+  "/_next",
+];
+
+export function isPublicAuthorRoute(pathname: string): boolean {
+  if (!pathname || pathname === "/") return false;
+  if (pathname === "/favicon.ico") return false;
+
+  const lowerPath = pathname.toLowerCase();
+  const isReserved = reservedRoutePrefixes.some(
+    (prefix) => lowerPath === prefix || lowerPath.startsWith(`${prefix}/`)
+  );
+  if (isReserved) return false;
+
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 1) return true;
+
+  const secondSegment = segments[1]?.toLowerCase();
+  if (secondSegment !== "blog") return false;
+
+  return segments.length === 2 || segments.length === 3;
+}
+
 // Routes that require authentication
 const protectedRoutes = ["/dashboard"];
 
@@ -57,9 +85,10 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Check if path matches public routes
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  const isPublicRoute =
+    publicRoutes.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    ) || isPublicAuthorRoute(pathname);
 
   // Handle unauthenticated access to protected routes
   if (isProtectedRoute && !user) {

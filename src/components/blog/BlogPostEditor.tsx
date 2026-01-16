@@ -107,43 +107,48 @@ export default function BlogPostEditor({
     }
   }, [postId, title, slug, content, contentText, updatedAt, isSaving]);
 
-  // Autosave debounce
-  const queueAutosave = useCallback(() => {
-    pendingChangesRef.current = true;
-    setSaveStatus("idle");
+  // Autosave effect
+  useEffect(() => {
+    if (!pendingChangesRef.current) return;
 
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
     }
 
+    setSaveStatus("idle");
+    
     autosaveTimerRef.current = setTimeout(() => {
-      if (pendingChangesRef.current) {
-        save();
+      save();
+    }, 3000);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
       }
-    }, 3000); // 3 second debounce
-  }, [save]);
+    };
+  }, [save, title, slug, content, contentText]); // Re-run when dependencies change
 
   // Handle content changes from TipTap
   const handleContentChange = useCallback(
     (data: { json: unknown; html: string; text: string }) => {
       setContent(data.json as Record<string, unknown>);
       setContentText(data.text);
-      queueAutosave();
+      pendingChangesRef.current = true;
     },
-    [queueAutosave]
+    []
   );
 
   // Handle title change
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
-    queueAutosave();
+    pendingChangesRef.current = true;
   };
 
   // Handle slug change
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSlugEdited(true);
     setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"));
-    queueAutosave();
+    pendingChangesRef.current = true;
   };
 
   // Publish post

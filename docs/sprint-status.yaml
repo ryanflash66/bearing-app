@@ -47,8 +47,8 @@ development_status:
 
   # Epic 6: Blog & Content Platform (In Progress)
   epic-6: in-progress
-  6-1-blog-management-cms: ready-for-dev
-  6-2-public-author-profile: planned
+  6-1-blog-management-cms: in-progress
+  6-2-public-author-profile: review
   6-3-admin-blog-moderation: planned
 
   # Epic 7: Publication & Beta Distribution (Backlog)
@@ -57,3 +57,5 @@ development_status:
   7-2-wysiwyg-export-previewer: backlog
   7-3-publication-metadata: backlog
   7-4-coming-soon-pages: backlog
+
+

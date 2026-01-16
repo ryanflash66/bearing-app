@@ -3,7 +3,7 @@
  * Story 4.5: Maintenance Mode Enforcement
  */
 
-import { updateSession } from "@/utils/supabase/middleware";
+import { updateSession, isPublicAuthorRoute } from "@/utils/supabase/middleware";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
@@ -117,5 +117,25 @@ describe("Middleware updateSession", () => {
         const response = await updateSession(mockRequest as any);
         // Should catch error and proceed
         expect(NextResponse.next).toHaveBeenCalled();
+    });
+});
+
+describe("Public author route detection", () => {
+    it("matches author root and blog routes", () => {
+        expect(isPublicAuthorRoute("/author-handle")).toBe(true);
+        expect(isPublicAuthorRoute("/author-handle/blog")).toBe(true);
+        expect(isPublicAuthorRoute("/author-handle/blog/my-first-post")).toBe(true);
+    });
+
+    it("rejects reserved and non-blog nested routes", () => {
+        expect(isPublicAuthorRoute("/dashboard")).toBe(false);
+        expect(isPublicAuthorRoute("/api/blog/posts")).toBe(false);
+        expect(isPublicAuthorRoute("/login")).toBe(false);
+        expect(isPublicAuthorRoute("/signup")).toBe(false);
+        expect(isPublicAuthorRoute("/auth/callback")).toBe(false);
+        expect(isPublicAuthorRoute("/_next/static")).toBe(false);
+        expect(isPublicAuthorRoute("/favicon.ico")).toBe(false);
+        expect(isPublicAuthorRoute("/author-handle/settings")).toBe(false);
+        expect(isPublicAuthorRoute("/author-handle/blog/slug/extra")).toBe(false);
     });
 });
