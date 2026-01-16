@@ -71,39 +71,28 @@ export async function POST(request: Request) {
   // For ISBN requests, handle ISBN assignment
   if (serviceRequest.service_type === "isbn") {
     if (autoAssign) {
-      // Auto-assign from pool
-      const { data: availableIsbn, error: poolError } = await adminClient
-        .from("isbn_pool")
-        .select("id, isbn")
-        .is("assigned_to_request_id", null)
-        .limit(1)
-        .single();
+      // Auto-assign from pool using atomic RPC to prevent race conditions
+      const { data: claimedIsbn, error: claimError } = await adminClient
+        .rpc("claim_isbn_from_pool", { p_request_id: requestId })
+        .maybeSingle();
 
-      if (poolError || !availableIsbn) {
+      if (claimError) {
+        console.error("Error claiming ISBN from pool:", claimError);
+        return NextResponse.json(
+          { error: "Failed to claim ISBN from pool" },
+          { status: 500 }
+        );
+      }
+
+      if (!claimedIsbn) {
         return NextResponse.json(
           { error: "No ISBNs available in pool" },
           { status: 400 }
         );
       }
 
-      assignedIsbn = availableIsbn.isbn;
-
-      // Mark ISBN as assigned
-      const { error: assignError } = await adminClient
-        .from("isbn_pool")
-        .update({
-          assigned_to_request_id: requestId,
-          assigned_at: new Date().toISOString(),
-        })
-        .eq("id", availableIsbn.id);
-
-      if (assignError) {
-        console.error("Error assigning ISBN from pool:", assignError);
-        return NextResponse.json(
-          { error: "Failed to assign ISBN from pool" },
-          { status: 500 }
-        );
-      }
+      // RPC returns { id: uuid, isbn: text }
+      assignedIsbn = (claimedIsbn as { id: string; isbn: string }).isbn;
     } else if (!isbn) {
       return NextResponse.json(
         { error: "ISBN is required for manual assignment" },

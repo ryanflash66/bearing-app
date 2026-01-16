@@ -43,15 +43,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No account found" }, { status: 404 });
     }
 
-    // Parse optional body
+    // Parse optional body with validation
     let title: string | undefined;
     let slug: string | undefined;
-    try {
-      const body = await request.json();
-      title = body.title;
-      slug = body.slug;
-    } catch {
-      // Body is optional for create
+
+    // Check if there's a body to parse
+    const contentType = request.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      let body: unknown;
+      try {
+        body = await request.json();
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid JSON in request body" },
+          { status: 400 }
+        );
+      }
+
+      // Validate body is an object
+      if (body !== null && typeof body === "object" && !Array.isArray(body)) {
+        const bodyObj = body as Record<string, unknown>;
+
+        // Validate title if provided
+        if (bodyObj.title !== undefined) {
+          if (typeof bodyObj.title !== "string") {
+            return NextResponse.json(
+              { error: "title must be a string" },
+              { status: 400 }
+            );
+          }
+          title = bodyObj.title;
+        }
+
+        // Validate slug if provided
+        if (bodyObj.slug !== undefined) {
+          if (typeof bodyObj.slug !== "string") {
+            return NextResponse.json(
+              { error: "slug must be a string" },
+              { status: 400 }
+            );
+          }
+          slug = bodyObj.slug;
+        }
+      }
     }
 
     const result = await createBlogPost(supabase, {
