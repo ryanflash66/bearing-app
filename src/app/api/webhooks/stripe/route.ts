@@ -101,7 +101,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     service_type: serviceType,
     status: "pending",
     stripe_session_id: session.id,
-    stripe_payment_intent_id: session.payment_intent as string,
+    stripe_payment_intent_id: 
+      typeof session.payment_intent === "string" 
+        ? session.payment_intent 
+        : session.payment_intent?.id || null,
     amount_cents: session.amount_total || 0,
     metadata: {
       customer_email: session.customer_email,
@@ -132,11 +135,16 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
   }
 
   // Check if there's already a record (shouldn't be, but check anyway)
-  const { data: existingRequest } = await supabase
+  const { data: existingRequest, error: checkError } = await supabase
     .from("service_requests")
     .select("id")
     .eq("stripe_session_id", session.id)
     .maybeSingle();
+
+  if (checkError) {
+    console.error("Error checking for existing request:", checkError);
+    return;
+  }
 
   if (existingRequest) {
     return;

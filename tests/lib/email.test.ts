@@ -8,6 +8,8 @@ import {
   notifyAdminsNewTicket,
   notifyUserReply,
   notifyAdminReply,
+  notifyServiceFulfilled,
+  notifyServiceCancelled,
 } from "@/lib/email";
 
 // Mock Resend SDK
@@ -167,6 +169,102 @@ describe("email.ts", () => {
       );
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining("user@example.com")
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe("notifyServiceFulfilled (AC 5.4.2)", () => {
+    it("should notify user when ISBN is assigned", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+      delete process.env.RESEND_API_KEY;
+      jest.resetModules();
+      const { notifyServiceFulfilled: freshNotify } = await import("@/lib/email");
+
+      await freshNotify("author@example.com", "isbn", "9781234567890");
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("author@example.com")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("ISBN")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("9781234567890")
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it("should notify user for non-ISBN service completion", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+      delete process.env.RESEND_API_KEY;
+      jest.resetModules();
+      const { notifyServiceFulfilled: freshNotify } = await import("@/lib/email");
+
+      await freshNotify("author@example.com", "cover_design");
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("author@example.com")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("cover_design")
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe("notifyServiceCancelled (AC 5.4.3)", () => {
+    it("should notify user when service is cancelled with refund", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+      delete process.env.RESEND_API_KEY;
+      jest.resetModules();
+      const { notifyServiceCancelled: freshNotify } = await import("@/lib/email");
+
+      await freshNotify(
+        "author@example.com",
+        "isbn",
+        "ISBN pool depleted",
+        true
+      );
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("author@example.com")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Cancelled")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("refund")
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it("should notify user when service is cancelled without refund", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+      delete process.env.RESEND_API_KEY;
+      jest.resetModules();
+      const { notifyServiceCancelled: freshNotify } = await import("@/lib/email");
+
+      await freshNotify(
+        "author@example.com",
+        "editing",
+        "User requested cancellation",
+        false
+      );
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("author@example.com")
+      );
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("contact support")
       );
 
       consoleLogSpy.mockRestore();

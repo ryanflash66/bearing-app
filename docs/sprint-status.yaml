@@ -1,46 +1,59 @@
-generated: 2024-12-22
+generated: 2026-01-16
 project: bearing-app
 tracking_system: file-system
 story_location: docs/
 
 development_status:
-  # Epic 1: Foundation & Auth (Weeks 5-8)
+  # Epic 1: Foundation & Auth (Done)
   epic-1: done
   1-1-email-mfa-authentication: done
   1-2-author-profiles: done
   1-3-account-role-management: done
   1-4-basic-admin-panel: done
-  epic-1-retrospective: done
 
-  # Epic 2: Manuscript Editor & Llama AI (Weeks 8-11)
+  # Epic 2: Manuscript Editor & Llama AI (Done)
   epic-2: done
   2-1-manuscript-crud-autosave: done
   2-2-version-history: done
   2-3-realtime-llama-suggestions: done
   2-4-manuscript-export: done
-  epic-2-retrospective: optional
 
-  # Epic 3: Consistency Engine (Weeks 11-14)
+  # Epic 3: Consistency Engine (Done)
   epic-3: done
   3-1-manual-gemini-consistency-check: done
   3-2-structured-consistency-reports: done
   3-3-ai-usage-metering: done
-  epic-3-retrospective: done
 
-  # Epic 4: Admin Infrastructure & Support System (Emergency Rework)
-  epic-4: in-progress
+  # Epic 4: Support & Admin (Done)
+  epic-4: done
   4-1-admin-role-architecture: done
   4-2-support-ticket-engine: done
   4-3-user-support-console: done
   4-4-support-agent-dashboard: done
   4-5-super-admin-dashboard: done
-  4-6-critical-notification-system: backlog
-  epic-4-retrospective: optional
+  4-6-critical-notification-system: done
 
-  # Epic 5: Service Marketplace & Intelligence
-  epic-5: in-progress
+  # Epic 5: Service Marketplace & Intelligence (Paused)
+  epic-5: paused
   5-1-service-marketplace-ui: done
   5-2-isbn-purchase-workflow: done
-  5-5-cmdk-commander-pattern: done
   5-3-service-request-management: done
-  5-4-admin-fulfillment-dashboard: backlog
+  5-4-admin-fulfillment-dashboard: done
+  5-5-cmdk-commander-pattern: done
+  5-6-integrate-custom-models: deferred
+  5-7-voice-to-text: deferred
+  5-8-mobile-responsive: deferred
+  5-9-ai-cover-generator: deferred
+
+  # Epic 6: Blog & Content Platform (In Progress)
+  epic-6: in-progress
+  6-1-blog-management-cms: ready-for-dev
+  6-2-public-author-profile: planned
+  6-3-admin-blog-moderation: planned
+
+  # Epic 7: Publication & Beta Distribution (Backlog)
+  epic-7: backlog
+  7-1-beta-reader-access: backlog
+  7-2-wysiwyg-export-previewer: backlog
+  7-3-publication-metadata: backlog
+  7-4-coming-soon-pages: backlog

@@ -114,9 +114,12 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
           </div>
 
           {/* My Orders Placeholder */}
-          <p className="mt-6 text-xs text-slate-500">
-            Track your orders in the upcoming &quot;My Orders&quot; section (coming soon).
-          </p>
+          {/* My Orders Link */}
+          <div className="mt-6 text-xs text-slate-500">
+            <Link href="/dashboard/orders" className="hover:text-slate-700 hover:underline">
+              View your orders
+            </Link>
+          </div>
         </div>
       </div>
     </DashboardLayout>

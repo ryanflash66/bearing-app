@@ -23,5 +23,9 @@ This Epic covers the "Business Side" of self-publishing. It moves beyond the man
 ## User Stories Overview
 *   **Story 5.1: Service Marketplace UI**: The "Storefront" for authors.
 *   **Story 5.2: ISBN Purchase Workflow**: The checkout and assignment flow.
-*   **Story 5.3: Service Request Management**: The "My Orders" view for authors.
 *   **Story 5.4: Admin Fulfillment Dashboard**: The backend processing view.
+*   **Story 5.5: Cmd+K Commander Pattern**: Global command palette for power users.
+*   **Story 5.6: Integrate Custom Fine-Tuned Models**: (Deferred) Specialized AI models.
+*   **Story 5.7: Voice-to-Text Dictation**: (Deferred) Audio input for manuscripts.
+*   **Story 5.8: Mobile Responsive Layout**: (Deferred) Optmized view for mobile devices.
+*   **Story 5.9: AI Cover Generator**: (Deferred) Generative art tool for book covers (moved from Epic 6).
