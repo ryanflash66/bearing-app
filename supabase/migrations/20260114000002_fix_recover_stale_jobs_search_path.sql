@@ -42,8 +42,8 @@ BEGIN
   FROM stalled;
 
   -- Ensure we return 0/empty array if no rows found
-  IF count_val IS NULL THEN
-    count_val := 0;
+  -- Ensure we return 0/empty array if no rows found
+  IF failed_ids IS NULL THEN
     failed_ids := array[]::uuid[];
   END IF;
 

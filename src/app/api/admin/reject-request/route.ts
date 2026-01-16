@@ -5,6 +5,8 @@ import { isSuperAdmin } from "@/lib/super-admin";
 import { stripe } from "@/lib/stripe";
 import { notifyServiceCancelled } from "@/lib/email";
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/admin/reject-request
  * Rejects a service request and optionally initiates a refund

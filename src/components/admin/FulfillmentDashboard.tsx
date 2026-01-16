@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FulfillmentQueue, { type FulfillmentRequest } from "./FulfillmentQueue";
 import ISBNAssignmentModal from "./ISBNAssignmentModal";
@@ -20,8 +20,11 @@ export default function FulfillmentDashboard({
   const [selectedRequest, setSelectedRequest] = useState<FulfillmentRequest | null>(null);
   const [isIsbnModalOpen, setIsIsbnModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Sync local state with props when server data changes
+  useEffect(() => {
+    setRequests(initialRequests);
+  }, [initialRequests]);
+
 
   const handleFulfill = (request: FulfillmentRequest) => {
     setSelectedRequest(request);
