@@ -1,101 +1,91 @@
-# Story 5.3: Voice-to-Text Dictation Support
+# Story 5.3: Service Request Management
 
 ## Description
 
-As an author with RSI, mobility issues, or a preference for dictation, I can use voice input to compose my manuscript. The system integrates with browser-native Speech Recognition APIs and provides voice-activated commands for common actions, ensuring accessibility and flow for all authors.
+As an author who has purchased a service (like an ISBN), I want to view my order history and track the status of my requests ("Pending", "In Progress", "Completed") so that I have visibility into the fulfillment process.
 
 ## Acceptance Criteria (Gherkin Format)
 
 ### AC 5.3.1
-
-- **Given:** I am in the manuscript editor
-- **When:** I click the "Dictate" button or press a designated shortcut
-- **Then:** The browser's Speech Recognition API is activated
-- **And:** A visual indicator shows that dictation is active (pulsing microphone icon)
+- **Given:** I am on the Dashboard
+- **When:** I click the "My Orders" tab
+- **Then:** I see a list of my past service requests
+- **And:** Each item shows date, service type (e.g., "ISBN"), amount, and current status
 
 ### AC 5.3.2
-
-- **Given:** Dictation is active
-- **When:** I speak
-- **Then:** My speech is transcribed in real-time and inserted at the cursor position
-- **And:** Interim (unconfirmed) text is displayed in a muted style until finalized
+- **Given:** I have a fulfilled ISBN request
+- **When:** I view the order details
+- **Then:** I can see the assigned ISBN number
+- **And:** I can copy it to my clipboard
 
 ### AC 5.3.3
-
-- **Given:** Dictation is active
-- **When:** I say a voice command (e.g., "new paragraph", "period", "comma")
-- **Then:** The corresponding action is executed (insert paragraph break, insert punctuation)
-
-### AC 5.3.4
-
-- **Given:** The browser does not support Speech Recognition (e.g., Firefox)
-- **When:** I try to activate dictation
-- **Then:** A clear message explains the limitation and suggests using Chrome or Edge
-
-### AC 5.3.5
-
-- **Given:** Dictation is active
-- **When:** I press `Esc` or click the "Stop" button
-- **Then:** Dictation stops immediately
-- **And:** The visual indicator returns to inactive state
-
-### AC 5.3.6
-
-- **Given:** The Cmd+K Commander is open (Story 5.2)
-- **When:** I activate voice mode and speak a command
-- **Then:** The command is recognized and executed as if typed
+- **Given:** I have a pending request
+- **When:** I view the order details
+- **Then:** I see a "Processing" indicator with an estimated completion time
 
 ## Dependencies
-
-- **Story 2.1:** Editor exists
-- **Story 5.2:** Cmd+K Commander (optional, for voice command integration)
-- **Browser Requirement:** Web Speech API (Chrome, Edge, Safari)
+- **Story 5.1:** Service Marketplace UI (Navigation)
+- **Story 5.2:** Service Requests Table (Data Source)
 
 ## Implementation Tasks
-
-- [ ] Create `useDictation` hook wrapping Web Speech API
-- [ ] Add "Dictate" button to editor toolbar with pulsing animation
-- [ ] Implement voice command recognition ("new paragraph", "period", "comma", "question mark")
-- [ ] Display interim transcription with muted styling
-- [ ] Handle browser compatibility detection and fallback messaging
-- [ ] (Optional) Integrate with Cmd+K Commander for voice-activated commands
-- [ ] Add accessibility announcements for screen readers during dictation
-
-## Cost Estimate
-
-- **AI inference:** $0 (uses browser-native Speech Recognition, not server-side AI)
-- **Storage:** Negligible
-- **Compute:** $0
-- **Total:** $0/month
-
-## Latency SLA
-
-- **Dictation start:** <500ms after activation
-- **Transcription update:** Real-time (<200ms lag)
-
-## Success Criteria (QA Gate)
-
-- [ ] All ACs verified on Chrome
-- [ ] Graceful fallback on unsupported browsers
-- [ ] Voice commands work reliably
-- [ ] Accessibility tested with screen readers
-
-## Effort Estimate
-
-- **Dev hours:** 12 hours
-- **QA hours:** 4 hours
-- **Total:** 16 hours
-
----
+- [x] Create `MyOrders` page at `/dashboard/orders`
+- [x] Create `OrderList` component
+- [x] Create `OrderDetail` component with status-specific views
+- [x] Query service_requests table (via RLS, not RPC - consistent with codebase patterns)
+- [x] Add navigation link to Sidebar/Marketplace
 
 ## Status
-
-**backlog**
+**done**
 
 ---
 
-## UX Reference
+## Dev Agent Record
 
-See `_bmad-output/ux-design-specification.md`:
-- Section: "Responsive Design & Accessibility" - "Assistive Technologies"
-- "Voice-to-Text: Prioritized Canvas dictation support for authors with RSI or mobility issues."
+### Implementation Plan
+- Created My Orders page at `/dashboard/orders` following existing page patterns
+- Built `OrderList` component with status badges, formatted dates, and amounts
+- Built `OrderDetail` component with status-specific views (Processing indicator for pending, ISBN display with copy for completed)
+- Used existing RLS policy (`auth.uid() = user_id`) instead of RPC - pattern consistent with codebase
+- Added "My Orders" nav item to DashboardLayout sidebar (authorOnly: true)
+- Applied red-green-refactor TDD approach with Jest tests
+
+### Debug Log
+- No significant issues encountered
+- Fixed test selectors for duplicate text scenarios (multiple headings, service names appearing in header and details)
+
+### Completion Notes
+All acceptance criteria verified:
+- AC 5.3.1: Order list displays date, service type, amount, status with navigation to details
+- AC 5.3.2: Completed ISBN orders show ISBN with functional copy-to-clipboard button
+- AC 5.3.3: Pending orders show "Processing" indicator with estimated completion time
+
+Tests: 20 tests passing for OrdersPage, OrderList, OrderDetail components
+Build: Successful compilation with new routes registered
+
+---
+
+## File List
+
+### New Files
+- `src/app/dashboard/orders/page.tsx` - My Orders page with error state UI
+- `src/app/dashboard/orders/[id]/page.tsx` - Order detail page
+- `src/components/marketplace/OrderList.tsx` - Order list component
+- `src/components/marketplace/OrderDetail.tsx` - Order detail component with clipboard error handling
+- `src/lib/marketplace-utils.ts` - Shared types, constants, and utilities for marketplace
+- `tests/components/marketplace/OrdersPage.test.tsx` - Page tests
+- `tests/components/marketplace/OrderList.test.tsx` - OrderList component tests
+- `tests/components/marketplace/OrderDetail.test.tsx` - OrderDetail component tests (21 tests)
+
+### Modified Files
+- `src/components/layout/DashboardLayout.tsx` - Added "My Orders" nav item
+- `src/types/supabase.ts` - Regenerated with service_requests table types
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` - Updated story status
+
+---
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-01-14 | Story 5.3 implemented: My Orders page, OrderList, OrderDetail components, navigation link, tests | Dev Agent |
+| 2026-01-15 | Code review fixes: extracted shared marketplace-utils.ts, added clipboard error handling, added error state UI for orders page, regenerated Supabase types, added test for clipboard error | Code Review |

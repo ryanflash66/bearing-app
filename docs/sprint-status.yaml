@@ -42,3 +42,5 @@ development_status:
   5-1-service-marketplace-ui: done
   5-2-isbn-purchase-workflow: done
   5-5-cmdk-commander-pattern: done
+  5-3-service-request-management: done
+  5-4-admin-fulfillment-dashboard: backlog

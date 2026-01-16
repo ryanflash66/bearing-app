@@ -335,7 +335,8 @@ epic_progress:
         completed: "2026-01-14"
       - id: "story-5.3"
         name: "Service Request Management"
-        status: "backlog"
+        status: "_bmad-output/implementation-artifacts/story5.3.md"
+        completed: "2026-01-15"
       - id: "story-5.4"
         name: "Admin Fulfillment Dashboard"
         status: "backlog"
@@ -405,11 +406,11 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-5.3"
-  name: "Service Request Management"
+  id: "story-5.4"
+  name: "Admin Fulfillment Dashboard"
   agent: "dev"
   command: "/dev-story"
-  description: "Next priority in Services epic: Managing service requests and fulfillment."
+  description: "Next priority in Services epic: Admin tools to fulfill service requests."
   priority: "high"
   reason: "Sequential execution of Service Marketplace epic."
 
