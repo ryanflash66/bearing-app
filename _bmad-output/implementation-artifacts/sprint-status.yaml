@@ -96,12 +96,11 @@ development_status:
   H-4-job-resilience: done
   H-5-ux-polish-sweep: done
 
-  # Epic 6: Publication & Beta Distribution
-  epic-6: backlog
-  6-1-beta-reader-access: backlog
-  6-2-export-previewer: backlog
-  6-3-publication-metadata: backlog
-  6-4-public-landing-pages: backlog
+  # Epic 6: Blog & Content Platform
+  epic-6: in-progress
+  6-1-blog-management: in-progress  # Story 6.1: Blog Management (CMS)
+  6-2-public-author-profile: backlog  # Story 6.2: Public Author Profile/Blog
+  6-3-admin-blog-moderation: backlog  # Story 6.3: Admin Blog Moderation
 
   # Epic 5: Service Marketplace
   epic-5: in-progress
