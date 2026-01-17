@@ -100,7 +100,7 @@ async function createTestUser(role: 'user' | 'admin' | 'super_admin' | 'support_
 async function testSingletonSuperAdmin() {
   console.log('\n--- Test 1: Singleton Super Admin Constraint ---');
   
-  let superAdmin1: { user: { id: string }, email: string };
+  let superAdmin1: { user: { id: string }, email: string } | undefined;
 
   // Check if a super admin already exists
   const { data: existingSAs } = await supabaseAdmin
@@ -154,6 +154,7 @@ async function testSingletonSuperAdmin() {
     }
   }
 
+  if (!superAdmin1) throw new Error('Critical: Failed to establish Super Admin context.');
   return superAdmin1;
 }
 
