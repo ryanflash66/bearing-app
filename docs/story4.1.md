@@ -32,7 +32,7 @@ As a System Architect, I want to separate the Super Admin and Support Agent role
 - **And:** They CANNOT view private Manuscripts (Strict Privacy Enforcement via RLS).
 
 ### AC 4.1.5: Role Assignment Logic (RPC)
-- **Given:** The `assign_role` RPC function
+- **Given:** The `assign_user_role` RPC function
 - **When:** Called by a non-Super Admin
 - **Then:** It MUST return a permission denied error (403).
 - **When:** Called by the Super Admin

@@ -77,7 +77,6 @@ begin
   -- Only recalculate if content_text changed
   if new.content_text is distinct from old.content_text then
     new.word_count = public.calculate_word_count(new.content_text);
-    -- new.word_count = 0; -- DEBUG BYPASS
   end if;
   return new;
 end;

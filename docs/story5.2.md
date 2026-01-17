@@ -1,4 +1,4 @@
-# Story 5.2: ISBN Purchase Workflow
+# Story 5.2: Request ISBN
 
 **Description**
 As an Author (Subscriber),

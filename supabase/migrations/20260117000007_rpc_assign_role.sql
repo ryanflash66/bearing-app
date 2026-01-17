@@ -27,7 +27,7 @@ BEGIN
   WHERE auth_id = executor_id;
 
   IF is_super IS NOT TRUE THEN
-    RAISE EXCEPTION 'Access Denied: Only Super Admin can assign roles.';
+    RAISE EXCEPTION 'Access Denied: Only Super Admin can assign roles.' USING ERRCODE = '42501';
   END IF;
 
   -- Prevent assigning 'super_admin' role via this function 
@@ -35,7 +35,7 @@ BEGIN
   -- but for safety we block it here to prevent accidental dual-super-admin attempts 
   -- which would fail DB constraint anyway, but this is a cleaner error).
   IF new_role = 'super_admin'::public.app_role THEN
-    RAISE EXCEPTION 'Operation Not Allowed: Cannot assign super_admin role via RPC.';
+    RAISE EXCEPTION 'Operation Not Allowed: Cannot assign super_admin role via RPC.' USING ERRCODE = '42501';
   END IF;
 
   -- Get old role for audit logging
@@ -59,6 +59,10 @@ BEGIN
   -- Strategy: Log it under the TARGET USER's primary account context if possible, 
   -- or a "System" account if we had one.
   -- For now, we'll try to find an account where the target_user is a member.
+  
+  IF NOT EXISTS (SELECT 1 FROM public.account_members WHERE user_id = target_user_id) THEN
+    RAISE EXCEPTION 'Audit Log Failed: Target user % has no account membership', target_user_id;
+  END IF;
   
   INSERT INTO public.audit_logs (
     account_id,

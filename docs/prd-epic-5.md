@@ -1,6 +1,6 @@
 # Epic 5: Services & Monetization
 
-**Goal:** Encapsulate all financial and service-based transactions, enabling authors to purchase professional assets (ISBNs) and services (Editing, Marketing) directly within the platform.
+**Goal:** Encapsulate all financial and service-based transactions, enabling authors to access subscriber benefits (ISBNs) and services (Editing, Marketing) directly within the platform.
 
 ## Scope
 This Epic covers the "Business Side" of self-publishing. It moves beyond the manuscript itself to the logistics of publishing.

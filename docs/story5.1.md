@@ -10,7 +10,7 @@ So that I can purchase the resources I need to publish my book.
     *   **When** loaded
     *   **Then** a grid of available services (ISBN, Copy Editing, Cover Design Request) is displayed.
     *   **And** each card shows: Title, Description, Turnaround Time.
-    *   **And** NO PRICE is displayed (Pricing specific usage is removed in favor of subscription tiers).
+    *   **And** NO PRICE is displayed (Pricing specific usage is removed in favor of subscriber benefits).
     *   **And** Service Cards display an "Available with Subscription" label or badge.
 *   **Given** a user with an INACTIVE subscription (or free tier)
     *   **When** viewing a service card
