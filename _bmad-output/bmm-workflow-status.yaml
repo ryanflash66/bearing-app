@@ -235,12 +235,14 @@ workflow_status:
             notes: "IMPLEMENTED: Email notifications via Resend for new tickets and replies. Code review passed with XSS fixes."
 
 # Story Progress Summary
+# Counts: Epic 0.5(5) + Epic 1(4) + Epic 2(7) + Epic 3(4) + Epic 4(6) + Epic 5(9) + Epic 6(3) + Epic 7(4) = 42 total
+# Completed: 5 + 4 + 7 + 4 + 6 + 5 + 1 + 0 = 32
 story_progress:
-  total: 24
-  completed: 25
+  total: 42
+  completed: 32
   ux_rework: 0
-  ready: 0
-  pending: 0
+  ready: 2
+  pending: 8
   
 epic_progress:
   - epic: 1
@@ -360,14 +362,15 @@ epic_progress:
   - epic: 6
     name: "Blog & Content Platform"
     stories: 3
-    completed: 0
+    completed: 1
     status: "in-progress"
     started: "2026-01-16"
     notes: "PRIORITY SHIFT: Epic 6 now active. Author blog and public profile features to build audience and SEO presence."
     story_list:
       - id: "story-6.1"
         name: "Blog Management (CMS)"
-        status: "ready"
+        status: "completed"
+        completed: "2026-01-16"
       - id: "story-6.2"
         name: "Public Author Profile/Blog"
         status: "ready"
@@ -428,11 +431,11 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-6.1"
-  name: "Blog Management (CMS)"
+  id: "story-6.2"
+  name: "Public Author Profile/Blog"
   agent: "dev"
   command: "/dev-story"
-  description: "Enable authors to create, edit, and publish blog posts to build their audience."
+  description: "Create public-facing pages for author profiles and blogs."
   priority: "high"
-  reason: "REPRIORITIZATION: Epic 6 (Blog & Content) now active. Starting with Blog CMS to establish author content platform and SEO presence."
+  reason: "Proceeding to 2nd story in Epic 6 (Blog & Content) after CMS completion."
 

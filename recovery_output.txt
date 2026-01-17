@@ -1,3 +1,0 @@
-[dotenv@17.2.3] injecting env (4) from .env.local -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
-[dotenv@17.2.3] injecting env (3) from .env -- tip: ≡ƒöæ add access controls to secrets: https://dotenvx.com/ops
-≡ƒÜº Testing Job Resilience...
