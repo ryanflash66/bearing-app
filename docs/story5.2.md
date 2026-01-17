@@ -1,21 +1,25 @@
-# Story 5.2: ISBN Purchase Workflow
+# Story 5.2: Request ISBN
 
 **Description**
-As an Author,
-I want to purchase a valid ISBN for my book,
-So that I can distribute it to retailers legally.
+As an Author (Subscriber),
+I want to claim an ISBN for my book as part of my subscription plan,
+So that I can distribute it to retailers legally without a separate checkout process.
 
 **Acceptance Criteria**
-*   **Given** the "Buy ISBN" clicked
+*   **Given** the "Request ISBN" action is clicked
+    *   **When** validated
+    *   **Then** the system Checks for Active Subscription (e.g., "Pro" plan).
+    *   **And** Checks for Monthly Quota (e.g., "1 ISBN remaining this month").
+*   **Given** validation passes
     *   **When** confirmed
-    *   **Then** a Stripe Checkout session is initiated for the configured amount.
-*   **Given** successful payment
-    *   **When** webhook received
-    *   **Then** a Service Request (Type: ISBN) is created in "Pending" state.
-    *   **And** the user is redirected to a "Success" page.
+    *   **Then** the UI proceeds immediately to the "Book Details" assignment form (Skipping Payment).
+    *   **And** a Service Request (Type: ISBN) is created in "Pending" state.
+*   **Given** validation fails (No Subscription or Quota Exceeded)
+    *   **When** attempted
+    *   **Then** an upgrading/upsell modal is displayed.
 *   **Given** no available ISBNs in admin pool
-    *   **When** checking out
-    *   **Then** logic warns user "Delayed Processing" but allows purchase.
+    *   **When** requesting
+    *   **Then** logic warns the user "Delayed Processing" but allows the request queueing.
 
 **Effort:** 16h
 **Dependencies:** Story 5.1, Stripe Account

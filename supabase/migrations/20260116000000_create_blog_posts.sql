@@ -59,7 +59,7 @@ create index if not exists idx_blog_posts_deleted_at
 -- ============================================================================
 -- TRIGGER: Auto-update updated_at timestamp
 -- ============================================================================
-drop trigger if exists trg_blog_posts_updated_at on public.blog_posts;
+-- drop trigger if exists trg_blog_posts_updated_at on public.blog_posts;
 create trigger trg_blog_posts_updated_at
   before update on public.blog_posts
   for each row execute function public.update_updated_at();

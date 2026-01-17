@@ -6,29 +6,37 @@ As a System Architect, I want to separate the Super Admin and Support Agent role
 
 ## Acceptance Criteria (Gherkin Format)
 
-### AC 4.1.1: Role Setup
+### AC 4.1.1: Singleton Super Admin Constraint
+- **Given:** The `users` (or `user_roles`) table
+- **When:** A user is assigned the `super_admin` role
+- **Then:** A database constraint (e.g., unique partial index) MUST ensure that only ONE row in the entire system can occupy this role at any time.
+- **And:** Any attempt to promote a second user to `super_admin` MUST fail at the database level.
 
-- **Given:** The `users` table exists
-- **When:** The database migration is applied
-- **Then:** A new `role` enum supports 'user', 'support_agent', 'super_admin' (or equivalent robust role management)
+### AC 4.1.2: Role Hierarchy & "Superset" Access
+- **Given:** A `super_admin` user
+- **When:** Accessing any route or resource
+- **Then:** They have FULL access to all capabilities of `admin`, `support_agent`, and `user` roles.
+- **And:** They have EXCLUSIVE access to the "Super Admin Dashboard" for system-wide configuration.
 
-### AC 4.1.2: Support Agent Manuscript Restrictions
+### AC 4.1.3: Admin Role (Operational Oversight)
+- **Given:** An `admin` user
+- **When:** Accessing the system
+- **Then:** They CAN view/manage all Users and Manuscripts (Content Oversight).
+- **And:** They CANNOT assign or revoke roles (Role Management is Super Admin exclusive).
+- **And:** They CANNOT access the Super Admin Dashboard.
 
-- **Given:** A user with the `support_agent` role
-- **When:** They attempt to query the `manuscripts` table
-- **Then:** The Row Level Security (RLS) policy BLOCKS access (returns 0 rows or 403 error), ensuring strict privacy
+### AC 4.1.4: Support Agent Role (Ticket Focused)
+- **Given:** A `support_agent` user
+- **When:** Accessing the system
+- **Then:** They CAN view and reply to Support Tickets.
+- **And:** They CANNOT view private Manuscripts (Strict Privacy Enforcement via RLS).
 
-### AC 4.1.3: Support Agent Ticket Access
-
-- **Given:** A user with the `support_agent` role
-- **When:** They query the `tickets` table
-- **Then:** The RLS policy ALLOWS access to all tickets assigned to them OR unassigned tickets
-
-### AC 4.1.4: RPC-First Action Enforcement
-
-- **Given:** An 'RPC-First' strategy
-- **When:** A support agent performs an action (e.g. reply, status update)
-- **Then:** It MUST go through a Security Definer Function (RPC), not direct table manipulation, ensuring logic is encapsulated and secure
+### AC 4.1.5: Role Assignment Logic (RPC)
+- **Given:** The `assign_user_role` RPC function
+- **When:** Called by a non-Super Admin
+- **Then:** It MUST return a permission denied error (403).
+- **When:** Called by the Super Admin
+- **Then:** It allows upgrading a user to `admin` or `support_agent`.
 
 ## Dependencies
 
