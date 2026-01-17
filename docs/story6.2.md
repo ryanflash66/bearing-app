@@ -94,10 +94,10 @@ So that I can learn more about them and read their latest updates.
 
 ### Change Log
 - **2026-01-16**: Initial task list created for development.
-- **2026-01-16**: Completed Infrastructure & Middleware task (public routes + public API helper).
-- **2026-01-16**: Completed Public Profile Page (SSR profile + published books).
-- **2026-01-16**: Completed Public Blog Index (pagination + BlogCard list).
-- **2026-01-16**: Completed Maintenance (Legacy) test updates (Supabase mocks + NotificationBell stub).
-- **2026-01-16**: Completed Public Blog Post (SSR metadata + viewer).
+- **2026-01-16**: Implemented Infrastructure & Middleware task (public routes + public API helper).
+- **2026-01-16**: Built Public Profile Page (SSR profile + published books).
+- **2026-01-16**: Added Public Blog Index (pagination + BlogCard list).
+- **2026-01-16**: Updated Maintenance (Legacy) test suite (Supabase mocks + NotificationBell stub).
+- **2026-01-16**: Finished Public Blog Post (SSR metadata + viewer).
 - **2026-01-16**: Revalidated Maintenance task and established ESLint baseline (lint runs with warnings).
-- **2026-01-16**: Code review completed - fixed 4 issues: OpenGraph images, avatar/bio schema+display, fetch deduplication. Status → done.
+- **2026-01-16**: Resolved code review feedback - fixed 4 issues: OpenGraph images, avatar/bio schema+display, fetch deduplication. Status → done.
