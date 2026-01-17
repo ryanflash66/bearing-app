@@ -81,6 +81,7 @@ BEGIN
     )
   FROM public.account_members am
   WHERE am.user_id = target_user_id
+  ORDER BY am.account_id ASC
   LIMIT 1;
   -- Note: If target user has no account, audit log insert might fail due to NOT NULL constraint.
   -- This is an acceptable edge case constraint for now: Users must belong to an account.

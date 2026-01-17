@@ -19,7 +19,7 @@ So that I can distribute it to retailers legally without a separate checkout pro
     *   **Then** an upgrading/upsell modal is displayed.
 *   **Given** no available ISBNs in admin pool
     *   **When** requesting
-    *   **Then** logic warns user "Delayed Processing" but allows the request queueing.
+    *   **Then** logic warns the user "Delayed Processing" but allows the request queueing.
 
 **Effort:** 16h
 **Dependencies:** Story 5.1, Stripe Account
