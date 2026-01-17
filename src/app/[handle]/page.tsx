@@ -20,9 +20,14 @@ export default async function PublicAuthorProfilePage({
   params: Promise<{ handle: string }>;
 }) {
   const { handle } = await params;
-  const normalizedHandle = decodeURIComponent(handle).trim();
+  let normalizedHandle: string;
 
-  if (!normalizedHandle) {
+  try {
+    normalizedHandle = decodeURIComponent(handle).trim();
+    if (!normalizedHandle) {
+      return notFound();
+    }
+  } catch {
     return notFound();
   }
 
