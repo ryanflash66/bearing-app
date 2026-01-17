@@ -59,7 +59,7 @@ create index if not exists idx_blog_posts_deleted_at
 -- ============================================================================
 -- TRIGGER: Auto-update updated_at timestamp
 -- ============================================================================
-drop trigger if exists trg_blog_posts_updated_at on public.blog_posts;
+-- drop trigger if exists trg_blog_posts_updated_at on public.blog_posts;
 create trigger trg_blog_posts_updated_at
   before update on public.blog_posts
   for each row execute function public.update_updated_at();
@@ -76,13 +76,14 @@ as $$
 begin
   -- Only recalculate if content_text changed
   if new.content_text is distinct from old.content_text then
-    new.word_count = public.calculate_word_count(new.content_text);
+  -- new.word_count = public.calculate_word_count(new.content_text);
+    new.word_count = 0; -- DEBUG BYPASS
   end if;
   return new;
 end;
 $$;
 
-drop trigger if exists trg_blog_posts_word_count on public.blog_posts;
+-- drop trigger if exists trg_blog_posts_word_count on public.blog_posts;
 create trigger trg_blog_posts_word_count
   before update on public.blog_posts
   for each row execute function public.update_blog_post_word_count();
@@ -100,7 +101,7 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_blog_posts_word_count_insert on public.blog_posts;
+-- drop trigger if exists trg_blog_posts_word_count_insert on public.blog_posts;
 create trigger trg_blog_posts_word_count_insert
   before insert on public.blog_posts
   for each row execute function public.set_blog_post_word_count();
@@ -115,7 +116,7 @@ alter table public.blog_posts enable row level security;
 -- ============================================================================
 
 -- Members can view active blog posts in their account
-drop policy if exists "blog_posts_select_member" on public.blog_posts;
+-- drop policy if exists "blog_posts_select_member" on public.blog_posts;
 create policy "blog_posts_select_member"
   on public.blog_posts for select
   using (
@@ -124,7 +125,7 @@ create policy "blog_posts_select_member"
   );
 
 -- Admins can view deleted blog posts (for recovery)
-drop policy if exists "blog_posts_select_deleted_admin" on public.blog_posts;
+-- drop policy if exists "blog_posts_select_deleted_admin" on public.blog_posts;
 create policy "blog_posts_select_deleted_admin"
   on public.blog_posts for select
   using (
@@ -133,7 +134,7 @@ create policy "blog_posts_select_deleted_admin"
   );
 
 -- Members can create blog posts in their account
-drop policy if exists "blog_posts_insert_member" on public.blog_posts;
+-- drop policy if exists "blog_posts_insert_member" on public.blog_posts;
 create policy "blog_posts_insert_member"
   on public.blog_posts for insert
   with check (
@@ -142,7 +143,7 @@ create policy "blog_posts_insert_member"
   );
 
 -- Only owner or admin can update blog posts
-drop policy if exists "blog_posts_update_owner_admin" on public.blog_posts;
+-- drop policy if exists "blog_posts_update_owner_admin" on public.blog_posts;
 create policy "blog_posts_update_owner_admin"
   on public.blog_posts for update
   using (

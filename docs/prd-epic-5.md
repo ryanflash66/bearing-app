@@ -4,25 +4,25 @@
 
 ## Scope
 This Epic covers the "Business Side" of self-publishing. It moves beyond the manuscript itself to the logistics of publishing.
-*   **Service Marketplace:** A catalog UI for browsing available services.
-*   **ISBN Procurement:** Validating, purchasing, and assigning ISBNs.
-*   **Service Request State Machine:** Tracking orders from "Requested" to "Fulfilled".
+*   **Service Marketplace:** A catalog UI for browsing available subscriber benefits.
+*   **ISBN Procurement:** Validating subscription status and assigning ISBNs.
+*   **Service Request State Machine:** Tracking requests from "Requested" to "Fulfilled".
 *   **Admin Fulfillment:** Back-office tools for admins to process these specialized requests.
 
 ## Functional Requirements Covered
-*   **Services Marketplace (PRD 7)**: Browse and filtering of services.
-*   **ISBN Workflow (PRD 7.1)**: Purchase and assignment logic.
+*   **Services Marketplace (PRD 7)**: Browse and filtering of included benefits.
+*   **ISBN Workflow (PRD 7.1)**: Subscription validation and assignment logic.
 *   **Order Tracking (PRD 7.2)**: Visibility into service status.
 *   **Admin Fulfillment (PRD 10)**: Ability for admins to upload ISBN blocks and mark services complete.
 
 ## Non-Functional Requirements
-*   **Financial Security**: All payments via Stripe (Audit Logs required).
+*   **Access Control**: All services gated by Subscription Tier (Entitlement Check).
 *   **Data Integrity**: ISBNs must be unique and immutable once assigned.
-*   **Accessibility**: Marketplace and Checkout must be WCAG 2.1 AA compliant.
+*   **Accessibility**: Marketplace and Request forms must be WCAG 2.1 AA compliant.
 
 ## User Stories Overview
-*   **Story 5.1: Service Marketplace UI**: The "Storefront" for authors.
-*   **Story 5.2: ISBN Purchase Workflow**: The checkout and assignment flow.
+*   **Story 5.1: Service Marketplace UI**: The "Benefits Hub" for authors.
+*   **Story 5.2: ISBN Request Workflow**: The entitlement and assignment flow.
 *   **Story 5.4: Admin Fulfillment Dashboard**: The backend processing view.
 *   **Story 5.5: Cmd+K Commander Pattern**: Global command palette for power users.
 *   **Story 5.6: Integrate Custom Fine-Tuned Models**: (Deferred) Specialized AI models.

@@ -9,10 +9,15 @@ So that I can purchase the resources I need to publish my book.
 *   **Given** the marketplace page
     *   **When** loaded
     *   **Then** a grid of available services (ISBN, Copy Editing, Cover Design Request) is displayed.
-    *   **And** each card shows: Title, Price/Range, Description, Turnaround Time.
+    *   **And** each card shows: Title, Description, Turnaround Time.
+    *   **And** NO PRICE is displayed (Pricing specific usage is removed in favor of subscription tiers).
+    *   **And** Service Cards display an "Available with Subscription" label or badge.
+*   **Given** a user with an INACTIVE subscription (or free tier)
+    *   **When** viewing a service card
+    *   **Then** the "Request Service" button is DISABLED or prompts an upgrade.
 *   **Given** a distinct user type "Designer" (System Persona)
     *   **When** viewing the marketplace
-    *   **Then** they see a "Task Board" view instead of a "Purchase" view (Future Scope prep).
+    *   **Then** they see a "Task Board" view instead of a "Request" view.
 *   **Given** mobile view
     *   **When** accessed
     *   **Then** the grid stacks responsive (1 column).

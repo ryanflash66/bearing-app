@@ -107,7 +107,11 @@ Inactive authors consume **zero AI allowance**.
 - **FR-01** Email-based authentication with optional MFA (TOTP)
 - **FR-02** Author profile management
 - **FR-03** Account-level grouping of users
-- **FR-04** Role-based access (Author, Admin)
+- **FR-04** Role-based access (RBAC) [REFINED]:
+    - **Super Admin (Singleton):** Exclusive role management, full system access.
+    - **Admin:** Operational oversight, can view manuscripts, cannot assign roles.
+    - **Support Agent:** Ticket management only, strictly NO manuscript access.
+    - **Author:** Standard user.
 
 ### Manuscript Management
 - **FR-05** Create, upload, and delete manuscripts
