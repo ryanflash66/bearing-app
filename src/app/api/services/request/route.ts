@@ -4,6 +4,30 @@ import { MARKETPLACE_SERVICES } from "@/lib/marketplace-data";
 
 export const dynamic = "force-dynamic";
 
+// Map frontend service IDs (with hyphens) to DB enum values (with underscores)
+const SERVICE_ID_TO_DB_ENUM: Record<string, string> = {
+  "cover-design": "cover_design",
+  "isbn": "isbn",
+  "editing": "editing",
+  "author-website": "author_website",
+  "marketing": "marketing",
+  "social-media": "social_media",
+  "publishing-help": "publishing_help",
+  "printing": "printing",
+};
+
+// Default amounts in cents for services (0 = quote-based)
+const SERVICE_DEFAULT_AMOUNTS: Record<string, number> = {
+  "cover_design": 0,      // Quote-based: $299-$799
+  "isbn": 12500,          // Fixed: $125
+  "editing": 0,           // Quote-based: per word
+  "author_website": 0,    // Quote-based: $500-$1500
+  "marketing": 0,         // Quote-based: $499-$1299
+  "social_media": 0,      // Quote-based: $199-$399
+  "publishing_help": 0,   // Quote-based: $150-$450
+  "printing": 0,          // Quote-based
+};
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -33,14 +57,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert frontend service ID to DB enum value
+    const dbServiceType = SERVICE_ID_TO_DB_ENUM[serviceId];
+    if (!dbServiceType) {
+      return NextResponse.json(
+        { error: "Unknown service type" },
+        { status: 400 }
+      );
+    }
+    
+    // Get the amount for this service type
+    const amountCents = SERVICE_DEFAULT_AMOUNTS[dbServiceType] ?? 0;
+
     // 3. Check for active subscription
     const { data: profile, error: profileError } = await supabase
-      .from("profiles")
+      .from("users")
       .select("role")
-      .eq("id", user.id)
+      .eq("auth_id", user.id)
       .single();
 
     if (profileError || !profile) {
+      console.error("Profile lookup error:", profileError);
       return NextResponse.json(
         { error: "User profile not found" },
         { status: 404 }
@@ -48,15 +85,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Admins and Support Agents skip subscription check
-    const isSpecialRole = ["admin", "support_agent"].includes(profile.role);
+    // NOTE: Current roles are 'user', 'support_agent', 'super_admin' per app_role enum
+    const isSpecialRole = ["super_admin", "support_agent"].includes(profile.role);
     
-    // For authors, we check their role which currently acts as their tier indicator
-    // In a full implementation, we'd check a separate subscription_tier column
-    const isPro = profile.role === "pro" || profile.role === "subscriber";
+    // TODO: Implement proper subscription tier check when subscription system is added
+    // For now, all authenticated users can request services (they're quote-based anyway)
+    // The actual payment happens through Stripe checkout for paid services like ISBN
+    const isAuthorizedUser = profile.role === "user" || isSpecialRole;
 
-    if (!isSpecialRole && !isPro) {
+    if (!isAuthorizedUser) {
       return NextResponse.json(
-        { error: "This service requires a Pro subscription" },
+        { error: "Unauthorized" },
         { status: 403 }
       );
     }
@@ -66,8 +105,9 @@ export async function POST(request: NextRequest) {
       .from("service_requests")
       .insert({
         user_id: user.id,
-        service_type: serviceId,
+        service_type: dbServiceType,
         status: "pending",
+        amount_cents: amountCents,
         metadata: {
           manuscript_id: manuscriptId || null,
           requested_at: new Date().toISOString(),

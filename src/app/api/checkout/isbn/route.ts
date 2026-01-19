@@ -88,7 +88,23 @@ export async function POST(request: NextRequest) {
       poolWarning,
     });
   } catch (error) {
-    console.error("Checkout session creation error:", error);
+    // Log detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("Checkout session creation error:", {
+      message: errorMessage,
+      stack: errorStack,
+      stripeKeyConfigured: !!process.env.STRIPE_SECRET_KEY,
+    });
+    
+    // Return more specific error if it's a configuration issue
+    if (errorMessage.includes("STRIPE_SECRET_KEY")) {
+      return NextResponse.json(
+        { error: "Payment system not configured" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

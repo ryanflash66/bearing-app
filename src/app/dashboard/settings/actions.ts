@@ -78,7 +78,7 @@ export async function updateProfileName(formData: FormData) {
     .single();
     
   if (setting?.value?.enabled) {
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('users').select('role').eq('auth_id', user.id).single();
       if (profile?.role !== 'super_admin') {
           return { error: setting.value.message || "System is under maintenance." };
       }
@@ -86,9 +86,9 @@ export async function updateProfileName(formData: FormData) {
 
   // --- Update Profile ---
   const { error } = await supabase
-    .from("profiles")
+    .from("users")
     .update({ display_name: normalizedDisplayName, updated_at: new Date().toISOString() })
-    .eq("id", user.id);
+    .eq("auth_id", user.id);
 
   if (error) {
     return { error: "Failed to update profile." };

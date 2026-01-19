@@ -75,6 +75,17 @@ describe("ServiceCard", () => {
   });
 
   it("changes button state when requesting service", async () => {
+    // Mock fetch to simulate API request with slight delay
+    mockFetch.mockImplementation(() => 
+      new Promise((resolve) => 
+        setTimeout(() => resolve({
+          ok: true,
+          json: async () => ({ success: true, message: "Request submitted!" }),
+        }), 100)
+      )
+    );
+    const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
+
     render(<ServiceCard service={mockService} />);
 
     const button = screen.getByRole("button", { name: /request service/i });
@@ -94,9 +105,22 @@ describe("ServiceCard", () => {
       },
       { timeout: ASYNC_TIMEOUT }
     );
+
+    mockAlert.mockRestore();
   });
 
   it("prevents multiple simultaneous requests", async () => {
+    // Mock fetch to simulate API request with delay
+    mockFetch.mockImplementation(() => 
+      new Promise((resolve) => 
+        setTimeout(() => resolve({
+          ok: true,
+          json: async () => ({ success: true, message: "Request submitted!" }),
+        }), 500)
+      )
+    );
+    const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
+
     render(<ServiceCard service={mockService} />);
 
     const button = screen.getByRole("button", { name: /request service/i });
@@ -110,6 +134,8 @@ describe("ServiceCard", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /processing/i })).toBeDisabled();
     });
+
+    mockAlert.mockRestore();
   });
 
   it("displays turnaround time with correct formatting", () => {
@@ -279,7 +305,14 @@ describe("ServiceCard", () => {
       });
     });
 
-    it("shows coming soon message for non-ISBN services", async () => {
+    it("makes API request for non-ISBN services", async () => {
+      // Mock successful response
+      const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, message: "Request submitted successfully!" }),
+      });
+
       render(<ServiceCard service={mockService} />);
 
       const button = screen.getByRole("button", { name: /request service/i });
@@ -287,10 +320,20 @@ describe("ServiceCard", () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText(/coming soon/i)).toBeInTheDocument();
+          expect(mockFetch).toHaveBeenCalledWith("/api/services/request", expect.objectContaining({
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }));
         },
         { timeout: ASYNC_TIMEOUT }
       );
+
+      // Verify alert was called with success message
+      await waitFor(() => {
+        expect(mockAlert).toHaveBeenCalledWith("Request submitted successfully!");
+      });
+
+      mockAlert.mockRestore();
     });
   });
 });

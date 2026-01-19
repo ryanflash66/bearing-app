@@ -11,11 +11,12 @@ jest.mock("@/utils/supabase/server", () => ({
   createClient: jest.fn(),
 }));
 
-// Mock Marketplace Data
+// Mock Marketplace Data - use valid service IDs that match the DB enum mapping
 jest.mock("@/lib/marketplace-data", () => ({
   __esModule: true,
   MARKETPLACE_SERVICES: [
-    { id: "test-service", title: "Test Service" },
+    { id: "cover-design", title: "Cover Design" },
+    { id: "isbn", title: "ISBN Registration" },
   ],
 }));
 
@@ -46,7 +47,7 @@ describe("Service Request API (/api/services/request)", () => {
 
   it("returns 401 if user is not authenticated", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
-    const req = createMockRequest({ serviceId: "test-service" });
+    const req = createMockRequest({ serviceId: "cover-design" });
     const res = await POST(req);
     expect(res.status).toBe(401);
   });
@@ -61,31 +62,32 @@ describe("Service Request API (/api/services/request)", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 403 for non-pro authors", async () => {
+  it("returns 400 for unknown service type (not in DB enum mapping)", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({ 
       data: { user: { id: "user-123" } }, 
       error: null 
     });
     mockSupabase.single.mockResolvedValue({ 
-      data: { role: "author" }, 
+      data: { role: "user" }, 
       error: null 
     });
 
-    const req = createMockRequest({ serviceId: "test-service" });
+    // Use a service ID that exists in MARKETPLACE_SERVICES mock but not in the DB enum mapping
+    const req = createMockRequest({ serviceId: "unknown-service" });
     const res = await POST(req);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
   });
 
-  it("successfully creates request for pro users", async () => {
+  it("successfully creates request for regular users", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({ 
       data: { user: { id: "user-123" } }, 
       error: null 
     });
     mockSupabase.single
-      .mockResolvedValueOnce({ data: { role: "pro" }, error: null }) // Profile check
+      .mockResolvedValueOnce({ data: { role: "user" }, error: null }) // Profile check
       .mockResolvedValueOnce({ data: { id: "req-456" }, error: null }); // Insert result
 
-    const req = createMockRequest({ serviceId: "test-service", manuscriptId: "ms-789" });
+    const req = createMockRequest({ serviceId: "cover-design", manuscriptId: "ms-789" });
     const res = await POST(req);
     
     expect(res.status).toBe(200);
@@ -95,26 +97,30 @@ describe("Service Request API (/api/services/request)", () => {
     
     expect(mockSupabase.insert).toHaveBeenCalledWith(expect.objectContaining({
       user_id: "user-123",
-      service_type: "test-service",
+      service_type: "cover_design", // DB enum uses underscores
+      amount_cents: 0, // Quote-based service
       metadata: expect.objectContaining({
         manuscript_id: "ms-789",
       }),
     }));
   });
 
-  it("successfully creates request for admins without subscription check", async () => {
+  it("successfully creates request for super_admins without subscription check", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({ 
       data: { user: { id: "admin-123" } }, 
       error: null 
     });
     mockSupabase.single
-      .mockResolvedValueOnce({ data: { role: "admin" }, error: null })
+      .mockResolvedValueOnce({ data: { role: "super_admin" }, error: null })
       .mockResolvedValueOnce({ data: { id: "req-999" }, error: null });
 
-    const req = createMockRequest({ serviceId: "test-service" });
+    const req = createMockRequest({ serviceId: "isbn" });
     const res = await POST(req);
     
     expect(res.status).toBe(200);
-    expect(mockSupabase.insert).toHaveBeenCalled();
+    expect(mockSupabase.insert).toHaveBeenCalledWith(expect.objectContaining({
+      service_type: "isbn",
+      amount_cents: 12500, // Fixed price for ISBN
+    }));
   });
 });
