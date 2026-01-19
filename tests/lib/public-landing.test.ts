@@ -8,7 +8,7 @@ import { getPublicBookBySlug, getSignupCount, getSignupList } from "@/lib/public
 // Mock the React cache function
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
-  cache: (fn: Function) => fn,
+  cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
 }));
 
 describe("getPublicBookBySlug", () => {

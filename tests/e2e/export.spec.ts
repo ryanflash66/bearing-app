@@ -1,6 +1,5 @@
 
 import { test, expect } from './fixtures/auth.fixture';
-import { createManuscriptData } from '../support/factories/manuscript.factory';
 
 /**
  * Story 7.2: WYSIWYG Export Previewer E2E Suite

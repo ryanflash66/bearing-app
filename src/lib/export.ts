@@ -1,3 +1,6 @@
+import fs from "fs/promises";
+import os from "os";
+import path from "path";
 import puppeteer from "puppeteer";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak } from "docx";
 import { Manuscript, getManuscript } from "./manuscripts";
@@ -102,12 +105,18 @@ export async function generatePDF(
   settings: ExportSettings = defaultExportSettings,
   metadata?: any
 ): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
+  const userDataDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), "bearing-puppeteer-profile-")
+  );
 
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
   try {
+    browser = await puppeteer.launch({
+      headless: true,
+      userDataDir,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
     const page = await browser.newPage();
     const { width, height } = getPageDimensions(settings.pageSize);
     
@@ -230,7 +239,18 @@ export async function generatePDF(
 
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        // Best-effort cleanup: browser may already be closed/crashed.
+      }
+    }
+    try {
+      await fs.rm(userDataDir, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup: Windows can keep the profile lockfile busy briefly.
+    }
   }
 }
 

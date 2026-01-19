@@ -16,6 +16,15 @@ import { getVersion } from "@/lib/manuscriptVersions";
 jest.mock("@/utils/supabase/server");
 jest.mock("@/lib/manuscripts");
 jest.mock("@/lib/manuscriptVersions");
+jest.mock("puppeteer", () => ({
+  launch: jest.fn().mockResolvedValue({
+    newPage: jest.fn().mockResolvedValue({
+      setContent: jest.fn().mockResolvedValue(undefined),
+      pdf: jest.fn().mockResolvedValue(Buffer.from("%PDF-FAKE")),
+    }),
+    close: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 describe("Manuscript Export (Story 2.4)", () => {
   const mockSupabase = {} as any;
