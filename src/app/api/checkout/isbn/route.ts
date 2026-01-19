@@ -87,14 +87,22 @@ export async function POST(request: NextRequest) {
       url: session.url,
       poolWarning,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     // Log detailed error for debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Check if it's a Stripe error with more details
+    const stripeError = error as { type?: string; code?: string; statusCode?: number };
+    
     console.error("Checkout session creation error:", {
       message: errorMessage,
       stack: errorStack,
       stripeKeyConfigured: !!process.env.STRIPE_SECRET_KEY,
+      stripeKeyLength: process.env.STRIPE_SECRET_KEY?.length || 0,
+      stripeErrorType: stripeError?.type,
+      stripeErrorCode: stripeError?.code,
+      stripeStatusCode: stripeError?.statusCode,
     });
     
     // Return more specific error if it's a configuration issue
@@ -102,6 +110,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Payment system not configured" },
         { status: 503 }
+      );
+    }
+    
+    // Return Stripe-specific errors
+    if (stripeError?.type === "StripeAuthenticationError") {
+      return NextResponse.json(
+        { error: "Payment system authentication failed" },
+        { status: 503 }
+      );
+    }
+    
+    if (stripeError?.type === "StripeInvalidRequestError") {
+      return NextResponse.json(
+        { error: "Invalid payment request" },
+        { status: 400 }
       );
     }
     

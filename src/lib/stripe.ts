@@ -7,8 +7,16 @@ export function getStripe(): Stripe {
   if (!_stripe) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (!secretKey) {
+      console.error("STRIPE_SECRET_KEY is missing from environment variables");
       throw new Error("STRIPE_SECRET_KEY is not configured");
     }
+    
+    // Validate key format (should start with sk_test_ or sk_live_)
+    if (!secretKey.startsWith("sk_test_") && !secretKey.startsWith("sk_live_")) {
+      console.error("STRIPE_SECRET_KEY has invalid format - should start with sk_test_ or sk_live_");
+      throw new Error("STRIPE_SECRET_KEY has invalid format");
+    }
+    
     // API version should be updated when Stripe releases new versions
     // Check https://stripe.com/docs/upgrades for latest versions
     // Current: 2025-12-15.clover (as of Jan 2026)
