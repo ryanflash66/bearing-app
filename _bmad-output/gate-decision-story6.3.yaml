@@ -1,0 +1,51 @@
+traceability_and_gate:
+  traceability:
+    story_id: "6.3"
+    date: "2026-01-19"
+    coverage:
+      overall: 80
+      p0: 100
+      p1: 100
+      p2: 0
+      p3: 100
+    gaps:
+      critical: 0
+      high: 0
+      medium: 1
+      low: 0
+    quality:
+      passing_tests: 5
+      total_tests: 5
+      blocker_issues: 0
+      warning_issues: 2
+    recommendations:
+      - "Add automated tests for moderation email notifications"
+      - "Add explicit suspended 404 test"
+
+  gate_decision:
+    decision: "CONCERNS"
+    gate_type: "story"
+    decision_mode: "deterministic"
+    criteria:
+      p0_coverage: 100
+      p0_pass_rate: 100
+      p1_coverage: 100
+      p1_pass_rate: 100
+      overall_pass_rate: 100
+      overall_coverage: 80
+      security_issues: "not_assessed"
+      critical_nfrs_fail: "not_assessed"
+      flaky_tests: "not_assessed"
+    thresholds:
+      min_p0_coverage: 100
+      min_p0_pass_rate: 100
+      min_p1_coverage: 90
+      min_p1_pass_rate: 95
+      min_overall_pass_rate: 90
+      min_coverage: 80
+    evidence:
+      test_results: "docs/story6.3.md (2026-01-19)"
+      traceability: "_bmad-output/traceability-matrix-story6.3.md"
+      nfr_assessment: "not_assessed"
+      code_coverage: "not_available"
+    next_steps: "Add automated moderation email tests and explicit suspended 404 test"

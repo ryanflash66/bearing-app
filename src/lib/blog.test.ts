@@ -141,11 +141,17 @@ describe('Blog Library', () => {
 
       const mockPost = {
         id: 'post-1',
-        content_text: input.content_text,
+        account_id: 'acc-1',
+        content_text: 'old content',
+        status: 'draft',
         updated_at: '2026-01-19T00:00:00Z',
       };
 
-      mockBuilder.single.mockResolvedValueOnce({ data: mockPost, error: null });
+      // First single(): existing post fetch
+      // Second single(): update result
+      mockBuilder.single
+        .mockResolvedValueOnce({ data: mockPost, error: null }) // existing fetch
+        .mockResolvedValueOnce({ data: { ...mockPost, ...input }, error: null }); // update result
 
       const result = await updateBlogPost(mockSupabase, 'post-1', input);
 
@@ -194,6 +200,8 @@ describe('Blog Library', () => {
       const result = await publishBlogPost(mockSupabase, 'post-2');
 
       expect(result.error).toBe('Post flagged for review before publishing');
+      expect(result.moderationHold).toBe(true);
+      expect(mockEvaluateModeration).toHaveBeenCalled();
       expect(mockBuilder.update).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'draft',

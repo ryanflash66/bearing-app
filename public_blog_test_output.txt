@@ -1,0 +1,35 @@
+
+> bearing-app@1.0.0 test
+> jest tests/lib/public-blog.test.ts
+
+FAIL tests/lib/public-blog.test.ts
+  ● Test suite failed to run
+
+      x Unexpected token `queryChain`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+         ,-[R:\Dropbox\_Code\Projects\bearing\bearing-app\tests\lib\public-blog.test.ts:135:1]
+     132 |           data: null,
+     133 |           error: { code: "PGRST116", message: "No rows found" },
+     134 |         }),
+     135 |       const queryChain = {
+         :             ^^^^^^^^^^
+     136 |         select: jest.fn().mockReturnThis(),
+     137 |         eq: jest.fn().mockReturnThis(),
+     137 |         is: jest.fn().mockReturnThis(),
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1460:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1591:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:105:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/index.js:422:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/index.js:519:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/index.js:558:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        1.074 s
+Ran all test suites matching tests/lib/public-blog.test.ts.

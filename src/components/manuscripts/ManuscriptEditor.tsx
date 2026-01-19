@@ -13,6 +13,7 @@ import Binder from "./Binder";
 import { ConsistencyIssue, ConsistencyReport } from "@/lib/gemini";
 import { useZenMode } from "@/lib/useZenMode";
 import { useGhostText } from "@/lib/useGhostText";
+import { useDictation } from "@/lib/useDictation";
 import { GhostTextOverlay } from "./GhostTextDisplay";
 import TiptapEditor from "../editor/TiptapEditor";
 import { Editor } from "@tiptap/react";
@@ -21,6 +22,8 @@ import { useCommandPalette } from "@/lib/useCommandPalette";
 import { extractCharacters, saveSelection, restoreSelection, findFirstOccurrence } from "@/lib/manuscript-utils";
 import BetaShareModal from "./BetaShareModal";
 import BetaCommentsPanel from "./BetaCommentsPanel";
+import ExportModal from "./ExportModal";
+import PublishingSettingsModal from "./PublishingSettingsModal";
 
 
 interface ManuscriptEditorProps {
@@ -28,6 +31,7 @@ interface ManuscriptEditorProps {
   initialTitle: string;
   initialContent: string;
   initialUpdatedAt: string;
+  initialMetadata?: Record<string, any>;
   onTitleChange?: (title: string) => void;
 }
 
@@ -137,16 +141,22 @@ export default function ManuscriptEditor({
   initialTitle,
   initialContent,
   initialUpdatedAt,
+  initialMetadata,
   onTitleChange,
 }: ManuscriptEditorProps) {
   const router = useRouter();
   const [editor, setEditor] = useState<Editor | null>(null);
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
+  const [metadata, setMetadata] = useState(initialMetadata || {});
   const [wordCount, setWordCount] = useState(0);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showBetaShare, setShowBetaShare] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showPublishingModal, setShowPublishingModal] = useState(false);
+  const [showReportViewer, setShowReportViewer] = useState(false);
+  const [selectedChapterForReport, setSelectedChapterForReport] = useState<number | null>(null);
   const [localContent, setLocalContent] = useState(initialContent);
   const [serverState, setServerState] = useState<{ content_text: string; title: string } | null>(null);
   
@@ -163,11 +173,6 @@ export default function ManuscriptEditor({
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
   const [suggestionError, setSuggestionError] = useState<string | null>(null);
   
-  // Export state
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [isExportingDocx, setIsExportingDocx] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-
   // Consistency check state
   const [consistencyCheckStatus, setConsistencyCheckStatus] = useState<{
     status: "idle" | "queued" | "running" | "completed" | "failed";
@@ -176,8 +181,6 @@ export default function ManuscriptEditor({
     report?: ConsistencyReport;
   }>({ status: "idle" });
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
-  const [showReportViewer, setShowReportViewer] = useState(false);
-  const [selectedChapterForReport, setSelectedChapterForReport] = useState<number | null>(null);
 
   const [betaComments, setBetaComments] = useState<BetaComment[]>([]);
   const [betaCommentsLoading, setBetaCommentsLoading] = useState(false);
@@ -390,25 +393,29 @@ export default function ManuscriptEditor({
 
   // Handle ghost text acceptance - uses setContent directly to avoid circular dependency
   const handleGhostTextAccept = useCallback((suggestion: string) => {
-    const before = content.substring(0, cursorPosition);
-    const after = content.substring(cursorPosition);
-    const newContent = before + suggestion + after;
+    if (!editor) return;
+
+    // Use editor commands to insert text so Tiptap state is updated correctly
+    editor.commands.insertContent(suggestion);
+    
+    const newContent = editor.getText();
+    const newJson = editor.getJSON();
     
     // Update content state
     setContent(newContent);
     setLocalContent(newContent);
     
-    // Move cursor to end of inserted text
-    // Move cursor to end of inserted text
-    setTimeout(() => {
-      if (editor) {
-        const newPos = cursorPosition + suggestion.length;
-        editor.commands.setTextSelection(newPos);
-        editor.view.focus();
-        setCursorPosition(newPos);
-      }
-    }, 0);
-  }, [content, cursorPosition]);
+    // Trigger autosave immediately for accepted ghost text
+    queueSave(
+      newJson,
+      newContent,
+      title,
+      metadata
+    );
+
+    // Move cursor to end of inserted text is handled by insertContent
+    setCursorPosition(editor.state.selection.to);
+  }, [editor, title, metadata, queueSave]);
 
   // Initialize Ghost Text
   const ghostText = useGhostText(content, cursorPosition, {
@@ -416,6 +423,24 @@ export default function ManuscriptEditor({
     onRequestSuggestion: handleGhostTextRequest,
     onAccept: handleGhostTextAccept,
     enabled: !selectedText && !suggestion && !isLoadingSuggestion,
+  });
+
+  const [interimDictationText, setInterimDictationText] = useState("");
+
+  // Handle dictation result
+  const handleDictationResult = useCallback((text: string, isFinal: boolean) => {
+    if (!editor) return;
+
+    if (isFinal) {
+       editor.commands.insertContent(text + " ");
+       setInterimDictationText("");
+    } else {
+       setInterimDictationText(text);
+    }
+  }, [editor]);
+
+  const { isListening, isSupported: isDictationSupported, toggle: toggleDictation, error: dictationError } = useDictation({
+    onResult: handleDictationResult,
   });
 
   // Initialize autosave hook
@@ -570,28 +595,44 @@ export default function ManuscriptEditor({
     fetchBetaComments();
   }, [fetchBetaComments]);
 
+  // Handle metadata update with autosave
+  const handleMetadataUpdate = useCallback((newMetadata: any) => {
+    setMetadata(newMetadata);
+    const currentJson = editor ? editor.getJSON() : { type: "doc", content: [{ type: "text", text: content }] };
+    queueSave(
+      currentJson,
+      content,
+      title,
+      newMetadata
+    );
+  }, [queueSave, content, title, editor]);
+
   // Handle content change with autosave
   const handleContentChange = useCallback((newContent: string) => {
     setContent(newContent);
     setLocalContent(newContent); // Track local content for conflict resolution
+    const currentJson = editor ? editor.getJSON() : { type: "doc", content: [{ type: "text", text: newContent }] };
     queueSave(
-      { type: "doc", content: [{ type: "text", text: newContent }] }, // Simple JSON structure
+      currentJson,
       newContent,
-      title
+      title,
+      metadata
     );
-  }, [queueSave, title]);
+  }, [queueSave, title, metadata, editor]);
 
   // Handle title change with autosave
   const handleTitleChange = useCallback((newTitle: string) => {
     setTitle(newTitle);
     onTitleChange?.(newTitle);
     // Also trigger autosave for title changes
+    const currentJson = editor ? editor.getJSON() : { type: "doc", content: [{ type: "text", text: content }] };
     queueSave(
-      { type: "doc", content: [{ type: "text", text: content }] },
+      currentJson,
       content,
-      newTitle
+      newTitle,
+      metadata
     );
-  }, [onTitleChange, queueSave, content]);
+  }, [onTitleChange, queueSave, content, metadata, editor]);
 
   // Track text selection and cursor position
 
@@ -756,61 +797,10 @@ export default function ManuscriptEditor({
     setSuggestionError(null);
   }, []);
 
-  // Export handlers
-  const handleExport = useCallback(async (format: "pdf" | "docx", versionId?: number) => {
-    if (format === "pdf") setIsExportingPdf(true);
-    else setIsExportingDocx(true);
-    
-    setExportError(null);
-
-    try {
-      const url = `/api/manuscripts/${manuscriptId}/export/${format}${
-        versionId !== undefined ? `?version=${versionId}` : ""
-      }`;
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Export failed" }));
-        throw new Error(errorData.error || "Failed to export manuscript");
-      }
-
-      // Get filename from Content-Disposition header or generate one
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `${title || "manuscript"}.${format}`;
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Download the file
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error("Error exporting manuscript:", error);
-      setExportError(
-        error instanceof Error ? error.message : "Failed to export manuscript"
-      );
-    } finally {
-      setIsExportingPdf(false);
-      setIsExportingDocx(false);
-    }
-  }, [manuscriptId, title]);
-
   // Handle consistency check trigger
   const handleCheckConsistency = useCallback(async () => {
     setIsCheckingConsistency(true);
     setConsistencyCheckStatus({ status: "queued" });
-    setExportError(null);
 
     try {
       const response = await fetch(`/api/manuscripts/${manuscriptId}/consistency-check`, {
@@ -950,9 +940,10 @@ export default function ManuscriptEditor({
     queueSave(
       data.json,
       data.text,
-      title
+      title,
+      metadata
     );
-  }, [queueSave, title, setContent, setLocalContent]);
+  }, [queueSave, title, setContent, setLocalContent, metadata]);
 
   // Tiptap Selection handler
   const handleEditorSelection = useCallback((editor: Editor) => {
@@ -1009,6 +1000,15 @@ export default function ManuscriptEditor({
         <div className="flex items-center gap-4">
            {/* ... (Export buttons and other controls remain same) ... */}
           <button
+            onClick={() => setShowPublishingModal(true)}
+            className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100 transition-colors flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Publishing
+          </button>
+          <button
             onClick={() => setShowBetaShare(true)}
             className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors flex items-center gap-2"
           >
@@ -1017,54 +1017,37 @@ export default function ManuscriptEditor({
             </svg>
             Share / Beta
           </button>
-            <div className="flex items-center gap-2">
             <button
-              onClick={() => handleExport("pdf")}
-              disabled={isExportingPdf || isExportingDocx}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Download as PDF"
+              onClick={() => setShowExportModal(true)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2"
+              title="Export Manuscript"
             >
-              {isExportingPdf ? (
-                <>
-                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export PDF
-                </>
-              )}
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export...
             </button>
+          {isDictationSupported && (
             <button
-              onClick={() => handleExport("docx")}
-              disabled={isExportingPdf || isExportingDocx}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Download as DOCX"
+              onClick={toggleDictation}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${
+                isListening
+                  ? "border-red-400 bg-red-50 text-red-700 animate-pulse"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+              title={isListening ? "Stop Dictation" : "Start Dictation"}
             >
-              {isExportingDocx ? (
-                <>
-                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export DOCX
-                </>
-              )}
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+              {isListening ? "Listening..." : "Dictate"}
             </button>
-          </div>
+          )}
           <button
             onClick={handleCheckConsistency}
             disabled={isCheckingConsistency || consistencyCheckStatus.status === "running" || consistencyCheckStatus.status === "queued"}
@@ -1231,6 +1214,35 @@ export default function ManuscriptEditor({
           )}
 
            {/* Error & Info Messages */}
+          {dictationError && (
+             <div className="my-4 rounded-lg border-2 border-red-200 bg-red-50 p-4 flex justify-between items-center">
+               <div className="flex items-center gap-2">
+                 <svg className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                 </svg>
+                 <span className="text-sm font-medium text-red-800">Dictation Error: {dictationError}</span>
+               </div>
+             </div>
+          )}
+
+          {isListening && (
+            <div className="sticky top-0 z-10 mb-4 rounded-lg border border-indigo-200 bg-indigo-50/90 p-3 shadow-sm backdrop-blur-sm animate-fade-in transition-all">
+              <div className="flex items-center gap-3">
+                 <div className="relative h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                 </div>
+                 <div className="flex-1 font-mono text-sm text-indigo-900">
+                    {interimDictationText ? (
+                      <span className="text-slate-600">{interimDictationText}</span>
+                    ) : (
+                      <span className="text-indigo-400 italic">Listening...</span>
+                    )}
+                 </div>
+              </div>
+            </div>
+          )}
+
           {suggestionError && (
             <div className="my-4 rounded-lg border-2 border-red-200 bg-red-50 p-4">
                {/* ... error content ... */}
@@ -1282,10 +1294,23 @@ export default function ManuscriptEditor({
         onClose={() => setShowBetaShare(false)}
         manuscriptId={manuscriptId}
       />
+      <PublishingSettingsModal
+        isOpen={showPublishingModal}
+        onClose={() => setShowPublishingModal(false)}
+        initialMetadata={metadata}
+        onSave={handleMetadataUpdate}
+      />
       <ConflictResolutionModal
         isOpen={showConflictModal}
         onResolve={handleConflictResolve}
         onClose={() => setShowConflictModal(false)}
+      />
+      <ExportModal 
+         isOpen={showExportModal}
+         onClose={() => setShowExportModal(false)}
+         manuscriptId={manuscriptId}
+         title={title}
+         content={editor?.getHTML() || content}
       />
 
       {/* Command Palette (Cmd+K) */}

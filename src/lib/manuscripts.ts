@@ -10,6 +10,7 @@ export interface Manuscript {
   content_json: Record<string, unknown>;
   content_text: string;
   content_hash: string | null;
+  metadata: Record<string, any>;
   word_count: number;
   last_saved_at: string | null;
   deleted_at: string | null;
@@ -30,6 +31,7 @@ export interface UpdateManuscriptInput {
   content_hash?: string;
   status?: Manuscript["status"];
   last_saved_at?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface ManuscriptListResult {

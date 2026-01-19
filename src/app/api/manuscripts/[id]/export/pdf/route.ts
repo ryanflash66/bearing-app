@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { exportManuscript } from "@/lib/export";
+import { ExportSettings, PageSize, FontFace } from "@/lib/export-types";
 
 export async function GET(
   request: NextRequest,
@@ -33,10 +34,27 @@ export async function GET(
       );
     }
 
+    // Parse formatting settings
+    const fontSizeParam = searchParams.get("fontSize");
+    const lineHeightParam = searchParams.get("lineHeight");
+    const pageSizeParam = searchParams.get("pageSize");
+    const fontFaceParam = searchParams.get("fontFace");
+    const useHtml = searchParams.get("useHtml") === "true";
+
+    const settings: Partial<ExportSettings> = {};
+    if (fontSizeParam) settings.fontSize = parseFloat(fontSizeParam);
+    if (lineHeightParam) settings.lineHeight = parseFloat(lineHeightParam);
+    if (pageSizeParam) settings.pageSize = pageSizeParam as PageSize;
+    if (fontFaceParam) settings.fontFace = fontFaceParam as FontFace;
+
     // Export manuscript
+    // Note: We'll fetch the current manuscript's HTML content from the DB if not provided via body
+    // (In a real scenario, we might want to POST the HTML from the editor to export exactly what's seen, 
+    // or rely on the same Tiptap -> HTML conversion on the server)
     const result = await exportManuscript(supabase, manuscriptId, {
       format: "pdf",
       versionId,
+      settings: settings as ExportSettings,
     });
 
     if (result.error) {

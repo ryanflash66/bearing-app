@@ -1,6 +1,6 @@
 # Story 7.1: Beta Reader Access & Commenting
 
-Status: review
+Status: done
 
 <!-- Note: Comprehensive context generated via validate-create-story simulation -->
 

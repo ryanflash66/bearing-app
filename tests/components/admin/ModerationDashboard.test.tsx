@@ -183,6 +183,28 @@ describe("ModerationDashboard", () => {
     });
   });
 
+  it("shows email status when takedown email is sent", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        success: true,
+        postId: "post-1",
+        authorEmail: "author@example.com",
+        title: "Published Post",
+        emailSent: true,
+      }),
+    });
+
+    render(<ModerationDashboard initialPosts={[mockPublishedPost]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /takedown/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirm suspension/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/email sent to author@example.com/i)).toBeInTheDocument();
+    });
+  });
+
   it("restores suspended post when Restore is clicked", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,

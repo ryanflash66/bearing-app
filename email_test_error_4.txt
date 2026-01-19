@@ -1,0 +1,26 @@
+
+> bearing-app@1.0.0 test
+> jest tests/lib/email.test.ts
+
+FAIL tests/lib/email.test.ts
+  ● Test suite failed to run
+
+    ReferenceError: Cannot access 'mockResendInstance' before initialization
+
+    [0m [90m 16 |[39m jest[33m.[39mmock([32m"resend"[39m[33m,[39m () [33m=>[39m {
+     [90m 17 |[39m     [36mreturn[39m {
+    [31m[1m>[22m[39m[90m 18 |[39m         [33mResend[39m[33m:[39m jest[33m.[39mfn()[33m.[39mmockReturnValue(mockResendInstance)[33m,[39m
+     [90m    |[39m                                           [31m[1m^[22m[39m
+     [90m 19 |[39m     }[33m;[39m
+     [90m 20 |[39m })[33m;[39m
+     [90m 21 |[39m[0m
+
+      at mockResendInstance (tests/lib/email.test.ts:18:43)
+      at Object.<anonymous> (src/lib/email.ts:34:17)
+      at Object.<anonymous> (tests/lib/email.test.ts:13:16)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.391 s
+Ran all test suites matching tests/lib/email.test.ts.

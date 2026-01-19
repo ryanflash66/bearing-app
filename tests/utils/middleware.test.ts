@@ -127,7 +127,14 @@ describe("Public author route detection", () => {
         expect(isPublicAuthorRoute("/author-handle/blog/my-first-post")).toBe(true);
     });
 
-    it("rejects reserved and non-blog nested routes", () => {
+    it("matches book landing page routes (Story 7.4)", () => {
+        // /@handle/[book-slug] pattern
+        expect(isPublicAuthorRoute("/author-handle/my-book")).toBe(true);
+        expect(isPublicAuthorRoute("/jkrowling/harry-potter")).toBe(true);
+        expect(isPublicAuthorRoute("/author/untitled-novel")).toBe(true);
+    });
+
+    it("rejects reserved and deep nested routes", () => {
         expect(isPublicAuthorRoute("/dashboard")).toBe(false);
         expect(isPublicAuthorRoute("/api/blog/posts")).toBe(false);
         expect(isPublicAuthorRoute("/login")).toBe(false);
@@ -135,7 +142,8 @@ describe("Public author route detection", () => {
         expect(isPublicAuthorRoute("/auth/callback")).toBe(false);
         expect(isPublicAuthorRoute("/_next/static")).toBe(false);
         expect(isPublicAuthorRoute("/favicon.ico")).toBe(false);
-        expect(isPublicAuthorRoute("/author-handle/settings")).toBe(false);
+        // Deep nested routes beyond 2 segments (except blog) should be rejected
         expect(isPublicAuthorRoute("/author-handle/blog/slug/extra")).toBe(false);
+        expect(isPublicAuthorRoute("/author-handle/book/slug/chapter")).toBe(false);
     });
 });

@@ -24,12 +24,23 @@ export function isPublicAuthorRoute(pathname: string): boolean {
   if (isReserved) return false;
 
   const segments = pathname.split("/").filter(Boolean);
+  // /@handle - author profile
   if (segments.length === 1) return true;
 
   const secondSegment = segments[1]?.toLowerCase();
-  if (secondSegment !== "blog") return false;
 
-  return segments.length === 2 || segments.length === 3;
+  // /@handle/blog or /@handle/blog/[slug] - author blog pages
+  if (secondSegment === "blog") {
+    return segments.length === 2 || segments.length === 3;
+  }
+
+  // /@handle/[book-slug] - book landing page (Story 7.4)
+  // Allows exactly 2 segments where second is the book slug
+  if (segments.length === 2) {
+    return true;
+  }
+
+  return false;
 }
 
 // Routes that require authentication

@@ -102,7 +102,7 @@ describe("BlogPostEditor", () => {
 
     // Type in mocked editor
     const editor = screen.getByTestId("tiptap-textarea");
-    fireEvent.change(editor, { target: { value: "Updated content" } });
+    await user.type(editor, "Updated content");
 
     // Fast-forward debounce timer (3000ms)
     jest.advanceTimersByTime(3000);
@@ -130,10 +130,12 @@ describe("BlogPostEditor", () => {
     const publishBtn = screen.getByRole("button", { name: "Publish" });
     await user.click(publishBtn);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-        `/api/blog/posts/${defaultProps.postId}/publish`,
-        expect.objectContaining({ method: "POST" })
-    );
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+          `/api/blog/posts/${defaultProps.postId}/publish`,
+          expect.objectContaining({ method: "POST" })
+      );
+    });
 
     await waitFor(() => {
         expect(screen.getByText("Published")).toBeInTheDocument();
@@ -152,10 +154,12 @@ describe("BlogPostEditor", () => {
     const unpublishBtn = screen.getByRole("button", { name: "Unpublish" });
     await user.click(unpublishBtn);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-        `/api/blog/posts/${defaultProps.postId}/unpublish`,
-        expect.objectContaining({ method: "POST" })
-    );
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+          `/api/blog/posts/${defaultProps.postId}/unpublish`,
+          expect.objectContaining({ method: "POST" })
+      );
+    });
 
     await waitFor(() => {
         expect(screen.getByText("Draft")).toBeInTheDocument();
