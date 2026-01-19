@@ -400,10 +400,14 @@ export async function generateDOCX(
         
         frontmatterChildren.push(
             new Paragraph({
-                text: text,
                 alignment: "center",
-                italics: true,
                 spacing: { before: 3000 },
+                children: [
+                  new TextRun({
+                    text,
+                    italics: true,
+                  }),
+                ],
             })
         );
         frontmatterChildren.push(new Paragraph({
