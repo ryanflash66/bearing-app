@@ -40,6 +40,15 @@ describe("generatePDF", () => {
       expect.stringContaining("Test Content"),
       expect.objectContaining({ waitUntil: "domcontentloaded" })
     );
+    // Ensure HTML markup is preserved (not escaped as text)
+    expect(page.setContent).toHaveBeenCalledWith(
+      expect.not.stringContaining("&lt;p&gt;"),
+      expect.anything()
+    );
+    expect(page.setContent).toHaveBeenCalledWith(
+      expect.stringContaining("<p>Test Content</p>"),
+      expect.anything()
+    );
     
     // Check if pdf() was called with default 6x9 dimensions
     expect(page.pdf).toHaveBeenCalledWith(

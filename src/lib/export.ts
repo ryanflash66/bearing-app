@@ -19,6 +19,38 @@ function escapeHtml(input: string): string {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Sanitize HTML intended for server-side PDF rendering.
+ *
+ * The `content` parameter comes from Tiptap (HTML) and MUST preserve tags for
+ * layout/structure. We do minimal hardening to strip obviously dangerous
+ * constructs while leaving the markup intact.
+ *
+ * Note: We also disable JS execution and block external resource loading in
+ * Puppeteer (see below), which further reduces risk.
+ */
+function sanitizeExportHtml(html: string): string {
+  let out = html;
+
+  // Remove active/embedded content blocks.
+  out = out
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<(object|embed)[\s\S]*?>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<link\b[^>]*?>/gi, "");
+
+  // Remove inline event handlers (e.g., onclick="...").
+  out = out.replace(/\son\w+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, "");
+
+  // Neutralize javascript: URLs in href/src.
+  out = out.replace(
+    /\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi,
+    ' $1=$2#$2'
+  );
+
+  return out;
+}
+
 function getPageDimensions(size: PageSize): { width: string; height: string } {
    switch(size) {
        case "6x9": return { width: "6in", height: "9in" };
@@ -145,7 +177,7 @@ export async function generatePDF(
     // Construct HTML identical to ExportPreview.tsx
     let frontmatterHtml = "";
     const safeTitle = escapeHtml(title);
-    const safeContent = escapeHtml(content);
+    const safeContentHtml = sanitizeExportHtml(content);
     if (metadata) {
         const publisherName = metadata.publisher_name ? escapeHtml(String(metadata.publisher_name)) : null;
         const copyrightHolder = metadata.copyright_holder ? escapeHtml(String(metadata.copyright_holder)) : "Author";
@@ -254,7 +286,7 @@ export async function generatePDF(
       <body>
         ${frontmatterHtml}
         <h1>${safeTitle}</h1>
-        ${safeContent}
+        ${safeContentHtml}
       </body>
       </html>
     `;
