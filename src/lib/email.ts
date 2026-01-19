@@ -230,3 +230,36 @@ export async function notifyServiceCancelled(
     return result;
 }
 
+/**
+ * Story 6.3: Notify author when a blog post is suspended by moderation
+ */
+export async function notifyBlogPostSuspended(
+    userEmail: string,
+    postTitle: string,
+    reason: string
+) {
+    const dashboardUrl = `${APP_URL}/dashboard/marketing/blog`;
+    const safeTitle = escapeHtml(postTitle);
+    const safeReason = escapeHtml(reason);
+
+    const result = await sendEmail({
+        to: userEmail,
+        subject: `Your blog post was suspended: ${safeTitle}`,
+        text: `Your blog post "${postTitle}" has been suspended for review.\n\nReason: ${reason}\n\nYou can review your posts here: ${dashboardUrl}`,
+        html: `
+            <p>Your blog post <strong>"${safeTitle}"</strong> has been suspended for review.</p>
+            <div style="background-color: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                <p style="margin: 0; font-size: 0.875rem; color: #b91c1c;"><strong>Reason:</strong></p>
+                <p style="margin: 0.5rem 0 0; color: #1f2937;">${safeReason}</p>
+            </div>
+            <p><a href="${dashboardUrl}">Review your blog posts in the dashboard</a></p>
+        `,
+    });
+
+    if (!result.success) {
+        console.error('[NOTIFY_BLOG_POST_SUSPENDED_FAILED]', { userEmail, postTitle, error: result.error });
+    }
+
+    return result;
+}
+

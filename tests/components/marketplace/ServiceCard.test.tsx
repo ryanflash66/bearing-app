@@ -43,7 +43,7 @@ describe("ServiceCard", () => {
     render(<ServiceCard service={mockService} />);
 
     expect(screen.getByText("Test Service")).toBeInTheDocument();
-    expect(screen.getByText("$100 - $200")).toBeInTheDocument();
+    // Prices are intentionally hidden from the UI per Story 6.3 hotfix
     expect(screen.getByText("This is a test service description")).toBeInTheDocument();
     expect(screen.getByText("5-7 days")).toBeInTheDocument();
   });
@@ -61,7 +61,8 @@ describe("ServiceCard", () => {
 
     const button = screen.getByRole("button", { name: /buy isbn/i });
     expect(button).toBeInTheDocument();
-    expect(button.textContent).toContain("$125");
+    // Price removed from button text per Story 6.3 hotfix
+    expect(button.textContent).toBe("Buy ISBN");
   });
 
   it("renders disabled Track Order button", () => {

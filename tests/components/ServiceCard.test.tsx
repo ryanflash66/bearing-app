@@ -36,7 +36,7 @@ describe("ServiceCard", () => {
   it("renders service details correctly", () => {
     render(<ServiceCard service={mockIsbnService} />);
     expect(screen.getByText("ISBN Assignment")).toBeInTheDocument();
-    expect(screen.getByText("$125")).toBeInTheDocument();
+    // Prices are intentionally hidden from the UI per Story 6.3 hotfix
     expect(screen.getByText("Instant")).toBeInTheDocument();
   });
 

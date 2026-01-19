@@ -74,11 +74,6 @@ export default function ServiceCard({ service }: ServiceCardProps) {
       <div className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md">
         <div>
           <h3 className="mb-2 text-lg font-bold text-slate-900">{service.title}</h3>
-          <div className="mb-4">
-            <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              {service.priceRange}
-            </span>
-          </div>
           <p className="mb-4 text-sm text-slate-600 leading-relaxed">
             {service.description}
           </p>
@@ -111,7 +106,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             disabled={isRequesting}
             className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
           >
-            {isRequesting ? "Processing..." : isISBN ? "Buy ISBN - $125" : "Request Service"}
+            {isRequesting ? "Processing..." : isISBN ? "Buy ISBN" : "Request Service"}
           </button>
         </div>
       </div>

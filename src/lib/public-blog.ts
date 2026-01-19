@@ -23,6 +23,7 @@ export interface PublicBlogPost {
   id: string;
   title: string;
   slug: string;
+  status: string;
   content_json: Record<string, unknown>;
   content_text: string;
   excerpt: string | null;
@@ -104,11 +105,10 @@ export async function getPublishedBlogPostBySlug(
     const { data, error } = await supabase
       .from("blog_posts")
       .select(
-        "id, title, slug, content_json, content_text, excerpt, published_at, created_at, updated_at"
+        "id, title, slug, status, content_json, content_text, excerpt, published_at, created_at, updated_at"
       )
       .eq("owner_user_id", authorId)
       .eq("slug", slug)
-      .eq("status", "published")
       .is("deleted_at", null)
       .single();
 
@@ -118,6 +118,10 @@ export async function getPublishedBlogPostBySlug(
       }
       console.error("Error fetching published blog post:", error);
       return { post: null, error: error.message };
+    }
+
+    if (data?.status !== "published") {
+      return { post: null, error: "Post not found" };
     }
 
     return { post: data as PublicBlogPost, error: null };

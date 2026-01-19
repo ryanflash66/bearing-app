@@ -64,6 +64,7 @@ describe("public-blog", () => {
         id: "post-1",
         title: "Public Post",
         slug: "public-post",
+        status: "published",
         content_json: { type: "doc", content: [] },
         content_text: "Public post content",
         excerpt: "Summary",
@@ -86,6 +87,40 @@ describe("public-blog", () => {
 
       expect(result.post).toEqual(mockPost);
       expect(result.error).toBeNull();
+    });
+
+    it("returns not found when post is not published", async () => {
+      const mockPost = {
+        id: "post-2",
+        title: "Draft Post",
+        slug: "draft-post",
+        status: "draft",
+        content_json: { type: "doc", content: [] },
+        content_text: "Draft content",
+        excerpt: null,
+        published_at: null,
+        updated_at: "2026-01-02",
+      };
+
+      const queryChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockPost, error: null }),
+      };
+
+      const mockSupabase = {
+        from: jest.fn().mockReturnValue(queryChain),
+      };
+
+      const result = await getPublishedBlogPostBySlug(
+        mockSupabase as never,
+        "user-123",
+        "draft-post"
+      );
+
+      expect(result.post).toBeNull();
+      expect(result.error).toBe("Post not found");
     });
 
     it("returns not found when no post matches", async () => {

@@ -46,10 +46,10 @@ development_status:
   5-9-ai-cover-generator: deferred
 
   # Epic 6: Blog & Content Platform (In Progress)
-  epic-6: in-progress
+  epic-6: done
   6-1-blog-management-cms: done
   6-2-public-author-profile: done
-  6-3-admin-blog-moderation: planned
+  6-3-admin-blog-moderation: done
 
   # Epic 7: Publication & Beta Distribution (Backlog)
   epic-7: backlog
