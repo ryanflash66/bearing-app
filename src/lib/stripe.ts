@@ -5,15 +5,23 @@ let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {
   if (!_stripe) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
+    // Trim whitespace in case the key was copy-pasted with extra spaces
+    const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
     if (!secretKey) {
       console.error("STRIPE_SECRET_KEY is missing from environment variables");
       throw new Error("STRIPE_SECRET_KEY is not configured");
     }
     
-    // Validate key format (should start with sk_test_ or sk_live_)
-    if (!secretKey.startsWith("sk_test_") && !secretKey.startsWith("sk_live_")) {
-      console.error("STRIPE_SECRET_KEY has invalid format - should start with sk_test_ or sk_live_");
+    // Log key prefix for debugging (safe - only shows first 8 chars which is just the prefix)
+    const keyPrefix = secretKey.substring(0, 8);
+    console.log("Stripe key prefix:", keyPrefix, "length:", secretKey.length);
+    
+    // Validate key format - must be a secret key (sk_) or restricted key (rk_), not publishable (pk_)
+    const validPrefixes = ["sk_test_", "sk_live_", "rk_test_", "rk_live_"];
+    const hasValidPrefix = validPrefixes.some(prefix => secretKey.startsWith(prefix));
+    
+    if (!hasValidPrefix) {
+      console.error("STRIPE_SECRET_KEY has invalid format. Prefix:", keyPrefix, "- expected sk_test_, sk_live_, rk_test_, or rk_live_");
       throw new Error("STRIPE_SECRET_KEY has invalid format");
     }
     
