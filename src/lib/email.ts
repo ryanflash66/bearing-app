@@ -1,9 +1,15 @@
 
 import { Resend } from 'resend';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+function getResend() {
+    if (process.env.RESEND_API_KEY) {
+        return new Resend(process.env.RESEND_API_KEY);
+    }
+    return null;
+}
 
 /**
  * Escape HTML special characters to prevent XSS in email templates
@@ -18,6 +24,7 @@ function escapeHtml(unsafe: string): string {
 }
 
 export async function sendEmail({ to, subject, text, html }: { to: string; subject: string; text: string; html?: string }) {
+  const resend = getResend();
   if (!resend) {
     console.log(`[MOCK EMAIL] To: ${to}, Subject: ${subject}, Body: ${text}`);
     return { success: true, mock: true };
@@ -262,4 +269,3 @@ export async function notifyBlogPostSuspended(
 
     return result;
 }
-

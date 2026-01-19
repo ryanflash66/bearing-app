@@ -34,7 +34,12 @@ export async function POST(
           { status: 422 }
         );
       }
-      const status = result.error.includes("not found") ? 404 : 500;
+      const errorText = result.error.toLowerCase();
+      const status = errorText.includes("not found")
+        ? 404
+        : errorText.includes("moderation") || errorText.includes("flagged")
+          ? 422
+          : 500;
       return NextResponse.json({ error: result.error }, { status });
     }
 

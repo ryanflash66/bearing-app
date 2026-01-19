@@ -143,5 +143,39 @@ describe("public-blog", () => {
       expect(result.post).toBeNull();
       expect(result.error).toBe("Post not found");
     });
+
+    it("returns not found when post is suspended", async () => {
+      const mockPost = {
+        id: "post-3",
+        title: "Suspended Post",
+        slug: "suspended-post",
+        status: "suspended",
+        content_json: { type: "doc", content: [] },
+        content_text: "Suspended content",
+        excerpt: null,
+        published_at: "2026-01-01",
+        updated_at: "2026-01-02",
+      };
+
+      const queryChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: mockPost, error: null }),
+      };
+
+      const mockSupabase = {
+        from: jest.fn().mockReturnValue(queryChain),
+      };
+
+      const result = await getPublishedBlogPostBySlug(
+        mockSupabase as never,
+        "user-123",
+        "suspended-post"
+      );
+
+      expect(result.post).toBeNull();
+      expect(result.error).toBe("Post not found");
+    });
   });
 });

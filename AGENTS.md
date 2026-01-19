@@ -232,6 +232,94 @@ Reference: `_bmad/bmm/docs/story-completion-workflow.md`
 - Implementation artifacts: `_bmad-output/implementation-artifacts/story*.md`
 - QA artifacts: `_bmad-output/traceability-matrix-*.md`, `_bmad-output/gate-decision-*.md`
 
+## BMAD Tasks + Tools (Core Execution)
+- Workflow engine (mandatory): `_bmad/core/tasks/workflow.xml`
+  - Always load this before executing any workflow YAML.
+  - Execute steps in order; never skip instructions or template outputs.
+- Validate workflow output: `_bmad/core/tasks/validate-workflow.xml`
+  - Run when workflow has a checklist or you need QA validation.
+  - Generates validation report in document folder.
+- Index docs task: `_bmad/core/tasks/index-docs.xml`
+  - Generates/updates `index.md` for a directory.
+  - Use after sharding large docs or when `docs/index.md` is missing.
+- Shard docs tool: `_bmad/core/tools/shard-doc.xml`
+  - Splits large markdown into structured shards + index.
+  - Use before index task if docs exceed ~500 lines.
+
+## Brownfield Readiness Checklist (Mandatory for existing codebases)
+Follow this before any planning if the repo is brownfield (this repo is).
+1. **Check for AI‑ready docs**:
+   - Look for `docs/index.md` and recent updates (≤30 days).
+   - Ensure docs are structured (<500 lines per file) and cover architecture, setup, patterns.
+2. **If docs are missing or questionable** → run `document-project`:
+   - Command: `/bmad:bmm:workflows:document-project`
+   - Path: `_bmad/bmm/workflows/document-project/workflow.yaml`
+3. **If docs exist but are huge** → shard + index:
+   - Shard: `_bmad/core/tools/shard-doc.xml`
+   - Index: `_bmad/core/tasks/index-docs.xml`
+   - If supported: `/bmad:core:tasks:index-docs`
+4. **Verify outputs**:
+   - `docs/index.md` exists and links are valid.
+   - Key docs present: `docs/project-overview.md`, `docs/architecture.md`, `docs/source-tree-analysis.md`.
+5. **Only then** proceed to `workflow-init` (or `create-tech-spec` for Quick Flow).
+
+## Workflow Cheat‑Sheet (Phase‑Ordered, Canonical IDs + Paths)
+Use slash commands with canonical IDs from `_bmad/_config/workflow-manifest.csv`.
+
+### Core Workflows (Any Phase)
+- `brainstorming` → `/bmad:core:workflows:brainstorming` → `_bmad/core/workflows/brainstorming/workflow.md`
+- `party-mode` → `/bmad:core:workflows:party-mode` → `_bmad/core/workflows/party-mode/workflow.md`
+
+### Phase 0: Documentation
+- `document-project` → `/bmad:bmm:workflows:document-project` → `_bmad/bmm/workflows/document-project/workflow.yaml`
+- `generate-project-context` → `/bmad:bmm:workflows:generate-project-context` → `_bmad/bmm/workflows/generate-project-context/workflow.md`
+
+### Phase 1: Analysis
+- `create-product-brief` → `/bmad:bmm:workflows:create-product-brief` → `_bmad/bmm/workflows/1-analysis/create-product-brief/workflow.md`
+- `research` → `/bmad:bmm:workflows:research` → `_bmad/bmm/workflows/1-analysis/research/workflow.md`
+
+### Phase 2: Planning
+- `workflow-init` → `/bmad:bmm:workflows:workflow-init` → `_bmad/bmm/workflows/workflow-status/init/workflow.yaml`
+- `workflow-status` → `/bmad:bmm:workflows:workflow-status` → `_bmad/bmm/workflows/workflow-status/workflow.yaml`
+- `create-prd` → `/bmad:bmm:workflows:create-prd` → `_bmad/bmm/workflows/2-plan-workflows/prd/workflow.md`
+- `create-ux-design` → `/bmad:bmm:workflows:create-ux-design` → `_bmad/bmm/workflows/2-plan-workflows/create-ux-design/workflow.md`
+- `create-tech-spec` → `/bmad:bmm:workflows:create-tech-spec` → `_bmad/bmm/workflows/bmad-quick-flow/create-tech-spec/workflow.yaml`
+
+### Phase 3: Solutioning
+- `create-architecture` → `/bmad:bmm:workflows:create-architecture` → `_bmad/bmm/workflows/3-solutioning/create-architecture/workflow.md`
+- `create-epics-and-stories` → `/bmad:bmm:workflows:create-epics-and-stories` → `_bmad/bmm/workflows/3-solutioning/create-epics-and-stories/workflow.md`
+- `check-implementation-readiness` → `/bmad:bmm:workflows:check-implementation-readiness` → `_bmad/bmm/workflows/3-solutioning/check-implementation-readiness/workflow.md`
+
+### Phase 4: Implementation
+- `sprint-planning` → `/bmad:bmm:workflows:sprint-planning` → `_bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml`
+- `sprint-status` → `/bmad:bmm:workflows:sprint-status` → `_bmad/bmm/workflows/4-implementation/sprint-status/workflow.yaml`
+- `create-story` → `/bmad:bmm:workflows:create-story` → `_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml`
+- `dev-story` → `/bmad:bmm:workflows:dev-story` → `_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml`
+- `code-review` → `/bmad:bmm:workflows:code-review` → `_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml`
+- `retrospective` → `/bmad:bmm:workflows:retrospective` → `_bmad/bmm/workflows/4-implementation/retrospective/workflow.yaml`
+- `correct-course` → `/bmad:bmm:workflows:correct-course` → `_bmad/bmm/workflows/4-implementation/correct-course/workflow.yaml`
+
+### Quick Flow Track (Standalone)
+- `create-tech-spec` → `/bmad:bmm:workflows:create-tech-spec` → `_bmad/bmm/workflows/bmad-quick-flow/create-tech-spec/workflow.yaml`
+- `quick-dev` → `/bmad:bmm:workflows:quick-dev` → `_bmad/bmm/workflows/bmad-quick-flow/quick-dev/workflow.yaml`
+- `code-review` → `/bmad:bmm:workflows:code-review` → `_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml`
+
+### Testing & QA (Test Architecture)
+- `testarch-framework` → `/bmad:bmm:workflows:testarch-framework` → `_bmad/bmm/workflows/testarch/framework/workflow.yaml`
+- `testarch-atdd` → `/bmad:bmm:workflows:testarch-atdd` → `_bmad/bmm/workflows/testarch/atdd/workflow.yaml`
+- `testarch-test-design` → `/bmad:bmm:workflows:testarch-test-design` → `_bmad/bmm/workflows/testarch/test-design/workflow.yaml`
+- `testarch-automate` → `/bmad:bmm:workflows:testarch-automate` → `_bmad/bmm/workflows/testarch/automate/workflow.yaml`
+- `testarch-trace` → `/bmad:bmm:workflows:testarch-trace` → `_bmad/bmm/workflows/testarch/trace/workflow.yaml`
+- `testarch-nfr` → `/bmad:bmm:workflows:testarch-nfr` → `_bmad/bmm/workflows/testarch/nfr-assess/workflow.yaml`
+- `testarch-ci` → `/bmad:bmm:workflows:testarch-ci` → `_bmad/bmm/workflows/testarch/ci/workflow.yaml`
+- `testarch-test-review` → `/bmad:bmm:workflows:testarch-test-review` → `_bmad/bmm/workflows/testarch/test-review/workflow.yaml`
+
+### Diagramming (Excalidraw)
+- `create-excalidraw-diagram` → `/bmad:bmm:workflows:create-excalidraw-diagram` → `_bmad/bmm/workflows/excalidraw-diagrams/create-diagram/workflow.yaml`
+- `create-excalidraw-dataflow` → `/bmad:bmm:workflows:create-excalidraw-dataflow` → `_bmad/bmm/workflows/excalidraw-diagrams/create-dataflow/workflow.yaml`
+- `create-excalidraw-flowchart` → `/bmad:bmm:workflows:create-excalidraw-flowchart` → `_bmad/bmm/workflows/excalidraw-diagrams/create-flowchart/workflow.yaml`
+- `create-excalidraw-wireframe` → `/bmad:bmm:workflows:create-excalidraw-wireframe` → `_bmad/bmm/workflows/excalidraw-diagrams/create-wireframe/workflow.yaml`
+
 ## Project overview
 - Next.js 16 App Router, React 19, TypeScript.
 - Supabase (Postgres + RLS), Supabase Auth.

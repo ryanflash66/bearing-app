@@ -1,0 +1,61 @@
+
+> bearing-app@1.0.0 test
+> jest tests/lib/email.test.ts
+
+  console.error
+    [EMAIL ERROR] { message: 'Failed to send' }
+
+    [0m [90m 41 |[39m
+     [90m 42 |[39m     [36mif[39m (error) {
+    [31m[1m>[22m[39m[90m 43 |[39m       console[33m.[39merror([32m'[EMAIL ERROR]'[39m[33m,[39m error)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 44 |[39m       [36mreturn[39m { success[33m:[39m [36mfalse[39m[33m,[39m error }[33m;[39m
+     [90m 45 |[39m     }
+     [90m 46 |[39m[0m
+
+      at error (src/lib/email.ts:43:15)
+      at notifyBlogPostSuspended (src/lib/email.ts:252:20)
+      at Object.<anonymous> (tests/lib/email.test.ts:78:24)
+
+  console.error
+    [NOTIFY_BLOG_POST_SUSPENDED_FAILED] {
+      userEmail: 'fail@example.com',
+      postTitle: 'Title',
+      error: { message: 'Failed to send' }
+    }
+
+    [0m [90m 265 |[39m
+     [90m 266 |[39m     [36mif[39m ([33m![39mresult[33m.[39msuccess) {
+    [31m[1m>[22m[39m[90m 267 |[39m         console[33m.[39merror([32m'[NOTIFY_BLOG_POST_SUSPENDED_FAILED]'[39m[33m,[39m { userEmail[33m,[39m postTitle[33m,[39m error[33m:[39m result[33m.[39merror })[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 268 |[39m     }
+     [90m 269 |[39m
+     [90m 270 |[39m     [36mreturn[39m result[33m;[39m[0m
+
+      at error (src/lib/email.ts:267:17)
+      at Object.<anonymous> (tests/lib/email.test.ts:78:24)
+
+FAIL tests/lib/email.test.ts
+  notifyBlogPostSuspended
+    × sends an email to the author with correct subject and body (3 ms)
+    √ handles failure gracefully (22 ms)
+
+  ● notifyBlogPostSuspended › sends an email to the author with correct subject and body
+
+    TypeError: Cannot read properties of undefined (reading 'send')
+
+    [0m [90m 53 |[39m         
+     [90m 54 |[39m         [36mconst[39m lastInstance [33m=[39m instances[instances[33m.[39mlength [33m-[39m [35m1[39m][33m;[39m
+    [31m[1m>[22m[39m[90m 55 |[39m         [36mconst[39m send [33m=[39m lastInstance[33m.[39memails[33m.[39msend[33m;[39m
+     [90m    |[39m                                          [31m[1m^[22m[39m
+     [90m 56 |[39m
+     [90m 57 |[39m         expect(send)[33m.[39mtoHaveBeenCalledTimes([35m1[39m)[33m;[39m
+     [90m 58 |[39m         expect(send)[33m.[39mtoHaveBeenCalledWith(expect[33m.[39mobjectContaining({[0m
+
+      at Object.send (tests/lib/email.test.ts:55:42)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        0.368 s, estimated 1 s
+Ran all test suites matching tests/lib/email.test.ts.

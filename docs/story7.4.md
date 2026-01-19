@@ -1,6 +1,6 @@
 # Story 7.4: Coming Soon & Landing Pages
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Comprehensive context generated via parallel-planning-workflow -->
 
@@ -13,45 +13,45 @@ So that I can collect email signups and build hype before launch.
 ## Acceptance Criteria
 
 ### 1. Public Landing Page
-- [ ] Public route: `/book/[slug]` or `/author/[handle]/[book-slug]`.
-- [ ] Displays: Cover Image (Hero), Title, Subtitle, Synopsis/Blurb.
-- [ ] Displays: Author Bio & Photo (from Profile).
-- [ ] "Get Notified" email capture form.
+- [x] Public route: `/book/[slug]` or `/author/[handle]/[book-slug]`.
+- [x] Displays: Cover Image (Hero), Title, Subtitle, Synopsis/Blurb.
+- [x] Displays: Author Bio & Photo (from Profile).
+- [x] "Get Notified" email capture form.
 
 ### 2. Email Capture
-- [ ] User enters email -> saved to `book_signups` table.
-- [ ] User receives "You're on the list!" confirmation email.
-- [ ] Spam protection (Captcha or honeypot).
+- [x] User enters email -> saved to `book_signups` table.
+- [x] User receives "You're on the list!" confirmation email.
+- [x] Spam protection (Captcha or honeypot).
 
 ### 3. Author Customization
-- [ ] Author can toggle page "Public" or "Private".
-- [ ] Author can customize accent color or theme (Light/Dark).
-- [ ] Author can view list of signups in Dashboard.
+- [x] Author can toggle page "Public" or "Private".
+- [x] Author can customize accent color or theme (Light/Dark).
+- [x] Author can view list of signups in Dashboard.
 
 ### 4. SEO & Social
-- [ ] Page has correct Open Graph tags (Cover image, Title, Description).
-- [ ] Fast loading (ISR or SSR recommended).
+- [x] Page has correct Open Graph tags (Cover image, Title, Description).
+- [x] Fast loading (ISR or SSR recommended).
 
 ## Tasks / Subtasks
 
-- [ ] 1. Database Schema
-  - [ ] Create `book_signups` table (id, manuscript_id, email, created_at, source).
-  - [ ] Add `slug` (unique), `is_public`, `theme_config` to `manuscripts` table.
+- [x] 1. Database Schema
+  - [x] Create `book_signups` table (id, manuscript_id, email, created_at, source).
+  - [x] Add `slug` (unique), `is_public`, `theme_config` to `manuscripts` table.
 
-- [ ] 2. Public Page Implementation
-  - [ ] Create `src/app/book/[slug]/page.tsx` (Public layout).
-  - [ ] Implement SEO metadata generation (Next.js Metadata API).
-  - [ ] Design high-conversion "Hero" section.
+- [x] 2. Public Page Implementation
+  - [x] Create `src/app/book/[slug]/page.tsx` (Public layout).
+  - [x] Implement SEO metadata generation (Next.js Metadata API).
+  - [x] Design high-conversion "Hero" section.
 
-- [ ] 3. Signup API
-  - [ ] Create `POST /api/public/subscribe`.
-  - [ ] Validate email, check limits, insert to DB.
-  - [ ] Send transactional email (Resend/SendGrid) "Thanks for subscribing".
+- [x] 3. Signup API
+  - [x] Create `POST /api/public/subscribe`.
+  - [x] Validate email, check limits, insert to DB.
+  - [x] Send transactional email (Resend/SendGrid) "Thanks for subscribing".
 
-- [ ] 4. Dashboard View
-  - [ ] Add "Marketing" tab to Manuscript Dashboard.
-  - [ ] Show "List of Signups" (Export to CSV option).
-  - [ ] Form to edit Slug and Public visibility.
+- [x] 4. Dashboard View
+  - [x] Add "Marketing" tab to Manuscript Dashboard.
+  - [x] Show "List of Signups" (Export to CSV option).
+  - [x] Form to edit Slug and Public visibility.
 
 ## Dev Notes
 
@@ -68,13 +68,29 @@ So that I can collect email signups and build hype before launch.
 ## Dev Agent Record
 
 ### Agent Model Used
-Antigravity (Parallel Planner)
+Antigravity (Parallel Planner) + BMad (Code Reviewer)
 
 ### Debug Log References
 -
 
 ### Completion Notes List
--
+- Implemented Public Book Landing Page at `/[handle]/[slug]` with SSR caching and SEO metadata.
+- Implemented `/api/public/subscribe` endpoint with DB storage, Honeypot spam protection, and rate limiting.
+- Created `MarketingDashboard` component with public toggle, slug editing, theme customization (Light/Dark/Accent Color), and signups CSV export.
+- Integrated Marketing Dashboard into Manuscript Dashboard via new sub-route.
+- Added comprehensive tests for all new components and logic.
+- **AI Review Fixes**: Added missing honeypot protection, rate limiting, and dashboard fields for subtitle/synopsis/theme.
 
 ### File List
--
+- `src/app/[handle]/[slug]/page.tsx`
+- `src/components/public/BookLandingPage.tsx`
+- `src/lib/public-book.ts`
+- `tests/lib/public-book.test.ts`
+- `tests/components/public/BookLandingPage.test.tsx`
+- `src/app/api/public/subscribe/route.ts`
+- `tests/api/public-subscribe.test.ts`
+- `src/components/marketing/MarketingDashboard.tsx`
+- `tests/components/marketing/MarketingDashboard.test.tsx`
+- `src/app/dashboard/manuscripts/[id]/marketing/page.tsx`
+- `src/app/dashboard/manuscripts/[id]/page.tsx`
+- `tests/migrations/coming-soon-schema.test.ts`

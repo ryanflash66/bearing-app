@@ -1,0 +1,42 @@
+
+> bearing-app@1.0.0 test
+> jest tests/lib/email.test.ts
+
+FAIL tests/lib/email.test.ts
+  notifyBlogPostSuspended
+    × sends an email to the author with correct subject and body (4 ms)
+    × handles failure gracefully
+
+  ● notifyBlogPostSuspended › sends an email to the author with correct subject and body
+
+    TypeError: Cannot read properties of undefined (reading 'send')
+
+    [0m [90m 41 |[39m         [36mconst[39m resendMock [33m=[39m [33mResend[39m [36mas[39m unknown [36mas[39m jest[33m.[39m[33mMock[39m[33m;[39m
+     [90m 42 |[39m         [36mif[39m (resendMock[33m.[39mmock[33m.[39minstances[33m.[39mlength [33m>[39m [35m0[39m) {
+    [31m[1m>[22m[39m[90m 43 |[39m             mockSend [33m=[39m resendMock[33m.[39mmock[33m.[39minstances[[35m0[39m][33m.[39memails[33m.[39msend[33m;[39m
+     [90m    |[39m                                                            [31m[1m^[22m[39m
+     [90m 44 |[39m         } [36melse[39m {
+     [90m 45 |[39m              [90m// If new Resend() hasn't been called (e.g. env var empty), mockSend won't be available yet?[39m
+     [90m 46 |[39m              [90m// But we set env var.[39m[0m
+
+      at Object.send (tests/lib/email.test.ts:43:60)
+
+  ● notifyBlogPostSuspended › handles failure gracefully
+
+    TypeError: Cannot read properties of undefined (reading 'send')
+
+    [0m [90m 41 |[39m         [36mconst[39m resendMock [33m=[39m [33mResend[39m [36mas[39m unknown [36mas[39m jest[33m.[39m[33mMock[39m[33m;[39m
+     [90m 42 |[39m         [36mif[39m (resendMock[33m.[39mmock[33m.[39minstances[33m.[39mlength [33m>[39m [35m0[39m) {
+    [31m[1m>[22m[39m[90m 43 |[39m             mockSend [33m=[39m resendMock[33m.[39mmock[33m.[39minstances[[35m0[39m][33m.[39memails[33m.[39msend[33m;[39m
+     [90m    |[39m                                                            [31m[1m^[22m[39m
+     [90m 44 |[39m         } [36melse[39m {
+     [90m 45 |[39m              [90m// If new Resend() hasn't been called (e.g. env var empty), mockSend won't be available yet?[39m
+     [90m 46 |[39m              [90m// But we set env var.[39m[0m
+
+      at Object.send (tests/lib/email.test.ts:43:60)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 total
+Snapshots:   0 total
+Time:        0.348 s, estimated 1 s
+Ran all test suites matching tests/lib/email.test.ts.

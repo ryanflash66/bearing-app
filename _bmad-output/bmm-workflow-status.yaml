@@ -239,10 +239,10 @@ workflow_status:
 # Completed: 5 + 4 + 7 + 4 + 6 + 5 + 1 + 0 = 32
 story_progress:
   total: 42
-  completed: 32
+  completed: 34
   ux_rework: 0
-  ready: 2
-  pending: 8
+  ready: 1
+  pending: 7
   
 epic_progress:
   - epic: 1
@@ -382,22 +382,35 @@ epic_progress:
   - epic: 7
     name: "Publication & Beta Distribution"
     stories: 4
-    completed: 0
+    completed: 2
     status: "in-progress"
-    notes: "Accelerated execution: Running in parallel with Epic 6 completion."
+    notes: "Accelerated execution: Story 7.1 complete. Moving to export previewer."
     story_list:
       - id: "story-7.1"
         name: "Beta Reader Access & Commenting"
-        status: "ready"
+        status: "completed"
+        completed: "2026-01-19"
       - id: "story-7.2"
         name: "WYSIWYG Export Previewer"
         status: "backlog"
       - id: "story-7.3"
         name: "Publication Metadata & Blurb Hub"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-19"
+        qa_passed: true
+        notes: "QA Approved: ISBN validation, metadata persistence, and frontmatter export integration verified."
       - id: "story-7.4"
         name: "Public Coming Soon Pages"
         status: "backlog"
+
+# Gate History
+gate_history:
+  - story_id: "7.3"
+    name: "Publication Metadata & Blurb Hub"
+    date: "2026-01-19"
+    decision: "PASS"
+    reason: "100% coverage, 100% pass rate, no security issues."
+    document: "_bmad-output/gate-decision-story-7.3.md"
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5
@@ -433,10 +446,10 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-7.1"
-  name: "Beta Reader Access & Commenting"
+  id: "story-7.2"
+  name: "WYSIWYG Export Previewer"
   agent: "dev"
   command: "/dev-story"
-  description: "Implement secure beta reader access and inline commenting system."
+  description: "Build WYSIWYG preview for PDF/EPUB exports."
   priority: "high"
-  reason: "Parallel execution initiated. Starting Epic 7 while Story 6.3 completes."
+  reason: "Story 7.1 complete. Moving to export preview capabilities."

@@ -1,0 +1,15 @@
+
+> bearing-app@1.0.0 test
+> jest tests/api/admin/moderation/suspend/route.test.ts
+
+PASS tests/api/admin/moderation/suspend/route.test.ts
+  POST /api/admin/moderation/suspend
+    √ returns 401 if user is not authenticated (4 ms)
+    √ calls suspend_blog_post RPC and sends email on success (2 ms)
+    √ returns error if RPC fails (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        0.361 s, estimated 1 s
+Ran all test suites matching tests/api/admin/moderation/suspend/route.test.ts.

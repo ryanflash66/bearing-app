@@ -193,30 +193,36 @@ export async function updateBlogPost(
   expectedUpdatedAt?: string
 ): Promise<BlogPostResult & { conflictDetected?: boolean; serverState?: Partial<BlogPost> }> {
   try {
+    // Load current post for validation and moderation diffing
+    const { data: existingPost, error: existingError } = await supabase
+      .from("blog_posts")
+      .select("id, account_id, content_text, status, published_at")
+      .eq("id", postId)
+      .single();
+
+    if (existingError || !existingPost) {
+      return { post: null, error: "Blog post not found or deleted" };
+    }
+
     // If slug is being changed, verify uniqueness
     if (input.slug) {
-      const { data: existing } = await supabase
-        .from("blog_posts")
-        .select("id, account_id")
-        .eq("id", postId)
-        .single();
-
-      if (existing) {
-        const uniqueSlug = await generateUniqueSlug(
-          supabase,
-          existing.account_id,
-          input.slug,
-          postId
-        );
-        if (uniqueSlug !== input.slug) {
-          input.slug = uniqueSlug;
-        }
+      const uniqueSlug = await generateUniqueSlug(
+        supabase,
+        existingPost.account_id,
+        input.slug,
+        postId
+      );
+      if (uniqueSlug !== input.slug) {
+        input.slug = uniqueSlug;
       }
     }
 
     const updatePayload: Record<string, unknown> = { ...input };
 
-    if (typeof input.content_text === "string") {
+    if (
+      typeof input.content_text === "string" &&
+      input.content_text !== existingPost.content_text
+    ) {
       const moderationInput = buildModerationInput([
         input.title,
         input.excerpt,
@@ -233,6 +239,12 @@ export async function updateBlogPost(
             decision.reason || "OpenAI moderation flagged content";
           updatePayload.flag_source = OPENAI_MODERATION_SOURCE;
           updatePayload.flag_confidence = decision.maxScore;
+
+          // If high confidence, hold publication until manual review
+          if (decision.shouldHold) {
+            updatePayload.status = "draft";
+            updatePayload.published_at = null;
+          }
         }
       }
     }

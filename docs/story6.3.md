@@ -59,6 +59,9 @@ So that I can remove offensive or illegal material from the platform.
 - `docs/story6.3.md`
 - `docs/sprint-status.yaml`
 - `tsconfig.json`
+- `_bmad-output/bmm-workflow-status.yaml`
+- `_bmad-output/implementation-readiness-report-2026-01-18.md`
+- `docs/story7.1.md`
 - `_bmad-output/traceability-matrix-story6.3.md`
 - `_bmad-output/gate-decision-story6.3.md`
 - `_bmad-output/implementation-readiness-report-2026-01-17.md`

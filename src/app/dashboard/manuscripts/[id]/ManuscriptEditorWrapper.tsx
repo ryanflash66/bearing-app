@@ -11,6 +11,7 @@ interface ManuscriptEditorWrapperProps {
   initialTitle: string;
   initialContent: string;
   initialUpdatedAt: string;
+  initialMetadata?: Record<string, any>;
 }
 
 export default function ManuscriptEditorWrapper({
@@ -18,6 +19,7 @@ export default function ManuscriptEditorWrapper({
   initialTitle,
   initialContent,
   initialUpdatedAt,
+  initialMetadata,
 }: ManuscriptEditorWrapperProps) {
   const router = useRouter();
 
@@ -33,6 +35,7 @@ export default function ManuscriptEditorWrapper({
       initialTitle={initialTitle}
       initialContent={initialContent}
       initialUpdatedAt={initialUpdatedAt}
+      initialMetadata={initialMetadata}
       onTitleChange={handleTitleChange}
     />
   );

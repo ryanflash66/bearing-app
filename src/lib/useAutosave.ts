@@ -33,6 +33,7 @@ interface QueuedSave {
   };
   expectedUpdatedAt: string;
   timestamp: number;
+  metadata?: Record<string, any>;
 }
 
 // IndexedDB for offline persistence
@@ -137,6 +138,7 @@ export function useAutosave(
   // Refs for latest values (avoid stale closures)
   const latestContentRef = useRef<{ json: Record<string, unknown>; text: string } | null>(null);
   const latestTitleRef = useRef<string>(options.initialTitle || "Untitled");
+  const latestMetadataRef = useRef<Record<string, any> | undefined>(undefined);
   const expectedUpdatedAtRef = useRef<string>(initialUpdatedAt);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,7 +167,8 @@ export function useAutosave(
     contentJson: Record<string, unknown>,
     contentText: string,
     expectedUpdatedAt: string,
-    title?: string
+    title?: string,
+    metadata?: Record<string, any>
   ): Promise<boolean> => {
     if (!isOnlineRef.current) {
       // Store in IndexedDB for later sync (AC 2.1.2)
@@ -174,6 +177,7 @@ export function useAutosave(
         content: { content_json: contentJson, content_text: contentText },
         expectedUpdatedAt,
         timestamp: Date.now(),
+        metadata,
       });
       setState((prev) => ({ ...prev, status: "offline", pendingChanges: true }));
       return false;
@@ -190,6 +194,7 @@ export function useAutosave(
       content_text: string;
       content_hash: string;
       title?: string;
+      metadata?: Record<string, any>;
     } = {
       content_json: contentJson,
       content_text: contentText,
@@ -197,6 +202,9 @@ export function useAutosave(
     };
     if (title !== undefined) {
       updateInput.title = title;
+    }
+    if (metadata !== undefined) {
+      updateInput.metadata = metadata;
     }
 
     const result = await updateManuscript(
@@ -248,11 +256,12 @@ export function useAutosave(
           content: { content_json: contentJson, content_text: contentText },
           expectedUpdatedAt,
           timestamp: Date.now(),
+          metadata,
         });
 
         // Schedule retry
         retryTimerRef.current = setTimeout(() => {
-          executeSave(contentJson, contentText, expectedUpdatedAt, title);
+          executeSave(contentJson, contentText, expectedUpdatedAt, title, metadata);
         }, retryDelayMs * currentRetry); // Exponential backoff
 
         return false;
@@ -327,7 +336,13 @@ export function useAutosave(
       if (pending && isOnlineRef.current) {
         console.log("[Autosave] Syncing pending changes for", manuscriptId);
         // Attempt to save the pending content
-        const success = await executeSave(pending.content.content_json, pending.content.content_text, pending.expectedUpdatedAt);
+        const success = await executeSave(
+          pending.content.content_json, 
+          pending.content.content_text, 
+          pending.expectedUpdatedAt,
+          undefined, // Title not persisted in pending save? It seems QueuedSave only has content.
+          pending.metadata
+        );
         
         if (success) {
           localStorage.removeItem(`bearing_pending_${manuscriptId}`);
@@ -342,12 +357,16 @@ export function useAutosave(
   const queueSave = useCallback((
     contentJson: Record<string, unknown>,
     contentText: string,
-    title?: string
+    title?: string,
+    metadata?: Record<string, any>
   ) => {
     // Update latest content
     latestContentRef.current = { json: contentJson, text: contentText };
     if (title !== undefined) {
       latestTitleRef.current = title;
+    }
+    if (metadata !== undefined) {
+      latestMetadataRef.current = metadata;
     }
     setState((prev) => ({ ...prev, pendingChanges: true }));
 
@@ -363,7 +382,8 @@ export function useAutosave(
           latestContentRef.current.json,
           latestContentRef.current.text,
           expectedUpdatedAtRef.current,
-          latestTitleRef.current
+          latestTitleRef.current,
+          latestMetadataRef.current
         );
       }
     }, debounceMs);
@@ -381,7 +401,8 @@ export function useAutosave(
         latestContentRef.current.json,
         latestContentRef.current.text,
         expectedUpdatedAtRef.current,
-        latestTitleRef.current
+        latestTitleRef.current,
+        latestMetadataRef.current
       );
     }
     return true;
@@ -441,6 +462,7 @@ export function useAutosave(
           },
           expectedUpdatedAt: expectedUpdatedAtRef.current,
           timestamp: Date.now(),
+          metadata: latestMetadataRef.current,
         };
 
         try {
