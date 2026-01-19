@@ -4,6 +4,8 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 
+export const runtime = "nodejs";
+
 // Initialize Resend
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)

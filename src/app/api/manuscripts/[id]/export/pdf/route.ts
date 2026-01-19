@@ -4,6 +4,8 @@ import { exportManuscript } from "@/lib/export";
 import { defaultExportSettings } from "@/lib/export-types";
 import type { ExportSettings, FontFace, PageSize } from "@/lib/export-types";
 
+export const runtime = "nodejs";
+
 const PAGE_SIZES: PageSize[] = ["6x9", "5x8", "a4", "a5"];
 const FONT_FACES: FontFace[] = ["serif", "sans"];
 
