@@ -123,24 +123,24 @@ export default function BetaShareModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4 animate-in fade-in duration-200">
+      <div className="w-full h-full md:h-auto md:max-w-3xl rounded-xl md:rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Share with Beta Readers</h3>
-            <p className="text-sm text-slate-500">
+            <h3 className="text-lg md:text-xl font-bold text-slate-900">Share with Beta Readers</h3>
+            <p className="text-xs md:text-sm text-slate-500 hidden sm:block">
               Generate invite links with read-only or comment permissions.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             Close
           </button>
         </div>
 
-        <div className="grid gap-6 px-6 py-6 lg:grid-cols-[1fr_1.2fr]">
+        <div className="flex-1 overflow-y-auto grid gap-4 md:gap-6 px-4 md:px-6 py-4 md:py-6 lg:grid-cols-[1fr_1.2fr]">
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <h4 className="text-sm font-semibold text-slate-700">Create Invite</h4>
             <div className="mt-4 space-y-4">
@@ -170,7 +170,7 @@ export default function BetaShareModal({
               <button
                 onClick={handleCreate}
                 disabled={isCreating}
-                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-60"
+                className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-60 min-h-[44px]"
               >
                 {isCreating ? "Creating..." : "Generate Invite Link"}
               </button>
@@ -210,13 +210,13 @@ export default function BetaShareModal({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleCopy(invite)}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 min-h-[40px]"
                         >
-                          {copiedId === invite.id ? "Copied!" : "Copy Link"}
+                          {copiedId === invite.id ? "Copied!" : "Copy"}
                         </button>
                         <button
                           onClick={() => handleRevoke(invite.id)}
-                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 min-h-[40px]"
                         >
                           Revoke
                         </button>

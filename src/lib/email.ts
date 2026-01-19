@@ -8,10 +8,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 let resendInstance: Resend | null = null;
 
 function getResend() {
-    if (!resendInstance && process.env.RESEND_API_KEY) {
-        resendInstance = new Resend(process.env.RESEND_API_KEY);
-    }
-    return resendInstance;
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resendInstance) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
 }
 
 /**

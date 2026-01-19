@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-
 // Mock Resend
 const mockSend = jest.fn();
 jest.mock("resend", () => ({
@@ -88,50 +87,28 @@ describe("POST /api/public/subscribe", () => {
     const res = await POST(req);
     const data = await res.json();
 
-        expect(res.status).toBe(409); // Conflict
+    expect(res.status).toBe(409); // Conflict
+    expect(data.error).toMatch(/already subscribed/i);
+  });
 
-        expect(data.error).toMatch(/already subscribed/i);
-
-      });
-
-    
-
-      it("triggers honeypot and fails silently", async () => {
-
-        const req = new Request("http://localhost/api/public/subscribe", {
-
-          method: "POST",
-
-          body: JSON.stringify({ 
-
-            email: "bot@example.com", 
-
-            manuscriptId: "123e4567-e89b-12d3-a456-426614174000",
-
-            _hp: "some-bot-value"
-
-          }),
-
-        });
-
-        const res = await POST(req);
-
-        const data = await res.json();
-
-    
-
-        expect(res.status).toBe(200);
-
-        expect(data.success).toBe(true);
-
-        // Ensure no DB insert or email send was called
-
-        expect(mockSupabase.from).not.toHaveBeenCalled();
-
-        expect(mockSend).not.toHaveBeenCalled();
-
-      });
-
+  it("triggers honeypot and fails silently", async () => {
+    const req = new Request("http://localhost/api/public/subscribe", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "bot@example.com",
+        manuscriptId: "123e4567-e89b-12d3-a456-426614174000",
+        _hp: "some-bot-value",
+      }),
     });
 
-    
+    const res = await POST(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.success).toBe(true);
+
+    // Ensure no DB insert or email send was called
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});

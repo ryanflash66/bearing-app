@@ -39,7 +39,6 @@ describe("MarketingDashboard", () => {
   const mockSignups = [
     { id: "1", email: "fan@example.com", created_at: "2026-01-01T00:00:00Z", source: "landing_page" },
   ];
-
   beforeEach(() => {
     jest.clearAllMocks();
     (createClient as jest.Mock).mockReturnValue(mockSupabase);
