@@ -3,7 +3,6 @@ import MarketingDashboard from "@/components/marketing/MarketingDashboard";
 import { createClient } from "@/utils/supabase/client";
 
 // Mock Supabase
-const mockUpdate = jest.fn();
 const mockSupabase = {
   from: jest.fn(() => ({
     update: jest.fn(() => ({
@@ -40,10 +39,6 @@ describe("MarketingDashboard", () => {
   const mockSignups = [
     { id: "1", email: "fan@example.com", created_at: "2026-01-01T00:00:00Z", source: "landing_page" },
   ];
-
-  const mockProfile = {
-    pen_name: "authorhandle",
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();

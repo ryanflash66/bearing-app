@@ -65,6 +65,7 @@ export async function getManuscriptForExport(
       if (versionResult.error || !versionResult.version) {
         return { title: "", content: "", content_json: null, metadata: null, error: versionResult.error || "Version not found" };
       }
+      // Only query manuscript if version exists
       const manuscriptResult = await getManuscript(supabase, manuscriptId);
       return {
         title: versionResult.version.title,

@@ -50,7 +50,6 @@ export default function PublishingSettingsForm({
   };
 
   const handleISBNChange = (field: 'isbn13' | 'isbn10', value: string) => {
-    const cleaned = cleanISBN(value);
     handleChange(field, value); // Store raw value for user input, validate separately
 
     if (field === 'isbn13') {

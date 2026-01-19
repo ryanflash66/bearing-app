@@ -4,11 +4,14 @@ import { Resend } from 'resend';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+// Cache Resend instance to prevent memory leaks from repeated instantiation
+let resendInstance: Resend | null = null;
+
 function getResend() {
-    if (process.env.RESEND_API_KEY) {
-        return new Resend(process.env.RESEND_API_KEY);
+    if (!resendInstance && process.env.RESEND_API_KEY) {
+        resendInstance = new Resend(process.env.RESEND_API_KEY);
     }
-    return null;
+    return resendInstance;
 }
 
 /**

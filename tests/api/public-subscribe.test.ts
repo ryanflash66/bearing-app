@@ -1,7 +1,6 @@
 /**
  * @jest-environment node
  */
-import { Resend } from "resend";
 
 // Mock Resend
 const mockSend = jest.fn();

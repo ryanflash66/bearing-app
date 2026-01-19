@@ -210,6 +210,9 @@ export default function ManuscriptEditor({
 
   // Store cursor position for restoration after command palette closes
   const savedCursorPosition = useRef<number | null>(null);
+  
+  // Store queueSave ref to avoid circular dependency in callbacks that are defined before autosave hook
+  const queueSaveRef = useRef<((contentJson: any, contentText: string, title: string, metadata: any) => void) | null>(null);
 
   // Handle command palette close - restore focus to editor
   const handleCommandPaletteClose = useCallback(() => {
@@ -391,7 +394,7 @@ export default function ManuscriptEditor({
     }
   }, [manuscriptId]);
 
-  // Handle ghost text acceptance - uses setContent directly to avoid circular dependency
+  // Handle ghost text acceptance - uses ref to access queueSave to avoid circular dependency
   const handleGhostTextAccept = useCallback((suggestion: string) => {
     if (!editor) return;
 
@@ -405,17 +408,19 @@ export default function ManuscriptEditor({
     setContent(newContent);
     setLocalContent(newContent);
     
-    // Trigger autosave immediately for accepted ghost text
-    queueSave(
-      newJson,
-      newContent,
-      title,
-      metadata
-    );
+    // Trigger autosave immediately for accepted ghost text using ref
+    if (queueSaveRef.current) {
+      queueSaveRef.current(
+        newJson,
+        newContent,
+        title,
+        metadata
+      );
+    }
 
     // Move cursor to end of inserted text is handled by insertContent
     setCursorPosition(editor.state.selection.to);
-  }, [editor, title, metadata, queueSave]);
+  }, [editor, title, metadata]);
 
   // Initialize Ghost Text
   const ghostText = useGhostText(content, cursorPosition, {
@@ -459,6 +464,11 @@ export default function ManuscriptEditor({
       setShowConflictModal(true);
     },
   });
+  
+  // Update queueSave ref whenever queueSave changes
+  useEffect(() => {
+    queueSaveRef.current = queueSave;
+  }, [queueSave]);
 
   // Handle conflict resolution
   const handleConflictResolve = useCallback(async (action: "overwrite" | "reload" | "merge") => {

@@ -9,7 +9,6 @@ test.describe('WYSIWYG Export Previewer', () => {
   
   test('[P0] should open export modal and update live preview on settings change', async ({ authenticatedPage }) => {
     // GIVEN: User is on the dashboard
-    const manuscript = createManuscriptData();
     
     // Create a manuscript first (we'll assume one exists or we navigate to an existing one)
     // For this test, we'll navigate to the first manuscript in the list
@@ -87,7 +86,6 @@ test.describe('WYSIWYG Export Previewer', () => {
     await authenticatedPage.click('[data-testid="export-button"]');
     
     // If overflow warning is present, check for the indicator
-    const overflowWarning = authenticatedPage.locator('[data-testid="overflow-warning"]');
     // This AC is conditionally tested based on content
     // await expect(overflowWarning).toBeVisible();
   });
