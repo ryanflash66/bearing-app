@@ -23,14 +23,17 @@ describe("POST /api/public/subscribe", () => {
 
     mockInsert = jest.fn().mockReturnThis();
     mockSupabase = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: null } }),
+      },
       from: jest.fn(() => ({
         insert: mockInsert,
       })),
     };
 
     // Use doMock to ensure the mock is fresh for the require call
-    jest.doMock("@supabase/supabase-js", () => ({
-      createClient: jest.fn(() => mockSupabase),
+    jest.doMock("@/utils/supabase/server", () => ({
+      createClient: jest.fn(async () => mockSupabase),
     }));
 
     // Dynamic import to ensure mock is set up before route initialization

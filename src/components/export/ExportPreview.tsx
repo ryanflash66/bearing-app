@@ -1,4 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+"use client";
+
+import DOMPurify from "dompurify";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useExport } from "./ExportContext";
 import { PageSize } from "@/lib/export-types";
 
@@ -11,12 +14,13 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [overflowWarnings, setOverflowWarnings] = useState<string[]>([]);
+  const safeContent = useMemo(() => DOMPurify.sanitize(content), [content]);
 
   // Re-render Paged.js when content or critical settings change
   useEffect(() => {
     // Only run Paged.js if in PDF mode
     if (settings.viewMode !== "pdf") return;
-    if (!previewRef.current || !content) return;
+    if (!previewRef.current || !safeContent) return;
 
     let isMounted = true;
 
@@ -65,7 +69,7 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
         `;
         
         const sourceContainer = document.createElement("div");
-        sourceContainer.innerHTML = content;
+        sourceContainer.innerHTML = safeContent;
         sourceContainer.appendChild(style);
 
         // We need to wait for PagedJS
@@ -103,7 +107,7 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
         isMounted = false;
         clearTimeout(timer);
     };
-  }, [content, settings]);
+  }, [safeContent, settings]);
 
   if (settings.viewMode === "epub") {
       return (
@@ -122,7 +126,7 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
                         lineHeight: settings.lineHeight
                     }}
                 >
-                    <div dangerouslySetInnerHTML={{ __html: content }} />
+                    <div dangerouslySetInnerHTML={{ __html: safeContent }} />
                 </div>
              </div>
          </div>

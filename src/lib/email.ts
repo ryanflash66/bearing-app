@@ -6,24 +6,25 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 // Cache Resend instance to prevent memory leaks from repeated instantiation
 let resendInstance: Resend | null = null;
-let cachedResendApiKey: string | null = null;
+let lastApiKey: string | null = null;
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return null;
 
-  // Tests rely on per-call Resend instantiation for mocking behavior.
-  if (process.env.NODE_ENV === "test") {
-    return new Resend(apiKey);
-  }
-
   // Recreate if key changes (e.g., env refresh / serverless cold start behavior).
-  if (!resendInstance || cachedResendApiKey !== apiKey) {
-    cachedResendApiKey = apiKey;
+  if (!resendInstance || lastApiKey !== apiKey) {
+    lastApiKey = apiKey;
     resendInstance = new Resend(apiKey);
   }
 
   return resendInstance;
+}
+
+// Test helper: allow unit tests to reset cached Resend instance.
+export function __resetResendForTests() {
+  resendInstance = null;
+  lastApiKey = null;
 }
 
 /**

@@ -1,25 +1,41 @@
 /**
  * @jest-environment node
  */
-import { notifyBlogPostSuspended } from "@/lib/email";
-import { Resend } from "resend";
-
-// Define mock factory
-jest.mock("resend", () => {
-    return {
-        // Return a mock implementation that returns a fresh object with mocks
-        Resend: jest.fn().mockReturnValue({
-            emails: {
-                send: jest.fn().mockResolvedValue({ data: { id: "mock-email-id" }, error: null })
-            }
-        })
-    };
-});
+let notifyBlogPostSuspended: typeof import("@/lib/email").notifyBlogPostSuspended;
+let __resetResendForTests: typeof import("@/lib/email").__resetResendForTests;
+let mockSend: jest.Mock;
+let ResendMock: jest.Mock;
 
 describe("notifyBlogPostSuspended", () => {
     beforeEach(() => {
+        jest.resetModules();
         jest.clearAllMocks();
         process.env.RESEND_API_KEY = "re_123";
+
+        mockSend = jest.fn().mockResolvedValue({
+            data: { id: "mock-email-id" },
+            error: null,
+        });
+
+        jest.doMock("resend", () => ({
+            Resend: jest.fn().mockImplementation(() => ({
+                emails: {
+                    send: mockSend,
+                },
+            })),
+        }));
+
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const emailModule = require("@/lib/email") as typeof import("@/lib/email");
+        notifyBlogPostSuspended = emailModule.notifyBlogPostSuspended;
+        __resetResendForTests = emailModule.__resetResendForTests;
+
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        ResendMock = (require("resend").Resend as unknown as jest.Mock);
+    });
+
+    afterEach(() => {
+        __resetResendForTests();
     });
 
     afterAll(() => {
@@ -35,35 +51,21 @@ describe("notifyBlogPostSuspended", () => {
 
         expect(result.success).toBe(true);
 
-        // Access the mock class
-        const ResendMock = Resend as unknown as jest.Mock;
-        // Access the return value of the constructor (the instance)
-        // Since notifyBlogPostSuspended calls new Resend(), we expect calls > 0
         expect(ResendMock).toHaveBeenCalled();
         
-        // Grab the instance returned by the last call
-        const mockInstance = ResendMock.mock.results[ResendMock.mock.results.length - 1].value;
-        const send = mockInstance.emails.send;
-
-        expect(send).toHaveBeenCalledTimes(1);
-        expect(send).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockSend).toHaveBeenCalledTimes(1);
+        expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
             to: userEmail,
             subject: expect.stringContaining("Your blog post was suspended"),
             html: expect.stringContaining(postTitle),
         }));
-        expect(send).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
             html: expect.stringContaining(reason),
         }));
     });
 
     it("handles failure gracefully", async () => {
-        // Override the return value for this test
-        const ResendMock = Resend as unknown as jest.Mock;
-        ResendMock.mockReturnValueOnce({
-            emails: {
-                send: jest.fn().mockResolvedValue({ data: null, error: { message: "Failed to send" } })
-            }
-        });
+        mockSend.mockResolvedValueOnce({ data: null, error: { message: "Failed to send" } });
 
         const result = await notifyBlogPostSuspended("fail@example.com", "Title", "Reason");
 

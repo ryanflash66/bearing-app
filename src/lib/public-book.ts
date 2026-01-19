@@ -4,6 +4,7 @@ import { getPublicAuthorProfileByHandle, PublicAuthorProfile } from "./public-pr
 export interface PublicBook {
   id: string;
   title: string;
+  slug: string;
   subtitle: string | null;
   synopsis: string | null;
   cover_image_url: string | null;
@@ -38,7 +39,7 @@ export async function getPublicBookBySlug(
   try {
     const { data, error } = await supabase
       .from("manuscripts")
-      .select("id, title, subtitle, synopsis, cover_image_url, theme_config, is_public, owner_user_id")
+      .select("id, title, slug, subtitle, synopsis, cover_image_url, theme_config, is_public, owner_user_id")
       .eq("owner_user_id", author.id)
       .eq("slug", slug)
       .eq("is_public", true)

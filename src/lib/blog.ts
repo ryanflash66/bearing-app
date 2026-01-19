@@ -198,6 +198,7 @@ export async function updateBlogPost(
       .from("blog_posts")
       .select("id, account_id, content_text, status, published_at")
       .eq("id", postId)
+      .is("deleted_at", null)
       .single();
 
     if (existingError || !existingPost) {
@@ -269,6 +270,7 @@ export async function updateBlogPost(
           .from("blog_posts")
           .select("updated_at, content_text, title")
           .eq("id", postId)
+          .is("deleted_at", null)
           .single();
 
         if (existing && expectedUpdatedAt && existing.updated_at !== expectedUpdatedAt) {
