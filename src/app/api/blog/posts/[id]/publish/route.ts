@@ -28,6 +28,12 @@ export async function POST(
     const result = await publishBlogPost(supabase, postId);
 
     if (result.error) {
+      if (result.moderationHold) {
+        return NextResponse.json(
+          { error: result.error, moderationHold: true },
+          { status: 422 }
+        );
+      }
       const status = result.error.includes("not found") ? 404 : 500;
       return NextResponse.json({ error: result.error }, { status });
     }

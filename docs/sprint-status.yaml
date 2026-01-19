@@ -43,17 +43,19 @@ development_status:
   5-6-integrate-custom-models: deferred
   5-7-voice-to-text: deferred
   5-8-mobile-responsive: deferred
-  5-9-ai-cover-generator: deferred
+  5-9-ai-cover-generator: ready-for-dev
 
   # Epic 6: Blog & Content Platform (In Progress)
   epic-6: done
   6-1-blog-management-cms: done
   6-2-public-author-profile: done
-  6-3-admin-blog-moderation: done
+  6-3-admin-blog-moderation: review
 
   # Epic 7: Publication & Beta Distribution (Backlog)
   epic-7: backlog
-  7-1-beta-reader-access: backlog
-  7-2-wysiwyg-export-previewer: backlog
-  7-3-publication-metadata: backlog
-  7-4-coming-soon-pages: backlog
+  7-1-beta-reader-access: review
+  7-2-wysiwyg-export-previewer: ready-for-dev
+  7-3-publication-metadata: ready-for-dev
+  7-4-coming-soon-pages: ready-for-dev
+
+

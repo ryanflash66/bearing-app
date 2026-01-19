@@ -10,6 +10,20 @@ import {
   UpdateBlogPostInput,
   BlogPostListItem,
 } from "@/types/blog";
+import {
+  evaluateOpenAIModeration,
+  OPENAI_MODERATION_SOURCE,
+} from "@/lib/openai-moderation";
+
+const MODERATION_HOLD_MESSAGE = "Post flagged for review before publishing";
+
+function buildModerationInput(parts: Array<string | undefined | null>): string | null {
+  const combined = parts
+    .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+    .join("\n\n");
+
+  return combined.length > 0 ? combined : null;
+}
 
 export interface BlogPostListResult {
   posts: BlogPostListItem[];
@@ -200,9 +214,32 @@ export async function updateBlogPost(
       }
     }
 
+    const updatePayload: Record<string, unknown> = { ...input };
+
+    if (typeof input.content_text === "string") {
+      const moderationInput = buildModerationInput([
+        input.title,
+        input.excerpt,
+        input.content_text,
+      ]);
+
+      if (moderationInput) {
+        const decision = await evaluateOpenAIModeration(moderationInput);
+
+        if (!decision.skipped && decision.flagged) {
+          updatePayload.is_flagged = true;
+          updatePayload.flagged_at = new Date().toISOString();
+          updatePayload.flag_reason =
+            decision.reason || "OpenAI moderation flagged content";
+          updatePayload.flag_source = OPENAI_MODERATION_SOURCE;
+          updatePayload.flag_confidence = decision.maxScore;
+        }
+      }
+    }
+
     let query = supabase
       .from("blog_posts")
-      .update(input)
+      .update(updatePayload)
       .eq("id", postId)
       .is("deleted_at", null);
 
@@ -249,14 +286,64 @@ export async function updateBlogPost(
 export async function publishBlogPost(
   supabase: SupabaseClient,
   postId: string
-): Promise<BlogPostResult> {
+): Promise<BlogPostResult & { moderationHold?: boolean }> {
   try {
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("blog_posts")
+      .select("id, title, excerpt, content_text, status")
+      .eq("id", postId)
+      .is("deleted_at", null)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
+        return { post: null, error: "Blog post not found or deleted" };
+      }
+      console.error("Error loading blog post for publish:", fetchError);
+      return { post: null, error: fetchError.message };
+    }
+
+    const moderationInput = buildModerationInput([
+      existingPost?.title,
+      existingPost?.excerpt,
+      existingPost?.content_text,
+    ]);
+
+    let moderationDecision = null;
+    if (moderationInput) {
+      moderationDecision = await evaluateOpenAIModeration(moderationInput);
+    }
+
+    const flagPayload: Record<string, unknown> = {};
+    if (moderationDecision && !moderationDecision.skipped && moderationDecision.flagged) {
+      flagPayload.is_flagged = true;
+      flagPayload.flagged_at = new Date().toISOString();
+      flagPayload.flag_reason =
+        moderationDecision.reason || "OpenAI moderation flagged content";
+      flagPayload.flag_source = OPENAI_MODERATION_SOURCE;
+      flagPayload.flag_confidence = moderationDecision.maxScore;
+    }
+
+    const shouldHold =
+      moderationDecision &&
+      !moderationDecision.skipped &&
+      moderationDecision.shouldHold;
+
+    const updatePayload: Record<string, unknown> = shouldHold
+      ? {
+          status: "draft",
+          published_at: null,
+          ...flagPayload,
+        }
+      : {
+          status: "published",
+          published_at: new Date().toISOString(),
+          ...flagPayload,
+        };
+
     const { data, error } = await supabase
       .from("blog_posts")
-      .update({
-        status: "published",
-        published_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", postId)
       .is("deleted_at", null)
       .select()
@@ -265,6 +352,14 @@ export async function publishBlogPost(
     if (error) {
       console.error("Error publishing blog post:", error);
       return { post: null, error: error.message };
+    }
+
+    if (shouldHold) {
+      return {
+        post: data,
+        error: MODERATION_HOLD_MESSAGE,
+        moderationHold: true,
+      };
     }
 
     return { post: data, error: null };

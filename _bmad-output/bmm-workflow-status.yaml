@@ -373,20 +373,22 @@ epic_progress:
         completed: "2026-01-16"
       - id: "story-6.2"
         name: "Public Author Profile/Blog"
-        status: "ready"
+        status: "docs/story6.2.md"
+        completed: "2026-01-18"
       - id: "story-6.3"
         name: "Admin Blog Moderation"
-        status: "ready"
+        status: "in-progress"
+        notes: "Assigned to parallel developer. Proceeding with Epic 7."
   - epic: 7
     name: "Publication & Beta Distribution"
     stories: 4
     completed: 0
-    status: "backlog"
-    notes: "Beta reader collaboration and export readiness features. Deferred until after Epic 6 completion."
+    status: "in-progress"
+    notes: "Accelerated execution: Running in parallel with Epic 6 completion."
     story_list:
       - id: "story-7.1"
         name: "Beta Reader Access & Commenting"
-        status: "backlog"
+        status: "ready"
       - id: "story-7.2"
         name: "WYSIWYG Export Previewer"
         status: "backlog"
@@ -431,11 +433,10 @@ epic_progress:
 
 # Next Action
 next_workflow:
-  id: "story-6.2"
-  name: "Public Author Profile/Blog"
+  id: "story-7.1"
+  name: "Beta Reader Access & Commenting"
   agent: "dev"
   command: "/dev-story"
-  description: "Create public-facing pages for author profiles and blogs."
+  description: "Implement secure beta reader access and inline commenting system."
   priority: "high"
-  reason: "Proceeding to 2nd story in Epic 6 (Blog & Content) after CMS completion."
-
+  reason: "Parallel execution initiated. Starting Epic 7 while Story 6.3 completes."

@@ -1,5 +1,13 @@
-import { generateSlug, createBlogPost } from './blog';
+import { generateSlug, createBlogPost, updateBlogPost, publishBlogPost } from './blog';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { evaluateOpenAIModeration } from '@/lib/openai-moderation';
+
+jest.mock('@/lib/openai-moderation', () => ({
+  evaluateOpenAIModeration: jest.fn(),
+  OPENAI_MODERATION_SOURCE: "openai_moderation",
+}));
+
+const mockEvaluateModeration = evaluateOpenAIModeration as jest.Mock;
 
 // Create a builder object that supports chaining
 const mockBuilder = {
@@ -114,6 +122,87 @@ describe('Blog Library', () => {
       expect(mockBuilder.insert).toHaveBeenCalledWith(expect.objectContaining({
         slug: 'collision-post-1',
       }));
+    });
+  });
+
+  describe('updateBlogPost moderation', () => {
+    it('should apply moderation flags when content is flagged', async () => {
+      const input = {
+        content_text: 'bad content',
+      };
+
+      mockEvaluateModeration.mockResolvedValueOnce({
+        skipped: false,
+        flagged: true,
+        shouldHold: false,
+        maxScore: 0.92,
+        reason: 'OpenAI moderation flagged: hate (0.92)',
+      });
+
+      const mockPost = {
+        id: 'post-1',
+        content_text: input.content_text,
+        updated_at: '2026-01-19T00:00:00Z',
+      };
+
+      mockBuilder.single.mockResolvedValueOnce({ data: mockPost, error: null });
+
+      const result = await updateBlogPost(mockSupabase, 'post-1', input);
+
+      expect(result.error).toBeNull();
+      expect(mockEvaluateModeration).toHaveBeenCalled();
+      expect(mockBuilder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content_text: input.content_text,
+          is_flagged: true,
+          flag_reason: 'OpenAI moderation flagged: hate (0.92)',
+          flag_source: 'openai_moderation',
+          flag_confidence: 0.92,
+        })
+      );
+    });
+  });
+
+  describe('publishBlogPost moderation hold', () => {
+    it('should block publishing and flag the post when moderation confidence is high', async () => {
+      mockEvaluateModeration.mockResolvedValueOnce({
+        skipped: false,
+        flagged: true,
+        shouldHold: true,
+        maxScore: 0.97,
+        reason: 'OpenAI moderation flagged: violence (0.97)',
+      });
+
+      const existingPost = {
+        id: 'post-2',
+        title: 'Test',
+        excerpt: 'Excerpt',
+        content_text: 'Violent content',
+        status: 'draft',
+      };
+
+      const updatedPost = {
+        ...existingPost,
+        status: 'draft',
+        is_flagged: true,
+      };
+
+      mockBuilder.single
+        .mockResolvedValueOnce({ data: existingPost, error: null })
+        .mockResolvedValueOnce({ data: updatedPost, error: null });
+
+      const result = await publishBlogPost(mockSupabase, 'post-2');
+
+      expect(result.error).toBe('Post flagged for review before publishing');
+      expect(mockBuilder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'draft',
+          is_flagged: true,
+          flag_reason: 'OpenAI moderation flagged: violence (0.97)',
+          flag_source: 'openai_moderation',
+          flag_confidence: 0.97,
+        })
+      );
     });
   });
 });

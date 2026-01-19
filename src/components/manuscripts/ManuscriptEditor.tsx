@@ -19,6 +19,8 @@ import { Editor } from "@tiptap/react";
 import CommandPalette from "../editor/CommandPalette";
 import { useCommandPalette } from "@/lib/useCommandPalette";
 import { extractCharacters, saveSelection, restoreSelection, findFirstOccurrence } from "@/lib/manuscript-utils";
+import BetaShareModal from "./BetaShareModal";
+import BetaCommentsPanel from "./BetaCommentsPanel";
 
 
 interface ManuscriptEditorProps {
@@ -27,6 +29,15 @@ interface ManuscriptEditorProps {
   initialContent: string;
   initialUpdatedAt: string;
   onTitleChange?: (title: string) => void;
+}
+
+interface BetaComment {
+  id: string;
+  author_name: string;
+  comment_text: string;
+  selected_text: string;
+  type: string;
+  status: string;
 }
 
 // Status indicator component
@@ -135,6 +146,7 @@ export default function ManuscriptEditor({
   const [wordCount, setWordCount] = useState(0);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showBetaShare, setShowBetaShare] = useState(false);
   const [localContent, setLocalContent] = useState(initialContent);
   const [serverState, setServerState] = useState<{ content_text: string; title: string } | null>(null);
   
@@ -166,6 +178,10 @@ export default function ManuscriptEditor({
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
   const [showReportViewer, setShowReportViewer] = useState(false);
   const [selectedChapterForReport, setSelectedChapterForReport] = useState<number | null>(null);
+
+  const [betaComments, setBetaComments] = useState<BetaComment[]>([]);
+  const [betaCommentsLoading, setBetaCommentsLoading] = useState(false);
+  const [betaCommentsError, setBetaCommentsError] = useState<string | null>(null);
 
   // Initialize Zen Mode
   const zenMode = useZenMode();
@@ -512,6 +528,47 @@ export default function ManuscriptEditor({
     const words = localContent.trim() ? localContent.trim().split(/\s+/).length : 0;
     setWordCount(words);
   }, [localContent]);
+
+  const fetchBetaComments = useCallback(async () => {
+    setBetaCommentsLoading(true);
+    setBetaCommentsError(null);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("beta_comments")
+        .select("id, author_name, comment_text, selected_text, type, status")
+        .eq("manuscript_id", manuscriptId);
+
+      if (error) {
+        throw error;
+      }
+
+      setBetaComments(data || []);
+    } catch (err) {
+      setBetaCommentsError(err instanceof Error ? err.message : "Failed to load beta comments");
+    } finally {
+      setBetaCommentsLoading(false);
+    }
+  }, [manuscriptId]);
+
+  useEffect(() => {
+    fetchBetaComments();
+  }, [fetchBetaComments]);
+
+  const handleResolveBetaComment = useCallback(async (commentId: string) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("beta_comments")
+      .update({ status: "resolved" })
+      .eq("id", commentId);
+
+    if (error) {
+      setBetaCommentsError(error.message || "Failed to resolve comment");
+      return;
+    }
+
+    fetchBetaComments();
+  }, [fetchBetaComments]);
 
   // Handle content change with autosave
   const handleContentChange = useCallback((newContent: string) => {
@@ -951,6 +1008,15 @@ export default function ManuscriptEditor({
         </div>
         <div className="flex items-center gap-4">
            {/* ... (Export buttons and other controls remain same) ... */}
+          <button
+            onClick={() => setShowBetaShare(true)}
+            className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 transition-colors flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 8a3 3 0 10-6 0m6 0a3 3 0 11-6 0m6 0v8a3 3 0 11-6 0V8m10 4a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Share / Beta
+          </button>
             <div className="flex items-center gap-2">
             <button
               onClick={() => handleExport("pdf")}
@@ -1186,8 +1252,13 @@ export default function ManuscriptEditor({
 
            {/* Ghost Text Overlay - Needs new logic for Tiptap coordinates if we want to overlay absolute */}
            {/* Alternatively, Tiptap extension handles inline phantom text */}
-          </div>
         </div>
+      </div>
+        <BetaCommentsPanel
+          comments={betaComments}
+          onResolve={handleResolveBetaComment}
+          isLoading={betaCommentsLoading}
+        />
       </div>
       
        {/* Footer */}
@@ -1206,6 +1277,11 @@ export default function ManuscriptEditor({
       </div>
 
       {/* Modals */}
+      <BetaShareModal
+        isOpen={showBetaShare}
+        onClose={() => setShowBetaShare(false)}
+        manuscriptId={manuscriptId}
+      />
       <ConflictResolutionModal
         isOpen={showConflictModal}
         onResolve={handleConflictResolve}

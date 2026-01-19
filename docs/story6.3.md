@@ -17,7 +17,7 @@ So that I can remove offensive or illegal material from the platform.
 
 **Effort:** 16h
 **Dependencies:** Epic 4 (Admin Dash), Story 6.1
-**Status:** done
+**Status:** review
 
 ## Tasks
 - [x] **Marketplace Hotfix (Priority)**
@@ -29,8 +29,8 @@ So that I can remove offensive or illegal material from the platform.
 - [x] **Takedown Logic**
     - [x] Implement `suspend_post` RPC function (set status='suspended').
     - [x] Update public middleware to block 'suspended' posts (return 404).
-- [ ] **Automated Safety (Optional/Bonus)**
-    - [ ] Integrate OpenAI Moderation API on `blog_post` insert/update.
+- [x] **Automated Safety (Optional/Bonus)**
+    - [x] Integrate OpenAI Moderation API on `blog_post` insert/update.
 
 ## Dev Agent Record
 
@@ -41,16 +41,21 @@ So that I can remove offensive or illegal material from the platform.
 - `supabase/migrations/20260117100000_add_blog_moderation.sql`
 - `supabase/migrations/20260117120000_fix_blog_moderation.sql`
 - `src/lib/moderation.ts`
+- `src/lib/openai-moderation.ts`
+- `src/lib/blog.ts`
 - `src/components/admin/ModerationDashboard.tsx`
 - `src/app/dashboard/admin/moderation/page.tsx`
 - `src/app/api/admin/moderation/suspend/route.ts`
 - `src/app/api/admin/moderation/restore/route.ts`
 - `src/app/api/admin/moderation/approve/route.ts`
+- `src/app/api/blog/posts/[id]/publish/route.ts`
 - `src/lib/email.ts`
 - `src/lib/public-blog.ts`
+- `src/lib/blog.test.ts`
 - `tests/lib/moderation.test.ts`
 - `tests/components/admin/ModerationDashboard.test.tsx`
 - `tests/lib/public-blog.test.ts`
+- `tests/lib/blog.test.ts`
 - `docs/story6.3.md`
 - `docs/sprint-status.yaml`
 - `tsconfig.json`
@@ -73,10 +78,11 @@ So that I can remove offensive or illegal material from the platform.
 - **Takedown Logic**: Added 'suspended' status to blog_posts via migration. Created `suspend_blog_post`, `restore_suspended_blog_post`, and `approve_blog_post` RPC functions. Suspended posts 404 via public fetch guard.
 - **Flagged Queue**: Added flagged metadata and queue ordering; flagged posts surfaced with Approve action.
 - **Email Notification**: Admin takedown now sends author email via API route + Resend helper.
-- **Automated Safety (Optional)**: Not implemented; pending OpenAI Moderation API integration.
+- **Automated Safety (Optional)**: Added OpenAI Moderation checks on blog post updates and publish attempts; high-confidence flags block publishing and set moderation flags.
 - **Testing**: Updated tests for moderation library, moderation UI, and public blog guard.
 - **Build Fix**: Added scripts folder to tsconfig.json exclude to fix pre-existing build error.
 - Tests updated for moderation and public blog guard; `npm test` run after fixes (57/57 passed).
+- **2026-01-19**: Added automated safety moderation integration and tests; full test suite + lint run (warnings only).
 
 ### Change Log
 - **2026-01-16**: Added Marketplace Hotfix task per user request. Initialized moderation tasks.
@@ -90,6 +96,8 @@ So that I can remove offensive or illegal material from the platform.
 - **2026-01-17**: Status set to in-progress pending automated safety integration (optional).
 - **2026-01-18**: Ran `npm test` after fixes; all 57 test suites passed.
 - **2026-01-18**: Status set to done; automated safety remains optional and not implemented.
+- **2026-01-19**: Implemented automated safety moderation (OpenAI) on blog post update/publish; added tests and API handling.
+- **2026-01-19**: Status set to review after automated safety validation.
 
 ## Traceability
 - **Matrix**: [traceability-matrix-story6.3.md](_bmad-output/traceability-matrix-story6.3.md)

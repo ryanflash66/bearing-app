@@ -105,6 +105,13 @@ describe("Blog Post CRUD Operations", () => {
   describe("publishBlogPost", () => {
     it("should set status to published and set published_at", async () => {
       const now = new Date().toISOString();
+      const existingPost = {
+        id: "test-id-123",
+        title: "Test Post",
+        excerpt: "Excerpt",
+        content_text: "Content",
+        status: "draft",
+      };
       const mockPublishedPost = {
         id: "test-id-123",
         status: "published",
@@ -112,8 +119,20 @@ describe("Blog Post CRUD Operations", () => {
         updated_at: now,
       };
 
+      const mockSelectChain = {
+        eq: jest.fn().mockReturnValue({
+          is: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: existingPost,
+              error: null,
+            }),
+          }),
+        }),
+      };
+
       const mockSupabase = {
         from: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue(mockSelectChain),
           update: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               is: jest.fn().mockReturnValue({
