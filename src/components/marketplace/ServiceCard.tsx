@@ -47,9 +47,22 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         // Redirect to Stripe Checkout
         navigateTo(url);
       } else {
-        // Other services - placeholder for future implementation
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setError("This service is coming soon. Please check back later.");
+        // Other services - Call the new request API
+        const response = await fetch("/api/services/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ serviceId: service.id }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to submit request");
+        }
+
+        // Show success state (could be improved with a toast, but using error state for feedback for now)
+        setError(null);
+        alert(data.message || "Request submitted successfully!");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

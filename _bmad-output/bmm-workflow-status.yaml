@@ -239,10 +239,10 @@ workflow_status:
 # Completed: 5 + 4 + 7 + 4 + 6 + 5 + 1 + 0 = 32
 story_progress:
   total: 42
-  completed: 34
+  completed: 39
   ux_rework: 0
   ready: 1
-  pending: 7
+  pending: 3
   
 epic_progress:
   - epic: 1
@@ -324,9 +324,9 @@ epic_progress:
   - epic: 5
     name: "Services & Intelligence"
     stories: 9
-    completed: 5
-    status: "paused"
-    notes: "PIVOT (2026-01-16): Core marketplace features complete (5.1-5.4, 5.5). Remaining stories (5.6-5.9) deferred to focus on Epic 6 (Blog & Content)."
+    completed: 6
+    status: "in-progress"
+    notes: "Core marketplace features (5.1-5.4, 5.5, 5.7) complete. Story 5.3 verified functional after user feedback. Moving to mobile responsive polish."
     story_list:
       - id: "story-5.1"
         name: "Service Marketplace UI"
@@ -352,20 +352,20 @@ epic_progress:
         status: "deferred"
       - id: "story-5.7"
         name: "Voice-to-Text Dictation"
-        status: "deferred"
+        status: "completed"
+        completed: "2026-01-19"
       - id: "story-5.8"
         name: "Mobile Responsive Layout"
-        status: "deferred"
+        status: "review"
       - id: "story-5.9"
         name: "AI Cover Generator"
-        status: "deferred"
+        status: "backlog"
   - epic: 6
     name: "Blog & Content Platform"
     stories: 3
-    completed: 1
-    status: "in-progress"
-    started: "2026-01-16"
-    notes: "PRIORITY SHIFT: Epic 6 now active. Author blog and public profile features to build audience and SEO presence."
+    completed: 3
+    status: "completed"
+    notes: "Blog CMS, Public Profiles, and Moderation all complete."
     story_list:
       - id: "story-6.1"
         name: "Blog Management (CMS)"
@@ -377,14 +377,14 @@ epic_progress:
         completed: "2026-01-18"
       - id: "story-6.3"
         name: "Admin Blog Moderation"
-        status: "in-progress"
-        notes: "Assigned to parallel developer. Proceeding with Epic 7."
+        status: "completed"
+        completed: "2026-01-19"
   - epic: 7
     name: "Publication & Beta Distribution"
     stories: 4
-    completed: 2
-    status: "in-progress"
-    notes: "Accelerated execution: Story 7.1 complete. Moving to export previewer."
+    completed: 4
+    status: "completed"
+    notes: "All 4 stories (Beta Access, Previewer, Metadata, Coming Soon) complete."
     story_list:
       - id: "story-7.1"
         name: "Beta Reader Access & Commenting"
@@ -392,16 +392,17 @@ epic_progress:
         completed: "2026-01-19"
       - id: "story-7.2"
         name: "WYSIWYG Export Previewer"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-19"
       - id: "story-7.3"
         name: "Publication Metadata & Blurb Hub"
         status: "completed"
         completed: "2026-01-19"
         qa_passed: true
-        notes: "QA Approved: ISBN validation, metadata persistence, and frontmatter export integration verified."
       - id: "story-7.4"
         name: "Public Coming Soon Pages"
-        status: "backlog"
+        status: "completed"
+        completed: "2026-01-19"
 
 # Gate History
 gate_history:
@@ -446,10 +447,10 @@ gate_history:
 
 # Next Action
 next_workflow:
-  id: "story-7.2"
-  name: "WYSIWYG Export Previewer"
-  agent: "dev"
-  command: "/dev-story"
-  description: "Build WYSIWYG preview for PDF/EPUB exports."
+  id: "story-5.8"
+  name: "Mobile Responsive Layout"
+  agent: "qa"
+  command: "/qa-story"
+  description: "Verify mobile responsiveness across all dashboard pages."
   priority: "high"
-  reason: "Story 7.1 complete. Moving to export preview capabilities."
+  reason: "Marketplace and Blog core features complete. Moving to QA validation for mobile polish."
