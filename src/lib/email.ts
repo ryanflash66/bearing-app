@@ -4,11 +4,27 @@ import { Resend } from 'resend';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+// Cache Resend instance to prevent memory leaks from repeated instantiation
+let resendInstance: Resend | null = null;
+let lastApiKey: string | null = null;
+
 function getResend() {
-    if (process.env.RESEND_API_KEY) {
-        return new Resend(process.env.RESEND_API_KEY);
-    }
-    return null;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+
+  // Recreate if key changes (e.g., env refresh / serverless cold start behavior).
+  if (!resendInstance || lastApiKey !== apiKey) {
+    lastApiKey = apiKey;
+    resendInstance = new Resend(apiKey);
+  }
+
+  return resendInstance;
+}
+
+// Test helper: allow unit tests to reset cached Resend instance.
+export function __resetResendForTests() {
+  resendInstance = null;
+  lastApiKey = null;
 }
 
 /**

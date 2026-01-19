@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { exportManuscript } from "@/lib/export";
-import { ExportSettings, PageSize, FontFace } from "@/lib/export-types";
+import { defaultExportSettings } from "@/lib/export-types";
+import type { ExportSettings, FontFace, PageSize } from "@/lib/export-types";
+
+export const runtime = "nodejs";
+
+const PAGE_SIZES: PageSize[] = ["6x9", "5x8", "a4", "a5"];
+const FONT_FACES: FontFace[] = ["serif", "sans"];
 
 export async function GET(
   request: NextRequest,
@@ -39,13 +45,55 @@ export async function GET(
     const lineHeightParam = searchParams.get("lineHeight");
     const pageSizeParam = searchParams.get("pageSize");
     const fontFaceParam = searchParams.get("fontFace");
-    const useHtml = searchParams.get("useHtml") === "true";
 
-    const settings: Partial<ExportSettings> = {};
-    if (fontSizeParam) settings.fontSize = parseFloat(fontSizeParam);
-    if (lineHeightParam) settings.lineHeight = parseFloat(lineHeightParam);
-    if (pageSizeParam) settings.pageSize = pageSizeParam as PageSize;
-    if (fontFaceParam) settings.fontFace = fontFaceParam as FontFace;
+    const partialSettings: Partial<ExportSettings> = {};
+
+    if (fontSizeParam !== null) {
+      const fontSize = parseFloat(fontSizeParam);
+      if (!Number.isFinite(fontSize)) {
+        return NextResponse.json(
+          { error: "Invalid fontSize parameter" },
+          { status: 400 }
+        );
+      }
+      partialSettings.fontSize = fontSize;
+    }
+
+    if (lineHeightParam !== null) {
+      const lineHeight = parseFloat(lineHeightParam);
+      if (!Number.isFinite(lineHeight)) {
+        return NextResponse.json(
+          { error: "Invalid lineHeight parameter" },
+          { status: 400 }
+        );
+      }
+      partialSettings.lineHeight = lineHeight;
+    }
+
+    if (pageSizeParam !== null) {
+      if (!PAGE_SIZES.includes(pageSizeParam as PageSize)) {
+        return NextResponse.json(
+          { error: `Invalid pageSize parameter. Allowed: ${PAGE_SIZES.join(", ")}` },
+          { status: 400 }
+        );
+      }
+      partialSettings.pageSize = pageSizeParam as PageSize;
+    }
+
+    if (fontFaceParam !== null) {
+      if (!FONT_FACES.includes(fontFaceParam as FontFace)) {
+        return NextResponse.json(
+          { error: `Invalid fontFace parameter. Allowed: ${FONT_FACES.join(", ")}` },
+          { status: 400 }
+        );
+      }
+      partialSettings.fontFace = fontFaceParam as FontFace;
+    }
+
+    const settings: ExportSettings = {
+      ...defaultExportSettings,
+      ...partialSettings,
+    };
 
     // Export manuscript
     // Note: We'll fetch the current manuscript's HTML content from the DB if not provided via body
@@ -54,7 +102,7 @@ export async function GET(
     const result = await exportManuscript(supabase, manuscriptId, {
       format: "pdf",
       versionId,
-      settings: settings as ExportSettings,
+      settings,
     });
 
     if (result.error) {

@@ -3,15 +3,13 @@ import MarketingDashboard from "@/components/marketing/MarketingDashboard";
 import { createClient } from "@/utils/supabase/client";
 
 // Mock Supabase
-const mockUpdate = jest.fn();
+const mockEq = jest.fn().mockResolvedValue({ error: null });
+const mockUpdate = jest.fn(() => ({
+  eq: mockEq,
+}));
 const mockSupabase = {
   from: jest.fn(() => ({
-    update: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        select: jest.fn().mockResolvedValue({ data: {}, error: null }),
-        then: jest.fn().mockResolvedValue({ data: {}, error: null }), // for simple await
-      })),
-    })),
+    update: mockUpdate,
   })),
 };
 
@@ -40,11 +38,6 @@ describe("MarketingDashboard", () => {
   const mockSignups = [
     { id: "1", email: "fan@example.com", created_at: "2026-01-01T00:00:00Z", source: "landing_page" },
   ];
-
-  const mockProfile = {
-    pen_name: "authorhandle",
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     (createClient as jest.Mock).mockReturnValue(mockSupabase);
@@ -86,7 +79,7 @@ describe("MarketingDashboard", () => {
       />
     );
 
-    const toggle = screen.getByRole("button", { name: "" }); // The toggle button doesn't have a label in the JSX provided but it's the only one with these classes
+    const toggle = screen.getByRole("button", { name: /toggle public visibility/i });
     expect(screen.getByText("Private")).toBeInTheDocument();
 
     fireEvent.click(toggle);
@@ -95,14 +88,8 @@ describe("MarketingDashboard", () => {
   });
 
   it("saves changes correctly", async () => {
-    const mockUpdate = jest.fn().mockReturnThis();
-    const mockEq = jest.fn().mockResolvedValue({ error: null });
-    
     mockSupabase.from.mockReturnValue({
       update: mockUpdate,
-    });
-    mockUpdate.mockReturnValue({
-      eq: mockEq,
     });
 
     render(
@@ -130,5 +117,29 @@ describe("MarketingDashboard", () => {
       subtitle: "New Subtitle",
       is_public: false,
     }));
+  });
+
+  it("handles save errors", async () => {
+    mockSupabase.from.mockReturnValue({
+      update: jest.fn(() => ({
+        eq: jest.fn().mockResolvedValue({ error: { message: "Update failed" } }),
+      })),
+    });
+
+    render(
+      <MarketingDashboard
+        manuscript={mockManuscript}
+        signups={mockSignups}
+        userHandle="authorhandle"
+      />
+    );
+
+    const saveButton = screen.getByRole("button", { name: /save changes/i });
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to save:/i)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Update failed/i)).toBeInTheDocument();
   });
 });

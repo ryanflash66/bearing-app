@@ -16,6 +16,18 @@ import { getVersion } from "@/lib/manuscriptVersions";
 jest.mock("@/utils/supabase/server");
 jest.mock("@/lib/manuscripts");
 jest.mock("@/lib/manuscriptVersions");
+jest.mock("puppeteer", () => ({
+  launch: jest.fn().mockResolvedValue({
+    newPage: jest.fn().mockResolvedValue({
+      setJavaScriptEnabled: jest.fn().mockResolvedValue(undefined),
+      setRequestInterception: jest.fn().mockResolvedValue(undefined),
+      on: jest.fn(),
+      setContent: jest.fn().mockResolvedValue(undefined),
+      pdf: jest.fn().mockResolvedValue(Buffer.from("%PDF-FAKE")),
+    }),
+    close: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 describe("Manuscript Export (Story 2.4)", () => {
   const mockSupabase = {} as any;
@@ -38,6 +50,27 @@ describe("Manuscript Export (Story 2.4)", () => {
       // PDF should start with PDF header
       const pdfHeader = pdfBuffer.toString("ascii", 0, 4);
       expect(pdfHeader).toBe("%PDF");
+    });
+
+    it("should surface mkdtemp errors without cleanup ReferenceError", async () => {
+      // We need to mock fs/promises BEFORE importing the module under test,
+      // because `export.ts` imports it as a default binding.
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock("fs/promises", () => {
+          const actual = jest.requireActual("fs/promises");
+          return {
+            ...actual,
+            mkdtemp: jest.fn().mockRejectedValue(new Error("mkdtemp failed")),
+          };
+        });
+
+        const { generatePDF: isolatedGeneratePDF } = await import("@/lib/export");
+        await expect(isolatedGeneratePDF("Title", "Content")).rejects.toThrow(
+          /mkdtemp failed/i
+        );
+      });
+
+      jest.dontMock("fs/promises");
     });
 
     it("should handle empty content", async () => {

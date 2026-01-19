@@ -50,11 +50,11 @@ export default function PublishingSettingsForm({
   };
 
   const handleISBNChange = (field: 'isbn13' | 'isbn10', value: string) => {
-    const cleaned = cleanISBN(value);
     handleChange(field, value); // Store raw value for user input, validate separately
+    const cleaned = cleanISBN(value);
 
     if (field === 'isbn13') {
-        if (value && !isValidISBN13(value)) {
+        if (cleaned && !isValidISBN13(cleaned)) {
             setErrors(prev => ({ ...prev, isbn13: "Invalid ISBN-13 checksum or format" }));
         } else {
             setErrors(prev => {
@@ -64,7 +64,7 @@ export default function PublishingSettingsForm({
             });
         }
     } else if (field === 'isbn10') {
-        if (value && !isValidISBN10(value)) {
+        if (cleaned && !isValidISBN10(cleaned)) {
              setErrors(prev => ({ ...prev, isbn10: "Invalid ISBN-10 checksum or format" }));
         } else {
              setErrors(prev => {

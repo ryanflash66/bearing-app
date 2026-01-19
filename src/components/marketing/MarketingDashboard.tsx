@@ -18,6 +18,10 @@ interface Manuscript {
   is_public: boolean;
   subtitle: string | null;
   synopsis: string | null;
+  theme_config?: {
+    theme?: string | null;
+    accent_color?: string | null;
+  } | null;
   owner_user_id: string;
 }
 
@@ -67,9 +71,15 @@ export default function MarketingDashboard({
 
       setMessage("Saved successfully!");
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving:", err);
-      setMessage("Failed to save: " + err.message);
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message?: unknown }).message)
+            : "Unknown error";
+      setMessage("Failed to save: " + message);
     } finally {
       setSaving(false);
     }
@@ -109,6 +119,7 @@ export default function MarketingDashboard({
             </span>
             <button
                 onClick={() => setIsPublic(!isPublic)}
+                aria-label="Toggle public visibility"
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isPublic ? "bg-green-600" : "bg-stone-300"}`}
             >
                 <span

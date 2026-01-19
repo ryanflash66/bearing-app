@@ -92,71 +92,70 @@ export default function ManuscriptList({ manuscripts, onDelete }: ManuscriptList
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <ul className="divide-y divide-slate-200">
-        {manuscripts.map((manuscript) => (
-          <li key={manuscript.id} className="group relative">
-            <Link
-              href={`/dashboard/manuscripts/${manuscript.id}`}
-              className="block px-6 py-5 transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-lg font-medium text-slate-900 group-hover:text-blue-600">
-                    {manuscript.title || "Untitled"}
-                  </h3>
-                  <div className="mt-2 flex items-center gap-4 text-sm text-slate-500">
-                    {getStatusBadge(manuscript.status)}
-                    <span>{manuscript.word_count.toLocaleString()} words</span>
-                    <span>Updated {formatDate(manuscript.updated_at)}</span>
-                  </div>
-                </div>
-                <div className="ml-4 flex items-center gap-2">
-                  {/* Delete button with confirmation */}
-                  {showConfirmDelete === manuscript.id ? (
-                    <div
-                      className="flex items-center gap-2"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <button
-                        onClick={() => handleDelete(manuscript.id)}
-                        disabled={deletingId === manuscript.id}
-                        className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                      >
-                        {deletingId === manuscript.id ? "Deleting..." : "Confirm"}
-                      </button>
-                      <button
-                        onClick={() => setShowConfirmDelete(null)}
-                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowConfirmDelete(manuscript.id);
-                      }}
-                      className="rounded-lg p-2 text-slate-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
-                      title="Delete manuscript"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {manuscripts.map((manuscript) => (
+        <div key={manuscript.id} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+          <Link
+            href={`/dashboard/manuscripts/${manuscript.id}`}
+            className="block p-5 transition-colors hover:bg-slate-50"
+          >
+            <div className="flex flex-col h-full">
+              <h3 className="truncate text-lg font-medium text-slate-900 group-hover:text-blue-600">
+                {manuscript.title || "Untitled"}
+              </h3>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                {getStatusBadge(manuscript.status)}
+                <span className="hidden sm:inline">•</span>
+                <span>{manuscript.word_count.toLocaleString()} words</span>
               </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
+              <p className="mt-2 text-xs text-slate-400">
+                Updated {formatDate(manuscript.updated_at)}
+              </p>
+            </div>
+          </Link>
+          {/* Delete button - always visible on mobile for touch accessibility */}
+          <div className="absolute top-3 right-3">
+            {showConfirmDelete === manuscript.id ? (
+              <div
+                className="flex items-center gap-2 rounded-lg bg-white p-1 shadow-lg"
+                onClick={(e) => e.preventDefault()}
+              >
+                <button
+                  onClick={() => handleDelete(manuscript.id)}
+                  disabled={deletingId === manuscript.id}
+                  className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 min-h-[44px] min-w-[44px]"
+                >
+                  {deletingId === manuscript.id ? "..." : "Delete"}
+                </button>
+                <button
+                  onClick={() => setShowConfirmDelete(null)}
+                  className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 min-h-[44px] min-w-[44px]"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowConfirmDelete(manuscript.id);
+                }}
+                className="rounded-lg p-2 text-slate-400 opacity-100 md:opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/80 md:bg-transparent"
+                title="Delete manuscript"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

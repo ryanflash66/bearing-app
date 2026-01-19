@@ -1,3 +1,6 @@
+import fs from "fs/promises";
+import os from "os";
+import path from "path";
 import puppeteer from "puppeteer";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak } from "docx";
 import { Manuscript, getManuscript } from "./manuscripts";
@@ -6,6 +9,47 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { ConsistencyReport } from "./gemini";
 import { tiptapToDocx } from "./tiptap-convert";
 import { ExportSettings, defaultExportSettings, PageSize } from "./export-types";
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Sanitize HTML intended for server-side PDF rendering.
+ *
+ * The `content` parameter comes from Tiptap (HTML) and MUST preserve tags for
+ * layout/structure. We do minimal hardening to strip obviously dangerous
+ * constructs while leaving the markup intact.
+ *
+ * Note: We also disable JS execution and block external resource loading in
+ * Puppeteer (see below), which further reduces risk.
+ */
+function sanitizeExportHtml(html: string): string {
+  let out = html;
+
+  // Remove active/embedded content blocks.
+  out = out
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<(object|embed)[\s\S]*?>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<link\b[^>]*?>/gi, "");
+
+  // Remove inline event handlers (e.g., onclick="...").
+  out = out.replace(/\son\w+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, "");
+
+  // Neutralize javascript: URLs in href/src.
+  out = out.replace(
+    /\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi,
+    ' $1=$2#$2'
+  );
+
+  return out;
+}
 
 function getPageDimensions(size: PageSize): { width: string; height: string } {
    switch(size) {
@@ -65,6 +109,7 @@ export async function getManuscriptForExport(
       if (versionResult.error || !versionResult.version) {
         return { title: "", content: "", content_json: null, metadata: null, error: versionResult.error || "Version not found" };
       }
+      // Only query manuscript if version exists
       const manuscriptResult = await getManuscript(supabase, manuscriptId);
       return {
         title: versionResult.version.title,
@@ -101,36 +146,64 @@ export async function generatePDF(
   settings: ExportSettings = defaultExportSettings,
   metadata?: any
 ): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  });
-
+  let userDataDir: string | null = null;
+  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
   try {
+    const profileDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "bearing-puppeteer-profile-")
+    );
+    userDataDir = profileDir;
+
+    browser = await puppeteer.launch({
+      headless: true,
+      userDataDir: profileDir,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
     const page = await browser.newPage();
+
+    // Hardening: do not execute scripts and do not load external resources.
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const resourceType = req.resourceType();
+      // Only allow the main document (setContent) - block images/fonts/scripts/etc.
+      if (resourceType === "document") return req.continue();
+      return req.abort();
+    });
+
     const { width, height } = getPageDimensions(settings.pageSize);
     
     // Construct HTML identical to ExportPreview.tsx
     let frontmatterHtml = "";
+    const safeTitle = escapeHtml(title);
+    const safeContentHtml = sanitizeExportHtml(content);
     if (metadata) {
+        const publisherName = metadata.publisher_name ? escapeHtml(String(metadata.publisher_name)) : null;
+        const copyrightHolder = metadata.copyright_holder ? escapeHtml(String(metadata.copyright_holder)) : "Author";
+        const isbn13 = metadata.isbn13 ? escapeHtml(String(metadata.isbn13)) : null;
+        const isbn10 = metadata.isbn10 ? escapeHtml(String(metadata.isbn10)) : null;
+        const editionNumber = metadata.edition_number ? escapeHtml(String(metadata.edition_number)) : null;
+
         // 1. Title Page
         frontmatterHtml += `
             <div class="page title-page">
-                <h1 class="main-title">${title}</h1>
-                ${metadata.publisher_name ? `<p class="publisher">${metadata.publisher_name}</p>` : ""}
+                <h1 class="main-title">${safeTitle}</h1>
+                ${publisherName ? `<p class="publisher">${publisherName}</p>` : ""}
             </div>
         `;
 
         // 2. Copyright Page
+        const copyrightYear = escapeHtml(String(metadata.copyright_year || new Date().getFullYear()));
         frontmatterHtml += `
             <div class="page copyright-page">
-                <p><strong>${title}</strong></p>
-                <p>Copyright © ${metadata.copyright_year || new Date().getFullYear()} by ${metadata.copyright_holder || "Author"}</p>
+                <p><strong>${safeTitle}</strong></p>
+                <p>Copyright © ${copyrightYear} by ${copyrightHolder}</p>
                 <p>All rights reserved.</p>
-                ${metadata.publisher_name ? `<p>Published by ${metadata.publisher_name}</p>` : ""}
-                ${metadata.isbn13 ? `<p>ISBN-13: ${metadata.isbn13}</p>` : ""}
-                ${metadata.isbn10 ? `<p>ISBN-10: ${metadata.isbn10}</p>` : ""}
-                ${metadata.edition_number ? `<p>Edition: ${metadata.edition_number}</p>` : ""}
+                ${publisherName ? `<p>Published by ${publisherName}</p>` : ""}
+                ${isbn13 ? `<p>ISBN-13: ${isbn13}</p>` : ""}
+                ${isbn10 ? `<p>ISBN-10: ${isbn10}</p>` : ""}
+                ${editionNumber ? `<p>Edition: ${editionNumber}</p>` : ""}
             </div>
         `;
 
@@ -138,11 +211,14 @@ export async function generatePDF(
         if (metadata.dedication) {
             let dedicationText = "";
             if (typeof metadata.dedication === "string") {
-                dedicationText = metadata.dedication;
+                dedicationText = escapeHtml(metadata.dedication);
             } else if (metadata.dedication.content) {
                 // Very basic conversion of Tiptap JSON to simple HTML for dedication
                 dedicationText = metadata.dedication.content
-                    .map((p: any) => `<p>${p.content?.map((c: any) => c.text).join("") || ""}</p>`)
+                    .map((p: any) => {
+                      const text = (p.content || []).map((c: any) => escapeHtml(String(c.text ?? ""))).join("");
+                      return `<p>${text}</p>`;
+                    })
                     .join("");
             }
             frontmatterHtml += `
@@ -156,10 +232,13 @@ export async function generatePDF(
         if (metadata.acknowledgements) {
              let ackText = "";
              if (typeof metadata.acknowledgements === "string") {
-                 ackText = metadata.acknowledgements;
+                 ackText = escapeHtml(metadata.acknowledgements);
              } else if (metadata.acknowledgements.content) {
                  ackText = metadata.acknowledgements.content
-                    .map((p: any) => `<p>${p.content?.map((c: any) => c.text).join("") || ""}</p>`)
+                    .map((p: any) => {
+                      const text = (p.content || []).map((c: any) => escapeHtml(String(c.text ?? ""))).join("");
+                      return `<p>${text}</p>`;
+                    })
                     .join("");
              }
              frontmatterHtml += `
@@ -179,7 +258,7 @@ export async function generatePDF(
           :root {
             --pagedjs-font-size: ${settings.fontSize}pt;
             --pagedjs-line-height: ${settings.lineHeight};
-            --pagedjs-font-family: ${settings.fontFace === "serif" ? "Merriweather, serif" : "Inter, sans-serif"};
+            --pagedjs-font-family: ${settings.fontFace === "serif" ? "serif" : "sans-serif"};
           }
           @page {
             size: ${width} ${height};
@@ -203,17 +282,16 @@ export async function generatePDF(
           p:first-of-type { text-indent: 0; }
           .copyright-page p, .title-page p, .dedication-page p { text-indent: 0; }
         </style>
-        <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
       </head>
       <body>
         ${frontmatterHtml}
-        <h1>${title}</h1>
-        ${content}
+        <h1>${safeTitle}</h1>
+        ${safeContentHtml}
       </body>
       </html>
     `;
 
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
     
     // Use PagedJS in the browser to handle pagination if needed, 
     // but Puppeteer's PDF engine with @page CSS is often sufficient for simple books.
@@ -229,7 +307,20 @@ export async function generatePDF(
 
     return Buffer.from(pdf);
   } finally {
-    await browser.close();
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        // Best-effort cleanup: browser may already be closed/crashed.
+      }
+    }
+    if (userDataDir) {
+      try {
+        await fs.rm(userDataDir, { recursive: true, force: true });
+      } catch {
+        // Best-effort cleanup: Windows can keep the profile lockfile busy briefly.
+      }
+    }
   }
 }
 
@@ -309,10 +400,14 @@ export async function generateDOCX(
         
         frontmatterChildren.push(
             new Paragraph({
-                text: text,
                 alignment: "center",
-                italics: true,
                 spacing: { before: 3000 },
+                children: [
+                  new TextRun({
+                    text,
+                    italics: true,
+                  }),
+                ],
             })
         );
         frontmatterChildren.push(new Paragraph({

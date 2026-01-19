@@ -93,15 +93,18 @@ export default function Binder({ content, issues = [], onChapterClick, onBadgeCl
 
   return (
     <aside className={`w-64 bg-slate-50/90 backdrop-blur-md border-r border-slate-200/50 overflow-y-auto flex-shrink-0 transition-all duration-300 ease-in-out ${className}`}>
-      <div className="p-4 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">Binder</h2>
-      </div>
+      {/* Hide header when className includes border-0 (mobile sheet has its own header) */}
+      {!className.includes('border-0') && (
+        <div className="p-4 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">Binder</h2>
+        </div>
+      )}
       <ul className="py-2 space-y-0.5">
         {chapters.map((chapter, index) => (
           <li key={index}>
             <button
               onClick={() => onChapterClick?.({ title: chapter.title, index: chapter.startIndex })}
-              className="w-full text-left px-4 py-3 hover:bg-slate-100/50 flex items-center justify-between group transition-colors"
+              className="w-full text-left px-4 py-3 min-h-[44px] hover:bg-slate-100/50 flex items-center justify-between group transition-colors"
             >
               <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 line-clamp-2">
                 {chapter.title}

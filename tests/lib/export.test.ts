@@ -7,6 +7,9 @@ import puppeteer from "puppeteer";
 jest.mock("puppeteer", () => ({
   launch: jest.fn().mockResolvedValue({
     newPage: jest.fn().mockResolvedValue({
+      setJavaScriptEnabled: jest.fn().mockResolvedValue(undefined),
+      setRequestInterception: jest.fn().mockResolvedValue(undefined),
+      on: jest.fn(),
       setContent: jest.fn().mockResolvedValue(undefined),
       pdf: jest.fn().mockResolvedValue(Buffer.from("PDF_BUFFER")),
     }),
@@ -34,8 +37,17 @@ describe("generatePDF", () => {
     
     // Check if setContent was called with the HTML including our content
     expect(page.setContent).toHaveBeenCalledWith(
-      expect.stringContaining(content),
-      expect.objectContaining({ waitUntil: "networkidle0" })
+      expect.stringContaining("Test Content"),
+      expect.objectContaining({ waitUntil: "domcontentloaded" })
+    );
+    // Ensure HTML markup is preserved (not escaped as text)
+    expect(page.setContent).toHaveBeenCalledWith(
+      expect.not.stringContaining("&lt;p&gt;"),
+      expect.anything()
+    );
+    expect(page.setContent).toHaveBeenCalledWith(
+      expect.stringContaining("<p>Test Content</p>"),
+      expect.anything()
     );
     
     // Check if pdf() was called with default 6x9 dimensions

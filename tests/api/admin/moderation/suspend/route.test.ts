@@ -4,7 +4,6 @@
 import { POST } from "@/app/api/admin/moderation/suspend/route";
 import { createClient } from "@/utils/supabase/server";
 import { notifyBlogPostSuspended } from "@/lib/email";
-import { NextResponse } from "next/server";
 
 // Mock dependencies
 jest.mock("@/utils/supabase/server", () => ({

@@ -24,6 +24,12 @@ import BetaShareModal from "./BetaShareModal";
 import BetaCommentsPanel from "./BetaCommentsPanel";
 import ExportModal from "./ExportModal";
 import PublishingSettingsModal from "./PublishingSettingsModal";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 
 interface ManuscriptEditorProps {
@@ -185,6 +191,9 @@ export default function ManuscriptEditor({
   const [betaComments, setBetaComments] = useState<BetaComment[]>([]);
   const [betaCommentsLoading, setBetaCommentsLoading] = useState(false);
   const [betaCommentsError, setBetaCommentsError] = useState<string | null>(null);
+  
+  // Mobile Binder state
+  const [isMobileBinderOpen, setIsMobileBinderOpen] = useState(false);
 
   // Initialize Zen Mode
   const zenMode = useZenMode();
@@ -210,6 +219,9 @@ export default function ManuscriptEditor({
 
   // Store cursor position for restoration after command palette closes
   const savedCursorPosition = useRef<number | null>(null);
+  
+  // Store queueSave ref to avoid circular dependency in callbacks that are defined before autosave hook
+  const queueSaveRef = useRef<((contentJson: any, contentText: string, title: string, metadata: any) => void) | null>(null);
 
   // Handle command palette close - restore focus to editor
   const handleCommandPaletteClose = useCallback(() => {
@@ -391,7 +403,7 @@ export default function ManuscriptEditor({
     }
   }, [manuscriptId]);
 
-  // Handle ghost text acceptance - uses setContent directly to avoid circular dependency
+  // Handle ghost text acceptance - uses ref to access queueSave to avoid circular dependency
   const handleGhostTextAccept = useCallback((suggestion: string) => {
     if (!editor) return;
 
@@ -405,17 +417,19 @@ export default function ManuscriptEditor({
     setContent(newContent);
     setLocalContent(newContent);
     
-    // Trigger autosave immediately for accepted ghost text
-    queueSave(
-      newJson,
-      newContent,
-      title,
-      metadata
-    );
+    // Trigger autosave immediately for accepted ghost text using ref
+    if (queueSaveRef.current) {
+      queueSaveRef.current(
+        newJson,
+        newContent,
+        title,
+        metadata
+      );
+    }
 
     // Move cursor to end of inserted text is handled by insertContent
     setCursorPosition(editor.state.selection.to);
-  }, [editor, title, metadata, queueSave]);
+  }, [editor, title, metadata]);
 
   // Initialize Ghost Text
   const ghostText = useGhostText(content, cursorPosition, {
@@ -459,6 +473,11 @@ export default function ManuscriptEditor({
       setShowConflictModal(true);
     },
   });
+  
+  // Update queueSave ref whenever queueSave changes
+  useEffect(() => {
+    queueSaveRef.current = queueSave;
+  }, [queueSave]);
 
   // Handle conflict resolution
   const handleConflictResolve = useCallback(async (action: "overwrite" | "reload" | "merge") => {
@@ -986,18 +1005,19 @@ export default function ManuscriptEditor({
         </div>
       )}
 
-      {/* Header with title and status */}
-      <div className={`flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 transition-all duration-300 ${zenMode.isActive ? 'opacity-0 h-0 overflow-hidden py-0 border-0' : ''}`}>
-        <div className="flex-1">
+      {/* Header with title and status - responsive layout */}
+      <div className={`flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 bg-white px-4 md:px-6 py-3 md:py-4 transition-all duration-300 ${zenMode.isActive ? 'opacity-0 h-0 overflow-hidden py-0 border-0' : ''}`}>
+        <div className="flex-1 min-w-0 mb-2 md:mb-0">
           <input
             type="text"
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            className="w-full border border-transparent bg-transparent text-2xl font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-100 focus:border-indigo-200 hover:border-slate-200 hover:bg-slate-50/50 rounded-lg px-3 -ml-3 transition-all duration-200 cursor-text"
+            className="w-full border border-transparent bg-transparent text-xl md:text-2xl font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-100 focus:border-indigo-200 hover:border-slate-200 hover:bg-slate-50/50 rounded-lg px-2 md:px-3 -ml-2 md:-ml-3 transition-all duration-200 cursor-text"
             placeholder="Untitled Manuscript"
           />
         </div>
-        <div className="flex items-center gap-4">
+        {/* Scrollable toolbar on mobile */}
+        <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
            {/* ... (Export buttons and other controls remain same) ... */}
           <button
             onClick={() => setShowPublishingModal(true)}
@@ -1128,7 +1148,46 @@ export default function ManuscriptEditor({
 
       {/* Main content area with Binder sidebar and Editor */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Binder Sidebar - hidden in Zen mode */}
+        {/* Mobile Binder Toggle Button - visible only on mobile when not in Zen mode */}
+        {!zenMode.isActive && (
+          <button
+            onClick={() => setIsMobileBinderOpen(true)}
+            className="fixed bottom-4 left-4 z-40 md:hidden flex items-center justify-center h-12 w-12 rounded-full bg-slate-800 text-white shadow-lg hover:bg-slate-700 transition-colors"
+            title="Open Binder"
+            aria-label="Open chapter navigation"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Mobile Binder Sheet Overlay */}
+        <Sheet open={isMobileBinderOpen} onOpenChange={setIsMobileBinderOpen}>
+          <SheetContent side="left" className="w-[280px] p-0 overflow-hidden">
+            <SheetHeader className="p-4 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm">
+              <SheetTitle className="text-xs font-bold text-slate-500 uppercase tracking-widest font-mono">Binder</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto h-[calc(100vh-80px)]">
+              <Binder
+                content={content}
+                issues={consistencyCheckStatus.report?.issues}
+                onChapterClick={(chapter) => {
+                  handleChapterClick(chapter);
+                  setIsMobileBinderOpen(false); // Close sheet after navigation
+                }}
+                onBadgeClick={(chapterIndex) => {
+                  setSelectedChapterForReport(chapterIndex);
+                  setShowReportViewer(true);
+                  setIsMobileBinderOpen(false);
+                }}
+                className="w-full border-0" // Full width, no border in sheet
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Desktop Binder Sidebar - hidden on mobile and in Zen mode */}
         {!zenMode.isActive && (
           <Binder
             content={content}
@@ -1138,13 +1197,13 @@ export default function ManuscriptEditor({
               setSelectedChapterForReport(chapterIndex);
               setShowReportViewer(true);
             }}
-            className="hidden md:block" // Hide on mobile by default
+            className="hidden md:block" // Hide on mobile, show on tablet+
           />
         )}
 
-      {/* Editor area - distraction-free */}
+      {/* Editor area - distraction-free, responsive padding */}
       <div className={`flex-1 overflow-auto transition-colors duration-300 ${zenMode.isActive ? 'bg-[#FDF7E9]' : 'bg-slate-50'}`}>
-          <div className={`mx-auto px-8 py-12 transition-all duration-300 ${zenMode.isActive ? 'max-w-2xl' : 'max-w-3xl'}`}>
+          <div className={`mx-auto px-4 py-6 md:px-8 md:py-12 transition-all duration-300 ${zenMode.isActive ? 'max-w-2xl' : 'max-w-3xl'}`}>
            {/* AI Suggestion (if available) - Positioning might need adjustment for Tiptap integration */}
           {suggestion && (
             <AISuggestion
@@ -1273,12 +1332,12 @@ export default function ManuscriptEditor({
         />
       </div>
       
-       {/* Footer */}
-      <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3 text-sm text-slate-500">
+       {/* Footer - responsive */}
+      <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 md:px-6 py-2 md:py-3 text-sm text-slate-500">
         <div>
           {wordCount.toLocaleString()} words
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <span>
             <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">⌘K</kbd> commands
           </span>

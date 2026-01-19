@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 import { Resend } from "resend";
 import { z } from "zod";
+import { createClient } from "@/utils/supabase/server";
 
-// Initialize Supabase Client (Anon)
-// We use Anon key so RLS policies are enforced (must be public manuscript)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+export const runtime = "nodejs";
 
 // Initialize Resend
 const resend = process.env.RESEND_API_KEY
@@ -28,7 +24,13 @@ const subscribeSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "anonymous";
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    const ip = forwardedFor?.split(",")[0]?.trim() || "anonymous";
     const body = await req.json();
     const result = subscribeSchema.safeParse(body);
 
@@ -43,7 +45,15 @@ export async function POST(req: NextRequest) {
 
     // 1. Honeypot check
     if (_hp) {
-      console.warn(`Honeypot triggered by ${ip} for email ${email}`);
+      const emailHash = crypto
+        .createHash("sha256")
+        .update(email.trim().toLowerCase())
+        .digest("hex");
+      console.warn("Honeypot triggered", {
+        ip,
+        emailHash,
+        userId: user?.id ?? null,
+      });
       return NextResponse.json({ success: true }); // Silent fail for bots
     }
 

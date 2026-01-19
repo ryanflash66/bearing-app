@@ -1,69 +1,43 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-
-import { ExportSettings, defaultExportSettings, FontFace, PageSize } from "@/lib/export-types";
-
 import { useCallback } from "react";
+import React, { createContext, useContext, useState, type ReactNode } from "react";
 
+import { ExportSettings, defaultExportSettings } from "@/lib/export-types";
 
+type ExportContextSettings = ExportSettings & {
+  isLivePreview: boolean;
+  viewMode: "pdf" | "epub";
+};
 
 interface ExportContextType {
-
-  settings: ExportSettings & { isLivePreview: boolean; viewMode: "pdf" | "epub" };
-
-  updateSettings: (updates: Partial<ExportSettings & { isLivePreview: boolean; viewMode: "pdf" | "epub" }>) => void;
-
+  settings: ExportContextSettings;
+  updateSettings: (updates: Partial<ExportContextSettings>) => void;
   toggleLivePreview: () => void;
-
 }
-
-
 
 const ExportContext = createContext<ExportContextType | undefined>(undefined);
 
-
-
 export function ExportProvider({ children }: { children: ReactNode }) {
-
-  const [settings, setSettings] = useState<ExportSettings & { isLivePreview: boolean; viewMode: "pdf" | "epub" }> ({
-
+  const [settings, setSettings] = useState<ExportContextSettings>({
     ...defaultExportSettings,
-
     isLivePreview: false,
-
     viewMode: "pdf",
-
   });
 
-
-
-  const updateSettings = useCallback((updates: Partial<ExportSettings & { isLivePreview: boolean; viewMode: "pdf" | "epub" }>) => {
-
+  const updateSettings = useCallback((updates: Partial<ExportContextSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
-
   }, []);
-
-
 
   const toggleLivePreview = useCallback(() => {
-
     setSettings((prev) => ({ ...prev, isLivePreview: !prev.isLivePreview }));
-
   }, []);
 
-
-
   return (
-
     <ExportContext.Provider value={{ settings, updateSettings, toggleLivePreview }}>
-
       {children}
-
     </ExportContext.Provider>
-
   );
-
 }
 
 export function useExport() {

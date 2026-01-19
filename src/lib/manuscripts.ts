@@ -6,6 +6,15 @@ export interface Manuscript {
   account_id: string;
   owner_user_id: string;
   title: string;
+  slug: string | null;
+  is_public: boolean;
+  subtitle: string | null;
+  synopsis: string | null;
+  cover_image_url: string | null;
+  theme_config: {
+    theme?: string | null;
+    accent_color?: string | null;
+  } | null;
   status: "draft" | "in_review" | "ready" | "published" | "archived";
   content_json: Record<string, unknown>;
   content_text: string;

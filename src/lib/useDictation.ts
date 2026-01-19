@@ -1,5 +1,45 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
+// Minimal Web Speech API typings (not always present in TS DOM lib)
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+interface SpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort?: () => void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+}
+
 interface UseDictationProps {
   onResult: (text: string, isFinal: boolean) => void;
   lang?: string;
@@ -15,16 +55,23 @@ export function useDictation({
   const [isSupported, setIsSupported] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const onResultRef = useRef(onResult);
+
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
 
   useEffect(() => {
     // Check browser support
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionCtor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition })
+        .SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognition }).webkitSpeechRecognition;
 
-    if (SpeechRecognition) {
+    if (SpeechRecognitionCtor) {
       setIsSupported(true);
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionCtor();
       recognition.continuous = continuous;
       recognition.interimResults = true;
       recognition.lang = lang;
@@ -38,13 +85,13 @@ export function useDictation({
         setIsListening(false);
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error("Dictation error:", event.error);
         setError(event.error);
         setIsListening(false);
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = "";
         let finalTranscript = "";
 
@@ -58,13 +105,35 @@ export function useDictation({
         }
 
         if (finalTranscript || interimTranscript) {
-          onResult(finalTranscript || interimTranscript, !!finalTranscript);
+          onResultRef.current(
+            finalTranscript || interimTranscript,
+            !!finalTranscript
+          );
         }
       };
 
       recognitionRef.current = recognition;
     }
-  }, [continuous, lang, onResult]);
+
+    return () => {
+      const recognition = recognitionRef.current;
+      if (!recognition) return;
+
+      try {
+        // Prefer abort if available to immediately end recognition.
+        recognition.abort?.();
+        recognition.stop();
+      } catch {
+        // Ignore cleanup errors (browser-dependent).
+      }
+
+      recognition.onstart = null;
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.onresult = null;
+      recognitionRef.current = null;
+    };
+  }, [continuous, lang]);
 
   const start = useCallback(() => {
     if (recognitionRef.current && !isListening) {

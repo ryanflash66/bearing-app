@@ -1,4 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+"use client";
+
+import DOMPurify from "dompurify";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useExport } from "./ExportContext";
 import { PageSize } from "@/lib/export-types";
 
@@ -9,14 +12,27 @@ interface ExportPreviewProps {
 export default function ExportPreview({ content }: ExportPreviewProps) {
   const { settings } = useExport();
   const previewRef = useRef<HTMLDivElement>(null);
+  const epubContentRef = useRef<HTMLDivElement>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [overflowWarnings, setOverflowWarnings] = useState<string[]>([]);
+  const safeContentFragment = useMemo(
+    () => DOMPurify.sanitize(content, { RETURN_DOM_FRAGMENT: true }) as unknown as DocumentFragment,
+    [content]
+  );
+
+  // Populate EPUB preview without dangerouslySetInnerHTML/innerHTML.
+  useEffect(() => {
+    if (settings.viewMode !== "epub") return;
+    if (!epubContentRef.current) return;
+
+    epubContentRef.current.replaceChildren(safeContentFragment.cloneNode(true));
+  }, [safeContentFragment, settings.viewMode]);
 
   // Re-render Paged.js when content or critical settings change
   useEffect(() => {
     // Only run Paged.js if in PDF mode
     if (settings.viewMode !== "pdf") return;
-    if (!previewRef.current || !content) return;
+    if (!previewRef.current) return;
 
     let isMounted = true;
 
@@ -65,11 +81,13 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
         `;
         
         const sourceContainer = document.createElement("div");
-        sourceContainer.innerHTML = content;
+        // Avoid assigning user content via innerHTML.
+        // Use DOMPurify DOM fragment and clone it for each render.
+        sourceContainer.appendChild(safeContentFragment.cloneNode(true));
         sourceContainer.appendChild(style);
 
         // We need to wait for PagedJS
-        await paged.preview(sourceContainer.innerHTML, ["/print.css"], previewRef.current);
+        await paged.preview(sourceContainer, ["/print.css"], previewRef.current);
         
         // AC 3.3: Warning if images or tables exceed page margins
         if (isMounted && previewRef.current) {
@@ -103,7 +121,7 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
         isMounted = false;
         clearTimeout(timer);
     };
-  }, [content, settings]);
+  }, [safeContentFragment, settings]);
 
   if (settings.viewMode === "epub") {
       return (
@@ -122,7 +140,7 @@ export default function ExportPreview({ content }: ExportPreviewProps) {
                         lineHeight: settings.lineHeight
                     }}
                 >
-                    <div dangerouslySetInnerHTML={{ __html: content }} />
+                    <div ref={epubContentRef} />
                 </div>
              </div>
          </div>
