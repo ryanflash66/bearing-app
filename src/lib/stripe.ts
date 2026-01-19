@@ -17,8 +17,10 @@ export function getStripe(): Stripe {
     console.log("Stripe key prefix:", keyPrefix, "length:", secretKey.length);
     
     // Validate key format - must be a secret key (sk_) or restricted key (rk_), not publishable (pk_)
+    // Use case-insensitive comparison since keys might be copy-pasted with wrong case
+    const keyLower = secretKey.toLowerCase();
     const validPrefixes = ["sk_test_", "sk_live_", "rk_test_", "rk_live_"];
-    const hasValidPrefix = validPrefixes.some(prefix => secretKey.startsWith(prefix));
+    const hasValidPrefix = validPrefixes.some(prefix => keyLower.startsWith(prefix));
     
     if (!hasValidPrefix) {
       console.error("STRIPE_SECRET_KEY has invalid format. Prefix:", keyPrefix, "- expected sk_test_, sk_live_, rk_test_, or rk_live_");
