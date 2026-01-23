@@ -12,12 +12,15 @@ export interface AutosaveState {
   error: string | null;
   pendingChanges: boolean;
   retryCount: number;
+  retryingIn: number | null;       // Seconds until next retry (null if not waiting)
+  maxRetriesExceeded: boolean;     // True when manual action is required
 }
 
 export interface AutosaveOptions {
   debounceMs?: number;        // Default 5000ms (5 seconds per AC 2.1.1)
   maxRetries?: number;        // Default 5 retries
-  retryDelayMs?: number;      // Default 2000ms
+  retryDelayMs?: number;      // Default 2000ms (base delay for exponential backoff)
+  maxRetryDelay?: number;     // Default 30000ms (cap for exponential backoff)
   versionThreshold?: number;  // Default 5 autosaves before creating version snapshot
   initialTitle?: string;
   onSaveSuccess?: () => void;
@@ -106,11 +109,63 @@ async function getAllPendingFromIndexedDB(): Promise<QueuedSave[]> {
 }
 
 /**
+ * Structured error logging for autosave failures (AC 8.2.4)
+ * Logs actionable error info without PII or manuscript content
+ */
+function logSaveError(
+  manuscriptId: string,
+  errorType: "network" | "api" | "conflict" | "timeout" | "unknown",
+  statusCode: number | null,
+  retryCount: number,
+  message: string
+): void {
+  const logEntry = {
+    event: "autosave_error",
+    manuscriptId,
+    errorType,
+    statusCode,
+    retryCount,
+    timestamp: new Date().toISOString(),
+    message: message.substring(0, 200), // Truncate to prevent PII leakage
+  };
+
+  console.error("[Autosave]", JSON.stringify(logEntry));
+
+  // Future: Send to server-side logging if analytics endpoint exists
+}
+
+/**
+ * Classify error type from error message/response
+ */
+function classifyError(error: string): { type: "network" | "api" | "conflict" | "timeout" | "unknown"; statusCode: number | null } {
+  const lowerError = error.toLowerCase();
+
+  if (lowerError.includes("network") || lowerError.includes("fetch") || lowerError.includes("connection")) {
+    return { type: "network", statusCode: null };
+  }
+  if (lowerError.includes("timeout")) {
+    return { type: "timeout", statusCode: null };
+  }
+  if (lowerError.includes("conflict")) {
+    return { type: "conflict", statusCode: 409 };
+  }
+
+  // Try to extract status code
+  const statusMatch = error.match(/\b([45]\d{2})\b/);
+  if (statusMatch) {
+    return { type: "api", statusCode: parseInt(statusMatch[1], 10) };
+  }
+
+  return { type: "unknown", statusCode: null };
+}
+
+/**
  * useAutosave hook - implements autosave with offline support
- * 
+ *
  * AC 2.1.1: Autosave at max 5-second interval without blocking UI
  * AC 2.1.2: Network drop recovery with no data loss
  * AC 2.1.3: Autosave begins immediately when editor loads
+ * AC 8.2.1: Exponential backoff for retries
  */
 export function useAutosave(
   manuscriptId: string,
@@ -120,7 +175,8 @@ export function useAutosave(
   const {
     debounceMs = 5000,          // 5 seconds per AC 2.1.1
     maxRetries = 5,
-    retryDelayMs = 2000,
+    retryDelayMs = 2000,        // Base delay for exponential backoff
+    maxRetryDelay = 30000,      // Cap at 30 seconds per AC 8.2.1
     versionThreshold = 5,       // Create version snapshot every 5 autosaves
     onSaveSuccess,
     onSaveError,
@@ -133,6 +189,8 @@ export function useAutosave(
     error: null,
     pendingChanges: false,
     retryCount: 0,
+    retryingIn: null,
+    maxRetriesExceeded: false,
   });
 
   // Refs for latest values (avoid stale closures)
@@ -142,6 +200,7 @@ export function useAutosave(
   const expectedUpdatedAtRef = useRef<string>(initialUpdatedAt);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null); // For countdown display
   const isOnlineRef = useRef<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
   const autosaveCountRef = useRef<number>(0); // Track autosaves for version threshold (0 means first save of session)
 
@@ -160,7 +219,8 @@ export function useAutosave(
     onConflictRef.current = onConflict;
   }, [onSaveSuccess, onSaveError, onConflict]);
 
-
+  // Forward declaration/Ref for executeSave to allow recursion without stale closures
+  const executeSaveRef = useRef<any>(null);
 
   // Execute the actual save
   const executeSave = useCallback(async (
@@ -231,23 +291,40 @@ export function useAutosave(
                 error: null,
                 pendingChanges: false,
                 retryCount: 0,
+                retryingIn: null,
+                maxRetriesExceeded: false,
             });
             return true;
         }
 
-        setState((prev) => ({ ...prev, status: "conflict", error: result.error }));
+        // Log conflict error
+        logSaveError(manuscriptId, "conflict", 409, state.retryCount, result.error);
+        setState((prev) => ({ ...prev, status: "conflict", error: result.error, retryingIn: null }));
         onConflictRef.current?.(result.serverState);
         return false;
       }
 
-      // Retry logic
+      // Log the save error with structured data (AC 8.2.4)
+      const { type: errorType, statusCode } = classifyError(result.error);
+      logSaveError(manuscriptId, errorType, statusCode, state.retryCount + 1, result.error);
+
+      // Retry logic with exponential backoff (AC 8.2.1)
       const currentRetry = state.retryCount + 1;
       if (currentRetry <= maxRetries) {
+        // Calculate exponential backoff delay: base * 2^(retry-1), capped at maxRetryDelay
+        const delay = Math.min(
+          retryDelayMs * Math.pow(2, currentRetry - 1),
+          maxRetryDelay
+        );
+        const delaySeconds = Math.ceil(delay / 1000);
+
         setState((prev) => ({
           ...prev,
           status: "error",
           error: result.error,
           retryCount: currentRetry,
+          retryingIn: delaySeconds,
+          maxRetriesExceeded: false,
         }));
 
         // Store in IndexedDB as backup
@@ -259,19 +336,44 @@ export function useAutosave(
           metadata,
         });
 
-        // Schedule retry
+        // Clear any existing countdown interval
+        if (retryCountdownRef.current) {
+          clearInterval(retryCountdownRef.current);
+        }
+
+        // Start countdown display (AC 8.2.1 - show "Retrying in Xs...")
+        let countdownSeconds = delaySeconds;
+        retryCountdownRef.current = setInterval(() => {
+          countdownSeconds -= 1;
+          if (countdownSeconds > 0) {
+            setState((prev) => ({ ...prev, retryingIn: countdownSeconds }));
+          } else {
+            if (retryCountdownRef.current) {
+              clearInterval(retryCountdownRef.current);
+              retryCountdownRef.current = null;
+            }
+          }
+        }, 1000);
+
+        // Schedule retry with exponential backoff
         retryTimerRef.current = setTimeout(() => {
-          executeSave(contentJson, contentText, expectedUpdatedAt, title, metadata);
-        }, retryDelayMs * currentRetry); // Exponential backoff
+          if (retryCountdownRef.current) {
+            clearInterval(retryCountdownRef.current);
+            retryCountdownRef.current = null;
+          }
+          executeSaveRef.current?.(contentJson, contentText, expectedUpdatedAt, title, metadata);
+        }, delay);
 
         return false;
       }
 
-      // Max retries exceeded
+      // Max retries exceeded (AC 8.2.2, 8.2.5)
       setState((prev) => ({
         ...prev,
         status: "error",
         error: `Save failed after ${maxRetries} retries: ${result.error}`,
+        retryingIn: null,
+        maxRetriesExceeded: true,
       }));
       onSaveErrorRef.current?.(result.error);
       return false;
@@ -303,17 +405,30 @@ export function useAutosave(
       autosaveCountRef.current += 1;
     }
 
+    // Clear countdown interval on success
+    if (retryCountdownRef.current) {
+      clearInterval(retryCountdownRef.current);
+      retryCountdownRef.current = null;
+    }
+
     setState({
       status: "saved",
       lastSavedAt: new Date(),
       error: null,
       pendingChanges: false,
       retryCount: 0,
+      retryingIn: null,
+      maxRetriesExceeded: false,
     });
 
     onSaveSuccessRef.current?.();
     return true;
-  }, [manuscriptId, maxRetries, retryDelayMs, versionThreshold, state.retryCount]);
+  }, [manuscriptId, maxRetries, retryDelayMs, maxRetryDelay, versionThreshold, state.retryCount]);
+
+  // Keep executeSaveRef in sync
+  useEffect(() => {
+    executeSaveRef.current = executeSave;
+  }, [executeSave]);
 
   // Sync pending saves from IndexedDB or LocalStorage (called on mount and when coming online)
   const syncPendingSaves = useCallback(async () => {
@@ -445,6 +560,9 @@ export function useAutosave(
       }
       if (retryTimerRef.current) {
         clearTimeout(retryTimerRef.current);
+      }
+      if (retryCountdownRef.current) {
+        clearInterval(retryCountdownRef.current);
       }
     };
   }, []);
