@@ -97,11 +97,11 @@ so that I am never stuck in an endless "Save failed" loop and can always recover
   - [x] Ensure no manuscript content or user data is logged
 
 - [x] **Task 5: Add Tests for Retry Behavior** (AC: 8.2.1, 8.2.2, 8.2.3) ✅
-  - [x] Unit test: verify exponential backoff delays (2s, 4s, 8s, 16s, capped) - skipped due to fake timer complexity
+  - [x] Unit test: verify exponential backoff delays (2s, 4s, 8s, 16s, capped)
   - [x] Unit test: verify manual save clears error state and resumes autosave
   - [x] Unit test: verify retryingIn field shows countdown value
   - [x] Unit test: verify structured error logging without PII
-  - [x] Test file location: `tests/lib/useAutosave.test.ts` (6 passing, 4 skipped)
+  - [x] Test file location: `tests/lib/useAutosave.test.ts` (10 passing)
 
 ## Dev Notes
 
@@ -390,10 +390,24 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 - Exponential backoff implemented with 2s base, capped at 30s
 - Manual "Save Now" button added with loading state
 - Structured error logging without PII
-- 4 tests skipped due to Jest fake timer + async IndexedDB complexity
+- Fixed test suite: unskipped tests and corrected timer mocking logic for async hooks
+- Updated useAutosave to use ref for recursive executeSave to prevent stale closures
 
 ### File List
 
 - `src/lib/useAutosave.ts` - Core autosave hook with exponential backoff, retry logic, structured logging
 - `src/components/manuscripts/ManuscriptEditor.tsx` - AutosaveIndicator component with Save Now button
-- `tests/lib/useAutosave.test.ts` - Unit tests for autosave hook (6 passing, 4 skipped)
+- `tests/lib/useAutosave.test.ts` - Unit tests for autosave hook (10 passing)
+
+## Traceability & Quality Gate (2026-01-22)
+
+**Decision**: ✅ PASS
+
+### Coverage Summary
+- **P0 Coverage**: 100% (Backoff, Manual Save, Recovery)
+- **P1 Coverage**: 100% (Logging, Persistence, State)
+- **Test Pass Rate**: 100% (10/10 tests)
+
+### Artifacts
+- [Traceability Matrix](..\_bmad-output\traceability-matrix-story-8.2.md)
+- [Gate Decision](..\_bmad-output\gate-decision-story-8.2.md)

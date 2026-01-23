@@ -15,7 +15,8 @@
 | `epic-hardening.md` | Stabilization | Sprint 0.5 | H.1-H.5 (5) | 60h | $0 |
 | `prd-epic-6.md` | Blog & Content | Weeks 17-18 | 6.1-6.3 (3) | 60h | $0 |
 | `prd-epic-7.md` | Publication & Beta | Weeks 19-20 | 7.1-7.4 (4) | 80h | $0 |
-| **TOTAL** | — | 24 weeks | 27 stories | **582h** | **$1.45/month** |
+| `prd-epic-8.md` | Client Feedback & Bearing TODO | Post–Epic 7 | 8.1-8.22 (22) | TBD | TBD |
+| **TOTAL** | — | 24+ weeks | 49+ stories | **582h+** | **$1.45/month** |
 
 ---
 
@@ -210,6 +211,9 @@ All 4 sharded epic files are ready for download from `docs/`:
 
 Each file is optimized to fit in a single LLM context window for story generation and architecture work.
 
+### Epic 8 (Client Feedback)
+- **`prd-epic-8.md`** — Isolates all `bearing-todo.md` items: P0 bugs (8.1–8.4), P1 features (8.5–8.20), P2 polish (8.21–8.22). Source: client walkthrough Jan 2026. Use with `_bmad-output/bearing-todo-plan.md` and `_bmad-output/p0-create-story-inputs.md`.
+
 ---
 
-**Next Action:** Proceed to Step 2.3 (Architect Phase) with Epic 1 architecture design using prd-epic-1.md as context.
+**Next Action:** Proceed to Step 2.3 (Architect Phase) with Epic 1 architecture design using prd-epic-1.md as context. For client-feedback work, use prd-epic-8.md and bearing-todo-plan.md.

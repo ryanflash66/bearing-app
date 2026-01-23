@@ -7,7 +7,7 @@
  * AC 2.4.4: Selected version is used when versionId is provided
  */
 
-import { exportManuscript, generatePDF, generateDOCX, getManuscriptForExport } from "@/lib/export";
+import { exportManuscript, generatePDF, generateDOCX, getManuscriptForExport, generateContentDisposition } from "@/lib/export";
 import { createClient } from "@/utils/supabase/server";
 import { getManuscript } from "@/lib/manuscripts";
 import { getVersion } from "@/lib/manuscriptVersions";
@@ -319,6 +319,46 @@ describe("Manuscript Export (Story 2.4)", () => {
       expect(result.error).toBe("Manuscript not found");
       expect(result.buffer.length).toBe(0);
       expect(result.filename).toBe("");
+    });
+  });
+
+  describe("AC 8.1.4: Content-Disposition Header Generation", () => {
+    it("should generate RFC 5987-compliant header for ASCII filename", () => {
+      const header = generateContentDisposition("my-manuscript.pdf");
+      
+      expect(header).toContain('attachment');
+      expect(header).toContain('filename="my-manuscript.pdf"');
+      expect(header).toContain("filename*=UTF-8''my-manuscript.pdf");
+    });
+
+    it("should encode spaces in filename*", () => {
+      const header = generateContentDisposition("My Book (Final).pdf");
+      
+      // filename* should have encoded spaces, parentheses are allowed per RFC 3986
+      expect(header).toContain("filename*=UTF-8''My%20Book%20(Final).pdf");
+    });
+
+    it("should handle Unicode characters", () => {
+      const header = generateContentDisposition("中文書名.pdf");
+      
+      // ASCII fallback should replace Unicode with underscore
+      expect(header).toContain('filename="____.pdf"');
+      // filename* should have URL-encoded Chinese characters
+      expect(header).toContain("filename*=UTF-8''%E4%B8%AD%E6%96%87%E6%9B%B8%E5%90%8D.pdf");
+    });
+
+    it("should escape quotes in ASCII fallback", () => {
+      const header = generateContentDisposition('Book "Special".pdf');
+      
+      // Quotes should be replaced in ASCII fallback
+      expect(header).toMatch(/filename="Book _Special_.pdf"/);
+    });
+
+    it("should encode single quotes in filename*", () => {
+      const header = generateContentDisposition("John's Book.pdf");
+      
+      // Single quote should be encoded as %27
+      expect(header).toContain("%27");
     });
   });
 

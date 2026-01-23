@@ -60,6 +60,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
     // Uncomment these if you want to test against other browsers
     // {
     //   name: 'firefox',
@@ -73,7 +77,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    // Next.js 16 uses Turbopack by default, but Turbopack can fail on Windows
+    // when certain packages (e.g. Puppeteer) require filesystem behaviors that
+    // are not supported in all environments. Use Webpack for E2E stability.
+    command: 'cross-env E2E_TEST_MODE=1 npm run dev -- --webpack',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

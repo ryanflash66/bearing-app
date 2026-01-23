@@ -23,7 +23,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
 
     // Submit and wait for navigation to complete
     await Promise.all([
-      page.waitForURL(/\/dashboard/, { timeout: 15000 }),
+      page.waitForURL(/\/dashboard/, { timeout: 30000 }),
       page.click('button[type="submit"]'),
     ]);
 

@@ -1,3 +1,9 @@
+---
+stepsCompleted: [1]
+agents_loaded: true
+party_active: true
+---
+
 # Step 1: Agent Loading and Party Mode Initialization
 
 ## MANDATORY EXECUTION RULES (READ FIRST):

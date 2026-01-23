@@ -10,6 +10,32 @@ import { ConsistencyReport } from "./gemini";
 import { tiptapToDocx } from "./tiptap-convert";
 import { ExportSettings, defaultExportSettings, PageSize } from "./export-types";
 
+/**
+ * Generate RFC 5987-compliant Content-Disposition header value
+ * 
+ * Provides both ASCII fallback (filename) and UTF-8 encoded (filename*)
+ * for maximum browser compatibility.
+ * 
+ * @param filename - The filename to encode
+ * @returns Content-Disposition header value
+ */
+export function generateContentDisposition(filename: string): string {
+  // Create ASCII-safe fallback by replacing non-ASCII with underscore
+  const asciiFallback = filename
+    .replace(/[^\x20-\x7E]/g, "_") // Replace non-printable ASCII with underscore
+    .replace(/["\\]/g, "_"); // Replace quotes and backslash
+  
+  // RFC 5987 encoding: percent-encode non-ASCII and special chars
+  // Use encodeURIComponent and then convert %20 back to space for readability
+  // Note: We need to encode more characters than encodeURIComponent does by default
+  const rfc5987Encoded = encodeURIComponent(filename)
+    .replace(/'/g, "%27"); // Single quotes need encoding in RFC 5987
+  
+  // Return both formats for maximum compatibility
+  // Some older browsers only understand filename="...", newer ones prefer filename*
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${rfc5987Encoded}`;
+}
+
 function escapeHtml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
