@@ -19,7 +19,7 @@ export default async function SupportPage() {
 
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
-  const isAdmin = profile?.role === "admin";
+
   const isSuperAdmin = profile?.role === "super_admin";
   const isSupportAgent = profile?.role === "support_agent";
   const isAgent = isSuperAdmin || isSupportAgent;
