@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { getServiceSupabaseClient } from "@/lib/supabase-admin";
 
+export const dynamic = 'force-dynamic';
+
 type OkResponse =
   | { ok: true; role: "super_admin"; swappedFrom: string | null; currentSuperAdminAuthId: string | null }
   | { ok: true; role: "user"; restored?: string; currentSuperAdminAuthId: string | null };
