@@ -30,6 +30,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
+export const EDITOR_CONTENT_WRAPPER_CLASSNAME =
+  "mx-auto px-4 py-6 md:px-8 md:py-12 max-w-3xl";
 
 interface ManuscriptEditorProps {
   manuscriptId: string;
@@ -1262,7 +1264,7 @@ export default function ManuscriptEditor({
 
       {/* Editor area - distraction-free, responsive padding */}
       <div className="flex-1 overflow-auto bg-slate-50">
-          <div className="mx-auto px-4 py-6 md:px-8 md:py-12 max-w-3xl">
+          <div className={EDITOR_CONTENT_WRAPPER_CLASSNAME}>
            {/* AI Suggestion (if available) - Positioning might need adjustment for Tiptap integration */}
           {suggestion && (
             <AISuggestion

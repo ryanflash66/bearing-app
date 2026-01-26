@@ -73,27 +73,26 @@ describe("Dashboard", () => {
       expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
 
-    it("shows Admin nav item for admin users", async () => {
+    it("shows Admin badge and admin dashboard link for super_admin users", async () => {
       const DashboardLayout = (
         await import("@/components/layout/DashboardLayout")
       ).default;
 
       render(
         <DashboardLayout
-          user={{ email: "admin@example.com", displayName: "Admin User", role: "admin" }}
+          user={{ email: "superadmin@example.com", displayName: "Super Admin", role: "super_admin" }}
         >
           <div>Dashboard content</div>
         </DashboardLayout>
       );
 
-      // Admin badge should be visible for admin users
-      const adminElements = screen.getAllByText("Admin");
-      expect(adminElements.length).toBeGreaterThanOrEqual(1);
+      // Admin badge should be visible for super admins (role === "super_admin")
+      expect(screen.getByText("Admin")).toBeInTheDocument();
 
-      // For admin users, Dashboard link redirects to admin dashboard
+      // For super admins, Dashboard link redirects to super admin dashboard
       const dashboardLink = screen.getByRole("link", { name: /Dashboard/i });
       expect(dashboardLink).toBeInTheDocument();
-      expect(dashboardLink).toHaveAttribute("href", "/dashboard/admin");
+      expect(dashboardLink).toHaveAttribute("href", "/dashboard/admin/super");
     });
 
     it("displays user email and display name", async () => {

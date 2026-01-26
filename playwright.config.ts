@@ -8,6 +8,12 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 const PORT = 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
+// E2E-only helper secret (used only when E2E_TEST_MODE=1).
+// In CI, set E2E_INTERNAL_SECRET explicitly. Locally, we default to a non-empty value
+// to keep E2E flows runnable without extra setup. The endpoint is also guarded against production.
+const E2E_INTERNAL_SECRET = process.env.E2E_INTERNAL_SECRET || "playwright-local-e2e";
+process.env.E2E_INTERNAL_SECRET = E2E_INTERNAL_SECRET;
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results',
@@ -77,10 +83,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    // Next.js 16 uses Turbopack by default, but Turbopack can fail on Windows
-    // when certain packages (e.g. Puppeteer) require filesystem behaviors that
-    // are not supported in all environments. Use Webpack for E2E stability.
-    command: 'cross-env E2E_TEST_MODE=1 npm run dev -- --webpack',
+    // Next.js 16 uses Turbopack by default.
+    // On Windows + network drives, forcing webpack can be unreliable (observed intermittent
+    // `.next/dev/server/*-manifest` file open errors). Prefer the default dev server.
+    // We also enable E2E_TEST_MODE for gated, test-only helper endpoints.
+    command: `cross-env E2E_TEST_MODE=1 E2E_INTERNAL_SECRET=${E2E_INTERNAL_SECRET} npm run dev`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

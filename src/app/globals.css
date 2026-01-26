@@ -64,6 +64,15 @@ input, textarea, select {
   animation: fade-in 0.3s ease-out forwards;
 }
 
+/* Utility: Hide scrollbars while keeping scrollable behavior */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
 /* Ghost Text Styling (AC 2.3.6) */
 /* Ghost Text Styling (AC 2.3.6 & H.5.2) */
 .ghost-text-container {

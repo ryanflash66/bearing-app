@@ -114,11 +114,10 @@ test.describe('Story 5.8 — Mobile Responsive Layout', () => {
       name: /open chapter navigation/i,
     }).first();
     await expect(binderFAB).toBeVisible();
-    
-    // Ensure stability before interaction
-    await authenticatedPage.waitForTimeout(1000);
 
-    await binderFAB.click();
+    // In dev, Next.js Dev Tools can render a floating button that overlaps the FAB
+    // and intercepts pointer events. Trigger the click via DOM to avoid z-index interference.
+    await binderFAB.evaluate((el) => (el as HTMLButtonElement).click());
     
     // Wait specifically for the sheet to animate in
     const sheet = authenticatedPage.getByRole('dialog');

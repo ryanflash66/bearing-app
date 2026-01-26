@@ -42,7 +42,7 @@ development_status:
   5-5-cmdk-commander-pattern: done
   5-6-integrate-custom-models: deferred
   5-7-voice-to-text: done
-  5-8-mobile-responsive: review
+  5-8-mobile-responsive: done
   5-9-ai-cover-generator: ready-for-dev
 
   # Epic 6: Blog & Content Platform (In Progress)
@@ -63,7 +63,7 @@ development_status:
   8-1-export-download-fix: done
   8-2-autosave-retry-recovery: done
   8-3-remove-broken-zen-mode: done
-  8-4-admin-login-maintenance-gating: backlog
+  8-4-admin-login-maintenance-gating: review
   8-5-move-2fa-to-settings: backlog
   8-6-publishing-service-request-popup: backlog
   8-7-check-consistency-enhancement: backlog

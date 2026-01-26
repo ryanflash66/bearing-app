@@ -141,11 +141,13 @@ export async function updateSession(request: NextRequest) {
   
   // Allowlist for system routes that must bypass maintenance
   // Use regex for precise matching to avoid prefix collisions (e.g. /auth-debug)
+  // Story 8.4: Added /dashboard/admin as defense-in-depth for admin bypass
   const isBypassedPath = [
     /^\/api\/auth(\/|$)/,      // /api/auth or /api/auth/*
     /^\/auth(\/|$)/,           // /auth or /auth/*
     /^\/api\/webhooks(\/|$)/,  // /api/webhooks or /api/webhooks/*
     /^\/api\/internal(\/|$)/,  // /api/internal or /api/internal/*
+    /^\/dashboard\/admin(\/|$)/, // Story 8.4: Admin routes bypass maintenance (AC 8.4.2)
   ].some(regex => regex.test(pathname));
 
   if (isWriteMethod && !isBypassedPath) {

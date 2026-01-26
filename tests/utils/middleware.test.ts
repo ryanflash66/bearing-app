@@ -108,6 +108,64 @@ describe("Middleware updateSession", () => {
         expect(getMaintenanceStatus).not.toHaveBeenCalled();
     });
 
+    // Story 8.4: Admin route bypass tests
+    it("allows POST request to /dashboard/admin when maintenance is enabled (path-based bypass)", async () => {
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
+
+        mockRequest.nextUrl.pathname = "/dashboard/admin";
+        mockRequest.url = "http://localhost/dashboard/admin";
+        
+        const response = await updateSession(mockRequest as any);
+        expect(NextResponse.next).toHaveBeenCalled();
+        
+        // Should NOT have called getMaintenanceStatus because admin routes are bypassed
+        expect(getMaintenanceStatus).not.toHaveBeenCalled();
+    });
+
+    it("allows POST request to /dashboard/admin/super when maintenance is enabled (path-based bypass)", async () => {
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
+
+        mockRequest.nextUrl.pathname = "/dashboard/admin/super";
+        mockRequest.url = "http://localhost/dashboard/admin/super";
+        
+        const response = await updateSession(mockRequest as any);
+        expect(NextResponse.next).toHaveBeenCalled();
+        
+        // Should NOT have called getMaintenanceStatus because admin routes are bypassed
+        expect(getMaintenanceStatus).not.toHaveBeenCalled();
+    });
+
+    it("allows POST request to /dashboard/admin/super/users when maintenance is enabled (path-based bypass)", async () => {
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
+
+        mockRequest.nextUrl.pathname = "/dashboard/admin/super/users";
+        mockRequest.url = "http://localhost/dashboard/admin/super/users";
+        
+        const response = await updateSession(mockRequest as any);
+        expect(NextResponse.next).toHaveBeenCalled();
+        
+        // Should NOT have called getMaintenanceStatus because admin routes are bypassed
+        expect(getMaintenanceStatus).not.toHaveBeenCalled();
+    });
+
+    it("still blocks POST request to regular dashboard when maintenance is enabled", async () => {
+        (getMaintenanceStatus as jest.Mock).mockResolvedValue({ enabled: true, message: "Maintenance active" });
+        (isSuperAdmin as jest.Mock).mockResolvedValue(false);
+
+        mockRequest.nextUrl.pathname = "/dashboard/manuscripts";
+        mockRequest.url = "http://localhost/dashboard/manuscripts";
+        
+        const response = await updateSession(mockRequest as any);
+        
+        expect(NextResponse.json).toHaveBeenCalledWith(
+            expect.objectContaining({ error: "Maintenance active" }),
+            { status: 503 }
+        );
+    });
+
     it("fails open (allows request) if maintenance check throws error", async () => {
          (getMaintenanceStatus as jest.Mock).mockRejectedValue(new Error("DB Error"));
 
