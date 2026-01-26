@@ -1,5 +1,43 @@
 
 import { test, expect } from './fixtures/auth.fixture';
+import type { Page } from '@playwright/test';
+import fs from 'fs';
+
+// File format validation constants
+const PDF_HEADER = '%PDF-';
+const DOCX_ZIP_HEADER = 'PK\x03\x04';
+const AUTOSAVE_WAIT_MS = 2000; // Wait for autosave to complete (TODO: wait for save indicator)
+
+/**
+ * ============================================================================
+ * EXPORT E2E TESTS - TESTING STRATEGY
+ * ============================================================================
+ * 
+ * This file contains two types of export tests:
+ * 
+ * 1. STANDARD E2E TESTS (with E2E_TEST_MODE=1):
+ *    - Run by default in CI and local development
+ *    - Fast and stable (no actual PDF/DOCX generation)
+ *    - Validate download flow, headers, and API integration
+ *    - Export routes return minimal stubs instead of real files
+ *    
+ * 2. REAL EXPORT TESTS (without E2E_TEST_MODE, tagged @real-export):
+ *    - Run locally on demand or in CI nightly builds
+ *    - Validate actual PDF/DOCX content generation
+ *    - Slower and may be flaky due to Puppeteer/docx library
+ *    - These tests ensure export functionality actually works end-to-end
+ * 
+ * RUNNING REAL EXPORT TESTS:
+ *   # Run locally without E2E_TEST_MODE
+ *   npx playwright test tests/e2e/export.spec.ts --grep @real-export
+ * 
+ *   # CI runs these nightly (see .github/workflows/nightly-export-tests.yml)
+ * 
+ * LIMITATION: Standard E2E tests do NOT validate actual file content, only
+ * the download flow and API integration. Real export tests must be run
+ * periodically to catch regressions in PDF/DOCX generation.
+ * ============================================================================
+ */
 
 /**
  * Story 7.2: WYSIWYG Export Previewer E2E Suite
@@ -341,5 +379,198 @@ test.describe('Export Download Fix (Story 8.1)', () => {
       expect(contentDisposition).toContain('filename=');
       expect(contentDisposition).toContain("filename*=UTF-8''");
     });
+  });
+});
+
+/**
+ * ============================================================================
+ * REAL EXPORT TESTS (without E2E_TEST_MODE)
+ * ============================================================================
+ * 
+ * These tests verify actual PDF/DOCX generation by running without E2E_TEST_MODE.
+ * They are tagged with @real-export and should be run:
+ * 
+ * 1. Locally when making changes to export functionality:
+ *    npx playwright test tests/e2e/export.spec.ts --grep @real-export
+ * 
+ * 2. In CI on a schedule (nightly) to catch regressions:
+ *    See .github/workflows/nightly-export-tests.yml
+ * 
+ * IMPORTANT: These tests are slower and may be flaky due to Puppeteer/docx
+ * library behavior in different environments. They are not part of the standard
+ * CI pipeline to keep it fast and stable.
+ * ============================================================================
+ */
+test.describe('Real Export Tests @real-export', () => {
+  // Helper to open a manuscript editor
+  async function openNewManuscriptEditor(authenticatedPage: Page) {
+    await authenticatedPage.goto('/dashboard/manuscripts/new');
+    await authenticatedPage.waitForURL(/\/dashboard\/manuscripts\/[^/]+$/, { timeout: 15000 });
+  }
+
+  // Helper to add some content to the editor
+  async function addEditorContent(authenticatedPage: Page, content: string) {
+    const editor = authenticatedPage.locator('.tiptap').first();
+    await editor.click();
+    await editor.fill(content);
+    // Wait for autosave to complete
+    // TODO: Replace with waiting for save indicator to disappear for more reliable test
+    await authenticatedPage.waitForTimeout(AUTOSAVE_WAIT_MS);
+  }
+
+  test('should generate and download a real PDF with actual content', async ({ authenticatedPage }) => {
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
+    if (process.env.E2E_TEST_MODE === "1") {
+      test.skip();
+      return;
+    }
+
+    await openNewManuscriptEditor(authenticatedPage);
+    
+    // Add some test content
+    await addEditorContent(authenticatedPage, 'This is a test manuscript for real PDF export validation.');
+    
+    // Open export modal
+    await authenticatedPage.click('[data-testid="export-button"]');
+    const modal = authenticatedPage.locator('[data-testid="export-modal"]');
+    await expect(modal).toBeVisible();
+    
+    // Wait for download event and API response
+    const downloadPromise = authenticatedPage.waitForEvent('download', { timeout: 60000 });
+    const responsePromise = authenticatedPage.waitForResponse(
+      (resp) => resp.url().includes('/api/manuscripts/') && resp.url().includes('/export/pdf'),
+      { timeout: 60000 }
+    );
+    
+    // Click PDF download button
+    await authenticatedPage.click('[data-testid="download-pdf-button"]');
+    
+    // Verify API response
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toBe('application/pdf');
+    
+    // Verify the PDF is larger than the minimal stub (which is ~50 bytes)
+    const contentLength = response.headers()['content-length'];
+    expect(parseInt(contentLength)).toBeGreaterThan(1000); // Real PDFs should be > 1KB
+    
+    // Verify download completes
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.pdf');
+    
+    // Download the file and verify it's a valid PDF
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    
+    // Read the downloaded file
+    const pdfBuffer = fs.readFileSync(path);
+    
+    // Verify PDF header
+    expect(pdfBuffer.toString('utf8', 0, 8)).toContain(PDF_HEADER);
+    
+    // Verify the PDF is substantial (not just a minimal stub)
+    expect(pdfBuffer.length).toBeGreaterThan(1000);
+  });
+
+  test('should generate and download a real DOCX with actual content', async ({ authenticatedPage }) => {
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
+    if (process.env.E2E_TEST_MODE === "1") {
+      test.skip();
+      return;
+    }
+
+    await openNewManuscriptEditor(authenticatedPage);
+    
+    // Add some test content
+    await addEditorContent(authenticatedPage, 'This is a test manuscript for real DOCX export validation.');
+    
+    // Open export modal
+    await authenticatedPage.click('[data-testid="export-button"]');
+    const modal = authenticatedPage.locator('[data-testid="export-modal"]');
+    await expect(modal).toBeVisible();
+    
+    // Wait for download event and API response
+    const downloadPromise = authenticatedPage.waitForEvent('download', { timeout: 60000 });
+    const responsePromise = authenticatedPage.waitForResponse(
+      (resp) => resp.url().includes('/api/manuscripts/') && resp.url().includes('/export/docx'),
+      { timeout: 60000 }
+    );
+    
+    // Click DOCX download button
+    await authenticatedPage.click('[data-testid="download-docx-button"]');
+    
+    // Verify API response
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toBe(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    
+    // Verify the DOCX is larger than the minimal stub (which is 4 bytes)
+    const contentLength = response.headers()['content-length'];
+    expect(parseInt(contentLength)).toBeGreaterThan(1000); // Real DOCX files should be > 1KB
+    
+    // Verify download completes
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.docx');
+    
+    // Download the file and verify it's a valid DOCX (ZIP format)
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    
+    // Read the downloaded file
+    const docxBuffer = fs.readFileSync(path);
+    
+    // Verify ZIP header (DOCX is a ZIP container)
+    expect(docxBuffer.toString('binary', 0, 4)).toBe(DOCX_ZIP_HEADER);
+    
+    // Verify the DOCX is substantial (not just a minimal stub)
+    expect(docxBuffer.length).toBeGreaterThan(1000);
+  });
+
+  test('should generate PDF with custom formatting settings', async ({ authenticatedPage }) => {
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
+    if (process.env.E2E_TEST_MODE === "1") {
+      test.skip();
+      return;
+    }
+
+    await openNewManuscriptEditor(authenticatedPage);
+    
+    // Add some test content
+    await addEditorContent(authenticatedPage, 'Test content with custom formatting.');
+    
+    // Open export modal
+    await authenticatedPage.click('[data-testid="export-button"]');
+    
+    // Change font size
+    const fontSizeRange = authenticatedPage.locator('[data-testid="font-size-range"]');
+    await fontSizeRange.evaluate((el) => {
+      const input = el as HTMLInputElement;
+      input.value = "14";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    
+    // Wait for settings to update
+    await authenticatedPage.waitForTimeout(500);
+    
+    // Download PDF
+    const downloadPromise = authenticatedPage.waitForEvent('download', { timeout: 60000 });
+    const responsePromise = authenticatedPage.waitForResponse(
+      (resp) => resp.url().includes('/export/pdf') && resp.url().includes('fontSize=14'),
+      { timeout: 60000 }
+    );
+    
+    await authenticatedPage.click('[data-testid="download-pdf-button"]');
+    
+    // Verify the API was called with custom settings
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+    expect(response.url()).toContain('fontSize=14');
+    
+    // Verify download completes
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toContain('.pdf');
   });
 });
