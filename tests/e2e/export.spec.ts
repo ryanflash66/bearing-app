@@ -3,6 +3,11 @@ import { test, expect } from './fixtures/auth.fixture';
 import type { Page } from '@playwright/test';
 import fs from 'fs';
 
+// File format validation constants
+const PDF_HEADER = '%PDF-';
+const DOCX_ZIP_HEADER = 'PK\x03\x04';
+const AUTOSAVE_WAIT_MS = 2000; // Wait for autosave to complete (TODO: wait for save indicator)
+
 /**
  * ============================================================================
  * EXPORT E2E TESTS - TESTING STRATEGY
@@ -409,11 +414,12 @@ test.describe('Real Export Tests @real-export', () => {
     await editor.click();
     await editor.fill(content);
     // Wait for autosave to complete
-    await authenticatedPage.waitForTimeout(2000);
+    // TODO: Replace with waiting for save indicator to disappear for more reliable test
+    await authenticatedPage.waitForTimeout(AUTOSAVE_WAIT_MS);
   }
 
   test('should generate and download a real PDF with actual content', async ({ authenticatedPage }) => {
-    // Skip this test if E2E_TEST_MODE is enabled
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
     if (process.env.E2E_TEST_MODE === "1") {
       test.skip();
       return;
@@ -460,14 +466,14 @@ test.describe('Real Export Tests @real-export', () => {
     const pdfBuffer = fs.readFileSync(path);
     
     // Verify PDF header
-    expect(pdfBuffer.toString('utf8', 0, 8)).toContain('%PDF-');
+    expect(pdfBuffer.toString('utf8', 0, 8)).toContain(PDF_HEADER);
     
     // Verify the PDF is substantial (not just a minimal stub)
     expect(pdfBuffer.length).toBeGreaterThan(1000);
   });
 
   test('should generate and download a real DOCX with actual content', async ({ authenticatedPage }) => {
-    // Skip this test if E2E_TEST_MODE is enabled
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
     if (process.env.E2E_TEST_MODE === "1") {
       test.skip();
       return;
@@ -516,14 +522,14 @@ test.describe('Real Export Tests @real-export', () => {
     const docxBuffer = fs.readFileSync(path);
     
     // Verify ZIP header (DOCX is a ZIP container)
-    expect(docxBuffer.toString('binary', 0, 4)).toBe('PK\x03\x04');
+    expect(docxBuffer.toString('binary', 0, 4)).toBe(DOCX_ZIP_HEADER);
     
     // Verify the DOCX is substantial (not just a minimal stub)
     expect(docxBuffer.length).toBeGreaterThan(1000);
   });
 
   test('should generate PDF with custom formatting settings', async ({ authenticatedPage }) => {
-    // Skip this test if E2E_TEST_MODE is enabled
+    // Skip this test if E2E_TEST_MODE is enabled (environment variables are always strings)
     if (process.env.E2E_TEST_MODE === "1") {
       test.skip();
       return;

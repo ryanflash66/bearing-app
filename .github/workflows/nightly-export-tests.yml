@@ -44,10 +44,8 @@ jobs:
       - name: Run real export tests
         run: |
           # Run only @real-export tagged tests without E2E_TEST_MODE
+          # Note: E2E_TEST_MODE is not set, so tests will use real PDF/DOCX generation
           npx playwright test tests/e2e/export.spec.ts --grep @real-export --project=chromium
-        env:
-          # Explicitly unset E2E_TEST_MODE to ensure real exports
-          E2E_TEST_MODE: ''
 
       - name: Upload test results
         if: always()

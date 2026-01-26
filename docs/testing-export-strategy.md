@@ -207,7 +207,7 @@ npx playwright test tests/e2e/export.spec.ts --grep @real-export
 
 ## Related Documentation
 
-- [Export Implementation](../src/lib/export.ts)
-- [Export Routes](../src/app/api/manuscripts/[id]/export/)
-- [Test Fixtures](../tests/e2e/fixtures/)
-- [Playwright Config](../playwright.config.ts)
+- Export Implementation: `src/lib/export.ts`
+- Export Routes: `src/app/api/manuscripts/[id]/export/`
+- Test Fixtures: `tests/e2e/fixtures/`
+- Playwright Config: `playwright.config.ts`
