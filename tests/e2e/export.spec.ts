@@ -1,5 +1,7 @@
 
 import { test, expect } from './fixtures/auth.fixture';
+import type { Page } from '@playwright/test';
+import fs from 'fs';
 
 /**
  * ============================================================================
@@ -396,13 +398,13 @@ test.describe('Export Download Fix (Story 8.1)', () => {
  */
 test.describe('Real Export Tests @real-export', () => {
   // Helper to open a manuscript editor
-  async function openNewManuscriptEditor(authenticatedPage: import('@playwright/test').Page) {
+  async function openNewManuscriptEditor(authenticatedPage: Page) {
     await authenticatedPage.goto('/dashboard/manuscripts/new');
     await authenticatedPage.waitForURL(/\/dashboard\/manuscripts\/[^/]+$/, { timeout: 15000 });
   }
 
   // Helper to add some content to the editor
-  async function addEditorContent(authenticatedPage: import('@playwright/test').Page, content: string) {
+  async function addEditorContent(authenticatedPage: Page, content: string) {
     const editor = authenticatedPage.locator('.tiptap').first();
     await editor.click();
     await editor.fill(content);
@@ -455,7 +457,6 @@ test.describe('Real Export Tests @real-export', () => {
     expect(path).toBeTruthy();
     
     // Read the downloaded file
-    const fs = require('fs');
     const pdfBuffer = fs.readFileSync(path);
     
     // Verify PDF header
@@ -512,7 +513,6 @@ test.describe('Real Export Tests @real-export', () => {
     expect(path).toBeTruthy();
     
     // Read the downloaded file
-    const fs = require('fs');
     const docxBuffer = fs.readFileSync(path);
     
     // Verify ZIP header (DOCX is a ZIP container)
