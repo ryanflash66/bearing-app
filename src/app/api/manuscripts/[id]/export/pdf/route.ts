@@ -95,9 +95,27 @@ export async function GET(
       ...partialSettings,
     };
 
-    // E2E optimization: Puppeteer-based PDF generation can be slow/flaky in
-    // Playwright's dev-server environment on Windows. For E2E we only need to
-    // validate the download flow + headers, so return a minimal valid PDF.
+    // ============================================================================
+    // E2E_TEST_MODE Optimization
+    // ============================================================================
+    // When E2E_TEST_MODE=1, we return a minimal PDF stub instead of generating
+    // a real PDF using Puppeteer. This is an optimization for E2E tests that
+    // validates the download flow, headers, and API integration without the
+    // overhead and flakiness of actual PDF generation.
+    //
+    // LIMITATION: Standard E2E tests do NOT validate actual PDF content generation.
+    // 
+    // TESTING STRATEGY:
+    // 1. Standard E2E tests (with E2E_TEST_MODE=1): Fast, validates download flow
+    // 2. Real export tests (without E2E_TEST_MODE): Run locally or in CI nightly
+    //    to verify actual PDF generation works correctly
+    //
+    // To run real export tests locally:
+    //   npx playwright test tests/e2e/export.spec.ts --grep @real-export
+    //
+    // See: tests/e2e/export.spec.ts for test implementation
+    // See: .github/workflows/nightly-export-tests.yml for CI configuration
+    // ============================================================================
     if (process.env.E2E_TEST_MODE === "1") {
       const minimalPdf = Buffer.from(
         "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n",

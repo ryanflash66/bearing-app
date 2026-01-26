@@ -1,0 +1,77 @@
+name: Nightly Export Tests
+
+# Run real export tests (without E2E_TEST_MODE) nightly to catch regressions
+# These tests are slower and may be flaky, so they run separately from main CI
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  real-export-tests:
+    name: Real Export Tests (PDF/DOCX Generation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup test environment
+        run: |
+          # Copy example env and add test-specific variables
+          cp .env.example .env
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "E2E_INTERNAL_SECRET=${{ secrets.E2E_INTERNAL_SECRET }}" >> .env
+          # DO NOT set E2E_TEST_MODE - we want real exports
+
+      - name: Run real export tests
+        run: |
+          # Run only @real-export tagged tests without E2E_TEST_MODE
+          npx playwright test tests/e2e/export.spec.ts --grep @real-export --project=chromium
+        env:
+          # Explicitly unset E2E_TEST_MODE to ensure real exports
+          E2E_TEST_MODE: ''
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-nightly
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+      - name: Upload test report to summary
+        if: always()
+        run: |
+          echo "## Nightly Export Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f test-results/results.xml ]; then
+            echo "✅ Test results available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No test results found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Nightly export tests failed. Real PDF/DOCX generation may be broken."
+          echo "Review the test results and fix any issues with export functionality."
