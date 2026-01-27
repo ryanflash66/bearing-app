@@ -254,10 +254,10 @@ workflow_status:
 
 # Story Progress Summary
 # Counts: Epic 0.5(5) + Epic 1(4) + Epic 2(7) + Epic 3(4) + Epic 4(6) + Epic 5(9) + Epic 6(3) + Epic 7(4) + Epic 8(22) = 64 total
-# Completed: 5 + 4 + 7 + 4 + 6 + 6 + 3 + 4 + 3 = 42
+# Completed: 5 + 4 + 7 + 4 + 6 + 7 + 3 + 4 + 3 = 43
 story_progress:
   total: 64
-  completed: 42
+  completed: 43
   ux_rework: 0
   ready: 1
   pending: 22
@@ -342,9 +342,9 @@ epic_progress:
   - epic: 5
     name: "Services & Intelligence"
     stories: 9
-    completed: 6
+    completed: 7
     status: "in-progress"
-    notes: "Core marketplace features (5.1-5.4, 5.5, 5.7) complete. Story 5.3 verified functional after user feedback. Moving to mobile responsive polish."
+    notes: "Core marketplace features (5.1-5.4, 5.5, 5.7, 5.8) complete. Story 5.3 verified functional after user feedback. Story 5.8 mobile responsive QA passed."
     story_list:
       - id: "story-5.1"
         name: "Service Marketplace UI"

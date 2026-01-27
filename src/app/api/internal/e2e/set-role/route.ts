@@ -181,7 +181,7 @@ export async function POST(req: Request) {
           .update({ role: "user" })
           .eq("auth_id", otherSuper);
 
-        if (demoteOtherErr) return jsonErr(promoteErr.message, 500);
+        if (demoteOtherErr) return jsonErr(demoteOtherErr.message, 500);
 
         const { error: retryErr } = await service
           .from("users")

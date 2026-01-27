@@ -9,10 +9,16 @@ const PORT = 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 // E2E-only helper secret (used only when E2E_TEST_MODE=1).
-// In CI, set E2E_INTERNAL_SECRET explicitly. Locally, we default to a non-empty value
-// to keep E2E flows runnable without extra setup. The endpoint is also guarded against production.
-const E2E_INTERNAL_SECRET = process.env.E2E_INTERNAL_SECRET || "playwright-local-e2e";
-process.env.E2E_INTERNAL_SECRET = E2E_INTERNAL_SECRET;
+// SECURITY: This secret MUST be explicitly set - no hardcoded defaults allowed.
+// Generate one with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+const E2E_INTERNAL_SECRET = process.env.E2E_INTERNAL_SECRET;
+if (!E2E_INTERNAL_SECRET) {
+  throw new Error(
+    "E2E_INTERNAL_SECRET is required for Playwright tests.\n" +
+    "Add to your .env/.env.local: E2E_INTERNAL_SECRET=<random-string>\n" +
+    "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+  );
+}
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -86,10 +92,15 @@ export default defineConfig({
     // Next.js 16 uses Turbopack by default.
     // On Windows + network drives, forcing webpack can be unreliable (observed intermittent
     // `.next/dev/server/*-manifest` file open errors). Prefer the default dev server.
-    // We also enable E2E_TEST_MODE for gated, test-only helper endpoints.
-    command: `cross-env E2E_TEST_MODE=1 E2E_INTERNAL_SECRET=${E2E_INTERNAL_SECRET} npm run dev`,
+    command: 'npm run dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    // SECURITY: Pass secrets via env inheritance, NOT command-line arguments.
+    // Command-line args are visible in `ps` output; env vars passed this way are not.
+    env: {
+      E2E_TEST_MODE: '1',
+      E2E_INTERNAL_SECRET,
+    },
   },
 });

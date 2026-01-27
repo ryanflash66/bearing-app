@@ -161,9 +161,12 @@ test.describe('Story 8.4 - Admin Login / Maintenance Gating', () => {
 
       if (!initiallyEnabled) {
         page.once('dialog', (dialog) => dialog.accept());
-        const toggleNow = page.getByRole('switch');
-        await toggleNow.click();
-        await expect(toggleNow).toHaveAttribute('aria-checked', 'false');
+        // Use the same specific locator as setup (lines 136-138) to target the correct switch
+        const maintenanceToggleCleanup = page
+          .locator('div', { has: page.getByRole('heading', { name: 'Maintenance Mode' }) })
+          .getByRole('switch');
+        await maintenanceToggleCleanup.click();
+        await expect(maintenanceToggleCleanup).toHaveAttribute('aria-checked', 'false');
         await expect(page.getByText('Maintenance Mode Active')).toHaveCount(0);
       }
     } finally {

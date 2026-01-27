@@ -1264,7 +1264,7 @@ export default function ManuscriptEditor({
 
       {/* Editor area - distraction-free, responsive padding */}
       <div className="flex-1 overflow-auto bg-slate-50">
-          <div className={EDITOR_CONTENT_WRAPPER_CLASSNAME}>
+          <div className={EDITOR_CONTENT_WRAPPER_CLASSNAME} data-testid="editor-content-wrapper">
            {/* AI Suggestion (if available) - Positioning might need adjustment for Tiptap integration */}
           {suggestion && (
             <AISuggestion

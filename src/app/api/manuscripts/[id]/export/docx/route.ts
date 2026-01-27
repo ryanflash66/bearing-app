@@ -22,6 +22,20 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get optional version parameter from query string
+    // Validate BEFORE E2E shortcut so bad inputs return 400 even in E2E mode
+    const searchParams = request.nextUrl.searchParams;
+    const versionParam = searchParams.get("version");
+    const versionId =
+      versionParam !== null ? parseInt(versionParam, 10) : undefined;
+
+    if (versionParam !== null && isNaN(versionId!)) {
+      return NextResponse.json(
+        { error: "Invalid version parameter" },
+        { status: 400 }
+      );
+    }
+
     // ============================================================================
     // E2E_TEST_MODE Optimization
     // ============================================================================
@@ -57,19 +71,6 @@ export async function GET(
 
     // manuscriptId already extracted from params
 
-    // Get optional version parameter from query string
-    const searchParams = request.nextUrl.searchParams;
-    const versionParam = searchParams.get("version");
-    const versionId =
-      versionParam !== null ? parseInt(versionParam, 10) : undefined;
-
-    if (versionParam !== null && isNaN(versionId!)) {
-      return NextResponse.json(
-        { error: "Invalid version parameter" },
-        { status: 400 }
-      );
-    }
-
     // Export manuscript
     const result = await exportManuscript(supabase, manuscriptId, {
       format: "docx",
@@ -97,4 +98,3 @@ export async function GET(
     );
   }
 }
-
