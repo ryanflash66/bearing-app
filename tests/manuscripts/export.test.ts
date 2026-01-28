@@ -52,9 +52,10 @@ describe("Manuscript Export (Story 2.4)", () => {
       expect(pdfHeader).toBe("%PDF");
     });
 
-    it("should surface mkdtemp errors without cleanup ReferenceError", async () => {
-      // We need to mock fs/promises BEFORE importing the module under test,
-      // because `export.ts` imports it as a default binding.
+    // NOTE: This test was for temp-profile (mkdtemp) cleanup logic.
+    // The refactor for serverless (@sparticuz/chromium) removed the temp profile path,
+    // so this test is no longer applicable.
+    it.skip("should surface mkdtemp errors without cleanup ReferenceError", async () => {
       await jest.isolateModulesAsync(async () => {
         jest.doMock("fs/promises", () => {
           const actual = jest.requireActual("fs/promises");
