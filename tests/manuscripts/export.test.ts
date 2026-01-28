@@ -1,13 +1,19 @@
 /**
  * Tests for manuscript export functionality (Story 2.4)
- * 
+ *
  * AC 2.4.1: PDF downloads with correct title and content
  * AC 2.4.2: DOCX preserves formatting (text, bold, italics, lists)
  * AC 2.4.3: Large exports (>500K chars) complete within 10 seconds
  * AC 2.4.4: Selected version is used when versionId is provided
  */
 
-import { exportManuscript, generatePDF, generateDOCX, getManuscriptForExport, generateContentDisposition } from "@/lib/export";
+import {
+  exportManuscript,
+  generatePDF,
+  generateDOCX,
+  getManuscriptForExport,
+  generateContentDisposition,
+} from "@/lib/export";
 import { createClient } from "@/utils/supabase/server";
 import { getManuscript } from "@/lib/manuscripts";
 import { getVersion } from "@/lib/manuscriptVersions";
@@ -46,7 +52,7 @@ describe("Manuscript Export (Story 2.4)", () => {
 
       expect(pdfBuffer).toBeInstanceOf(Buffer);
       expect(pdfBuffer.length).toBeGreaterThan(0);
-      
+
       // PDF should start with PDF header
       const pdfHeader = pdfBuffer.toString("ascii", 0, 4);
       expect(pdfHeader).toBe("%PDF");
@@ -65,9 +71,10 @@ describe("Manuscript Export (Story 2.4)", () => {
           };
         });
 
-        const { generatePDF: isolatedGeneratePDF } = await import("@/lib/export");
+        const { generatePDF: isolatedGeneratePDF } =
+          await import("@/lib/export");
         await expect(isolatedGeneratePDF("Title", "Content")).rejects.toThrow(
-          /mkdtemp failed/i
+          /mkdtemp failed/i,
         );
       });
 
@@ -101,13 +108,14 @@ describe("Manuscript Export (Story 2.4)", () => {
   describe("AC 2.4.2: DOCX Export", () => {
     it("should generate DOCX with correct title and content", async () => {
       const title = "Test Manuscript";
-      const content = "This is test content for DOCX export.\n\nSecond paragraph.";
+      const content =
+        "This is test content for DOCX export.\n\nSecond paragraph.";
 
       const docxBuffer = await generateDOCX(title, content);
 
       expect(docxBuffer).toBeInstanceOf(Buffer);
       expect(docxBuffer.length).toBeGreaterThan(0);
-      
+
       // DOCX files start with PK (ZIP header)
       const zipHeader = docxBuffer.toString("ascii", 0, 2);
       expect(zipHeader).toBe("PK");
@@ -115,7 +123,8 @@ describe("Manuscript Export (Story 2.4)", () => {
 
     it("should preserve paragraph structure", async () => {
       const title = "Paragraph Test";
-      const content = "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.";
+      const content =
+        "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.";
 
       const docxBuffer = await generateDOCX(title, content);
 
@@ -179,12 +188,18 @@ describe("Manuscript Export (Story 2.4)", () => {
         error: null,
       });
 
-      const result = await getManuscriptForExport(mockSupabase, mockManuscriptId);
+      const result = await getManuscriptForExport(
+        mockSupabase,
+        mockManuscriptId,
+      );
 
       expect(result.title).toBe("Current Version");
       expect(result.content).toBe("Current content");
       expect(result.error).toBeNull();
-      expect(getManuscript).toHaveBeenCalledWith(mockSupabase, mockManuscriptId);
+      expect(getManuscript).toHaveBeenCalledWith(
+        mockSupabase,
+        mockManuscriptId,
+      );
     });
 
     it("should export specific version when versionId is provided", async () => {
@@ -200,12 +215,20 @@ describe("Manuscript Export (Story 2.4)", () => {
         error: null,
       });
 
-      const result = await getManuscriptForExport(mockSupabase, mockManuscriptId, 5);
+      const result = await getManuscriptForExport(
+        mockSupabase,
+        mockManuscriptId,
+        5,
+      );
 
       expect(result.title).toBe("Version 5");
       expect(result.content).toBe("Version 5 content");
       expect(result.error).toBeNull();
-      expect(getVersion).toHaveBeenCalledWith(mockSupabase, mockManuscriptId, 5);
+      expect(getVersion).toHaveBeenCalledWith(
+        mockSupabase,
+        mockManuscriptId,
+        5,
+      );
     });
 
     it("should return error when version not found", async () => {
@@ -214,7 +237,11 @@ describe("Manuscript Export (Story 2.4)", () => {
         error: "Version not found",
       });
 
-      const result = await getManuscriptForExport(mockSupabase, mockManuscriptId, 999);
+      const result = await getManuscriptForExport(
+        mockSupabase,
+        mockManuscriptId,
+        999,
+      );
 
       expect(result.error).toBe("Version not found");
       expect(result.title).toBe("");
@@ -227,7 +254,10 @@ describe("Manuscript Export (Story 2.4)", () => {
         error: "Manuscript not found",
       });
 
-      const result = await getManuscriptForExport(mockSupabase, mockManuscriptId);
+      const result = await getManuscriptForExport(
+        mockSupabase,
+        mockManuscriptId,
+      );
 
       expect(result.error).toBe("Manuscript not found");
       expect(result.title).toBe("");
@@ -326,38 +356,40 @@ describe("Manuscript Export (Story 2.4)", () => {
   describe("AC 8.1.4: Content-Disposition Header Generation", () => {
     it("should generate RFC 5987-compliant header for ASCII filename", () => {
       const header = generateContentDisposition("my-manuscript.pdf");
-      
-      expect(header).toContain('attachment');
+
+      expect(header).toContain("attachment");
       expect(header).toContain('filename="my-manuscript.pdf"');
       expect(header).toContain("filename*=UTF-8''my-manuscript.pdf");
     });
 
     it("should encode spaces in filename*", () => {
       const header = generateContentDisposition("My Book (Final).pdf");
-      
+
       // filename* should have encoded spaces, parentheses are allowed per RFC 3986
       expect(header).toContain("filename*=UTF-8''My%20Book%20(Final).pdf");
     });
 
     it("should handle Unicode characters", () => {
       const header = generateContentDisposition("中文書名.pdf");
-      
+
       // ASCII fallback should replace Unicode with underscore
       expect(header).toContain('filename="____.pdf"');
       // filename* should have URL-encoded Chinese characters
-      expect(header).toContain("filename*=UTF-8''%E4%B8%AD%E6%96%87%E6%9B%B8%E5%90%8D.pdf");
+      expect(header).toContain(
+        "filename*=UTF-8''%E4%B8%AD%E6%96%87%E6%9B%B8%E5%90%8D.pdf",
+      );
     });
 
     it("should escape quotes in ASCII fallback", () => {
       const header = generateContentDisposition('Book "Special".pdf');
-      
+
       // Quotes should be replaced in ASCII fallback
       expect(header).toMatch(/filename="Book _Special_.pdf"/);
     });
 
     it("should encode single quotes in filename*", () => {
       const header = generateContentDisposition("John's Book.pdf");
-      
+
       // Single quote should be encoded as %27
       expect(header).toContain("%27");
     });
@@ -408,4 +440,3 @@ describe("Manuscript Export (Story 2.4)", () => {
     });
   });
 });
-

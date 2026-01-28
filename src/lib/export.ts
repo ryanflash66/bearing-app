@@ -214,7 +214,42 @@ export async function generatePDF(
   settings: ExportSettings = defaultExportSettings,
   metadata?: any,
 ): Promise<Buffer> {
-  let browser: Awaited<ReturnType<typeof puppeteerCore.launch>> | null = null;
+  // Avoid coupling to the concrete Browser/Page types from either `puppeteer-core`
+  // or full `puppeteer` (which can pull in a nested puppeteer-core copy). Next.js
+  // typechecking happens at build time, so we keep the surface area minimal.
+  type MinimalRequest = {
+    resourceType(): string;
+    continue(): unknown;
+    abort(): unknown;
+  };
+  type MinimalPage = {
+    setJavaScriptEnabled(enabled: boolean): Promise<void>;
+    setRequestInterception(enabled: boolean): Promise<void>;
+    on(event: "request", handler: (req: MinimalRequest) => void): void;
+    setContent(
+      html: string,
+      options: {
+        waitUntil:
+          | "domcontentloaded"
+          | "load"
+          | "networkidle0"
+          | "networkidle2";
+      },
+    ): Promise<void>;
+    pdf(options: {
+      width: string;
+      height: string;
+      printBackground: boolean;
+      displayHeaderFooter: boolean;
+      margin: { top: number; bottom: number; left: number; right: number };
+    }): Promise<Uint8Array>;
+  };
+  type MinimalBrowser = {
+    newPage(): Promise<MinimalPage>;
+    close(): Promise<void>;
+  };
+
+  let browser: MinimalBrowser | null = null;
   try {
     /**
      * PDF generation runs in a serverless function on Vercel.
@@ -230,29 +265,40 @@ export async function generatePDF(
       typeof process.env.AWS_LAMBDA_FUNCTION_NAME === "string" ||
       typeof process.env.AWS_EXECUTION_ENV === "string";
 
+    // `@sparticuz/chromium` has historically exposed a recommended `headless` mode,
+    // but its TypeScript types have not always included it. Preserve runtime behavior
+    // when present, otherwise default to headless mode for server environments.
+    type HeadlessMode = boolean | "shell";
+    const chromiumHeadless: HeadlessMode =
+      (chromium as unknown as { headless?: HeadlessMode }).headless ?? true;
+
     if (isServerless) {
-      browser = await puppeteerCore.launch({
+      browser = (await puppeteerCore.launch({
         args: chromium.args,
         defaultViewport: { width: 800, height: 600 },
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-      });
+        headless: chromiumHeadless,
+      })) as unknown as MinimalBrowser;
     } else if (process.platform === "win32" || process.platform === "darwin") {
       // Local dev path: use the bundled Chromium from full Puppeteer.
       // This dependency is dev-only (not deployed to Vercel).
       const puppeteer = (await import("puppeteer")).default;
-      browser = await puppeteer.launch({
+      browser = (await puppeteer.launch({
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+      })) as unknown as MinimalBrowser;
     } else {
       // Local Linux path: `@sparticuz/chromium` works fine.
-      browser = await puppeteerCore.launch({
+      browser = (await puppeteerCore.launch({
         args: chromium.args,
         defaultViewport: { width: 800, height: 600 },
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
-      });
+        headless: chromiumHeadless,
+      })) as unknown as MinimalBrowser;
+    }
+
+    if (!browser) {
+      throw new Error("Failed to launch Chromium for PDF export");
     }
 
     const page = await browser.newPage();
