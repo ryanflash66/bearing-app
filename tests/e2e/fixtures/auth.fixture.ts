@@ -11,11 +11,17 @@ import { test as base, expect, Page } from '@playwright/test';
  */
 export const test = base.extend<{ authenticatedPage: Page }>({
   authenticatedPage: async ({ page }, use) => {
-    const email = process.env.TEST_EMAIL || 'test@example.com';
-    const password = process.env.TEST_PASSWORD || 'password123';
+    const email = process.env.TEST_EMAIL;
+    const password = process.env.TEST_PASSWORD;
+    if (!email || !password) {
+      throw new Error("Missing TEST_EMAIL/TEST_PASSWORD. Set them in your local .env/.env.local for Playwright E2E.");
+    }
 
-    // Navigate to login and wait for the page to fully settle to reduce flakiness
-    await page.goto('/login', { waitUntil: 'networkidle' });
+    // Navigate to login (avoid `networkidle` which can be flaky in modern apps)
+    await page.goto('/login');
+    await expect(page.locator('#email')).toBeVisible();
+    await expect(page.locator('#password')).toBeVisible();
+    await expect(page.locator('button[type=\"submit\"]')).toBeEnabled();
 
     // Fill in credentials using specific selectors (id-based for this form)
     await page.fill('#email', email);
@@ -23,7 +29,7 @@ export const test = base.extend<{ authenticatedPage: Page }>({
 
     // Submit and wait for navigation to complete
     await Promise.all([
-      page.waitForURL(/\/dashboard/, { timeout: 15000 }),
+      page.waitForURL(/\/dashboard/, { timeout: 30000 }),
       page.click('button[type="submit"]'),
     ]);
 

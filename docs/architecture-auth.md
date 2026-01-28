@@ -315,6 +315,44 @@ export class AuthConfig {
 
 ---
 
+## Maintenance Mode & Admin Bypass (Story 8.4)
+
+### Overview
+
+When maintenance mode is enabled, write operations (POST, PUT, DELETE, PATCH) are blocked for regular users via middleware. However, admins need to bypass this to perform their duties.
+
+### Bypass Mechanisms
+
+1. **Super Admin Role Bypass (`isSuperAdmin`):**
+   - Users with `role = 'super_admin'` in the `users` table bypass maintenance mode
+   - The middleware checks `isSuperAdmin(supabase)` before blocking
+   - Requires RLS policy allowing users to read their own `users` row
+
+2. **Path-Based Bypass (Defense-in-Depth):**
+   - Admin routes (`/dashboard/admin/*`) bypass maintenance mode regardless of role
+   - Added as defense-in-depth in case `isSuperAdmin` check fails (timing, RLS issues)
+   - Middleware allowlist includes:
+     - `/api/auth/*` - Auth operations
+     - `/auth/*` - Auth callbacks
+     - `/api/webhooks/*` - External webhook handlers
+     - `/api/internal/*` - Internal APIs
+     - `/dashboard/admin/*` - Admin routes (Story 8.4)
+
+### Maintenance UI
+
+- **Regular Users:** See informational amber banner in `DashboardLayout` when maintenance is enabled
+- **Super Admins:** See `MaintenanceCallout` component (informational only, not blocking)
+- **Admin Dashboard:** Provides `MaintenanceToggle` to enable/disable maintenance mode
+
+### Implementation Notes
+
+- Middleware: `src/utils/supabase/middleware.ts`
+- `isSuperAdmin`: `src/lib/super-admin.ts`
+- Maintenance toggle: `src/components/admin/MaintenanceToggle.tsx`
+- Tests: `tests/utils/middleware.test.ts`
+
+---
+
 ## Security Checklist
 
 - [x] **JWT in httpOnly cookies:** XSS safe
@@ -327,6 +365,7 @@ export class AuthConfig {
 - [x] **Audit logs:** All auth events recorded
 - [x] **No hardcoded secrets:** Use env vars + Secrets Manager
 - [x] **Refresh token rotation:** Supabase handles automatically
+- [x] **Maintenance mode bypass:** Admins can access system during maintenance (Story 8.4)
 
 ---
 

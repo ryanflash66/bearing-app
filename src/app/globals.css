@@ -48,7 +48,7 @@ input, textarea, select {
 /* If you need specifically white text in dark inputs, you can override with .text-white */
 
 
-/* Zen Mode Animations */
+/* Fade-in Animation (used by various components) */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -64,28 +64,13 @@ input, textarea, select {
   animation: fade-in 0.3s ease-out forwards;
 }
 
-/* Zen Mode Canvas Styling */
-.zen-mode {
-  /* Modern Parchment background from UX spec */
-  --zen-surface: #FDF7E9;
-  --zen-text: #1F2937;
-  --zen-accent: #4F46E5;
+/* Utility: Hide scrollbars while keeping scrollable behavior */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
-
-/* Ensure smooth transitions for Zen Mode */
-.zen-mode textarea,
-.zen-mode input {
-  background-color: transparent;
-}
-
-/* Reduce visual noise in Zen Mode */
-.zen-mode .zen-minimized {
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
-}
-
-.zen-mode .zen-minimized:hover {
-  opacity: 1;
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
 /* Ghost Text Styling (AC 2.3.6) */

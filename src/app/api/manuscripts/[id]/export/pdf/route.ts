@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { exportManuscript } from "@/lib/export";
+import { exportManuscript, generateContentDisposition } from "@/lib/export";
 import { defaultExportSettings } from "@/lib/export-types";
 import type { ExportSettings, FontFace, PageSize } from "@/lib/export-types";
 
@@ -95,6 +95,42 @@ export async function GET(
       ...partialSettings,
     };
 
+    // ============================================================================
+    // E2E_TEST_MODE Optimization
+    // ============================================================================
+    // When E2E_TEST_MODE=1, we return a minimal PDF stub instead of generating
+    // a real PDF using Puppeteer. This is an optimization for E2E tests that
+    // validates the download flow, headers, and API integration without the
+    // overhead and flakiness of actual PDF generation.
+    //
+    // LIMITATION: Standard E2E tests do NOT validate actual PDF content generation.
+    // 
+    // TESTING STRATEGY:
+    // 1. Standard E2E tests (with E2E_TEST_MODE=1): Fast, validates download flow
+    // 2. Real export tests (without E2E_TEST_MODE): Run locally or in CI nightly
+    //    to verify actual PDF generation works correctly
+    //
+    // To run real export tests locally:
+    //   npx playwright test tests/e2e/export.spec.ts --grep @real-export
+    //
+    // See: tests/e2e/export.spec.ts for test implementation
+    // See: .github/workflows/nightly-export-tests.yml for CI configuration
+    // ============================================================================
+    if (process.env.E2E_TEST_MODE === "1") {
+      const minimalPdf = Buffer.from(
+        "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n",
+        "utf8"
+      );
+
+      return new NextResponse(new Uint8Array(minimalPdf), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": generateContentDisposition("export.pdf"),
+          "Content-Length": minimalPdf.length.toString(),
+        },
+      });
+    }
+
     // Export manuscript
     // Note: We'll fetch the current manuscript's HTML content from the DB if not provided via body
     // (In a real scenario, we might want to POST the HTML from the editor to export exactly what's seen, 
@@ -109,11 +145,11 @@ export async function GET(
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    // Return PDF file
+    // Return PDF file with RFC 5987-compliant Content-Disposition header
     return new NextResponse(new Uint8Array(result.buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${result.filename}"`,
+        "Content-Disposition": generateContentDisposition(result.filename),
         "Content-Length": result.buffer.length.toString(),
       },
     });

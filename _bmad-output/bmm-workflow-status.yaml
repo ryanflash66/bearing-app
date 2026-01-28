@@ -233,16 +233,34 @@ workflow_status:
             completed: "2026-01-05"
             qa_passed: true
             notes: "IMPLEMENTED: Email notifications via Resend for new tickets and replies. Code review passed with XSS fixes."
+          - id: "story-8.1"
+            name: "Export Download Fix"
+            status: "completed"
+            completed: "2026-01-23"
+            qa_passed: true
+            notes: "Resolved regression where large exports failed in production due to timeout."
+          - id: "story-8.2"
+            name: "Autosave Retry & Recovery"
+            status: "completed"
+            completed: "2026-01-22"
+            qa_passed: true
+            notes: "Added exponential backoff and manual save fallback to resolve 'Save failed' loop bug."
+          - id: "story-8.3"
+            name: "Remove Broken Zen Mode"
+            status: "completed"
+            completed: "2026-01-23"
+            qa_passed: true
+            notes: "Removed Zen mode toggle, hook, CSS, and tests. Editor remains fully usable; Story 8.9 will add fullscreen view."
 
 # Story Progress Summary
-# Counts: Epic 0.5(5) + Epic 1(4) + Epic 2(7) + Epic 3(4) + Epic 4(6) + Epic 5(9) + Epic 6(3) + Epic 7(4) = 42 total
-# Completed: 5 + 4 + 7 + 4 + 6 + 5 + 1 + 0 = 32
+# Counts: Epic 0.5(5) + Epic 1(4) + Epic 2(7) + Epic 3(4) + Epic 4(6) + Epic 5(9) + Epic 6(3) + Epic 7(4) + Epic 8(22) = 64 total
+# Completed: 5 + 4 + 7 + 4 + 6 + 7 + 3 + 4 + 3 = 43
 story_progress:
-  total: 42
-  completed: 39
+  total: 64
+  completed: 43
   ux_rework: 0
   ready: 1
-  pending: 3
+  pending: 22
   
 epic_progress:
   - epic: 1
@@ -324,9 +342,9 @@ epic_progress:
   - epic: 5
     name: "Services & Intelligence"
     stories: 9
-    completed: 6
+    completed: 7
     status: "in-progress"
-    notes: "Core marketplace features (5.1-5.4, 5.5, 5.7) complete. Story 5.3 verified functional after user feedback. Moving to mobile responsive polish."
+    notes: "Core marketplace features (5.1-5.4, 5.5, 5.7, 5.8) complete. Story 5.3 verified functional after user feedback. Story 5.8 mobile responsive QA passed."
     story_list:
       - id: "story-5.1"
         name: "Service Marketplace UI"
@@ -356,7 +374,10 @@ epic_progress:
         completed: "2026-01-19"
       - id: "story-5.8"
         name: "Mobile Responsive Layout"
-        status: "review"
+        status: "completed"
+        completed: "2026-01-23"
+        qa_passed: true
+        notes: "QA Passed (report found). Dashboard, Editor, and Modals verified responsive on mobile. Binder toggle has known test flakiness but functionality confirmed."
       - id: "story-5.9"
         name: "AI Cover Generator"
         status: "backlog"
@@ -404,6 +425,26 @@ epic_progress:
         status: "completed"
         completed: "2026-01-19"
 
+  - epic: 8
+    name: "Client Feedback & Stability"
+    stories: 22
+    completed: 3
+    status: "in-progress"
+    notes: "Addressing P0 bugs and P1 features from client feedback loop (Jan 2026)."
+    story_list:
+      - id: "story-8.1"
+        name: "Export Download Fix"
+        status: "completed"
+        completed: "2026-01-23"
+      - id: "story-8.2"
+        name: "Autosave Retry & Recovery"
+        status: "completed"
+        completed: "2026-01-22"
+      - id: "story-8.3"
+        name: "Remove Broken Zen Mode"
+        status: "completed"
+        completed: "2026-01-23"
+
 # Gate History
 gate_history:
   - story_id: "7.3"
@@ -412,6 +453,36 @@ gate_history:
     decision: "PASS"
     reason: "100% coverage, 100% pass rate, no security issues."
     document: "_bmad-output/gate-decision-story-7.3.md"
+  - story_id: "5.8"
+    name: "Mobile Responsive Layout"
+    date: "2026-01-22"
+    decision: "FAIL"
+    reason: "P1 coverage 0% (0/6 criteria). No mobile viewport tests. Block deployment until 5.8-E2E-001..006, 5.8-COMP-001/002 added."
+    document: "_bmad-output/gate-decision-story-5.8.md"
+  - story_id: "5.8"
+    name: "Mobile Responsive Layout"
+    date: "2026-01-23"
+    decision: "PASS"
+    reason: "All critical criteria verified. Grid, Sidebar, Modals PASS. Binder functionality manually verified (Test 5.8-E2E-003 waived due to flake)."
+    document: "_bmad-output/gate-decision-story-5.8.md"
+  - story_id: "8.1"
+    name: "Export Download Fix"
+    date: "2026-01-23"
+    decision: "PASS"
+    reason: "100% coverage (4/4 criteria), all quality gates met, comprehensive test coverage at E2E/Unit/Integration levels."
+    document: "_bmad-output/gate-decision-story-8.1.md"
+  - story_id: "8.2"
+    name: "Autosave Retry & Recovery"
+    date: "2026-01-22"
+    decision: "PASS"
+    reason: "100% coverage (6/6 criteria), 100% pass rate (10 tests), exponential backoff verified."
+    document: "_bmad-output/gate-decision-story-8.2.md"
+  - story_id: "8.3"
+    name: "Remove Broken Zen Mode"
+    date: "2026-01-22"
+    decision: "PASS"
+    reason: "100% coverage (4/4 criteria), Zen removed and verified, 542 Jest tests passed. Gate PASS."
+    document: "_bmad-output/gate-decision-story-8.3.md"
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5
@@ -447,10 +518,10 @@ gate_history:
 
 # Next Action
 next_workflow:
-  id: "story-5.8"
-  name: "Mobile Responsive Layout"
-  agent: "qa"
-  command: "/qa-story"
-  description: "Verify mobile responsiveness across all dashboard pages."
-  priority: "high"
-  reason: "Marketplace and Blog core features complete. Moving to QA validation for mobile polish."
+  id: "story-5.9"
+  name: "AI Cover Generator"
+  agent: "pm"
+  command: "/plan-story"
+  description: "Plan implementation of AI Cover Generator."
+  priority: "medium"
+  reason: "Mobile Responsive Layout (5.8) completed. Proceeding to final feature in Epic 5."

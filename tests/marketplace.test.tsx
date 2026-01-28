@@ -108,14 +108,14 @@ describe("MarketplacePage", () => {
     expect(screen.getByText("Manage service requests and tasks.")).toBeInTheDocument();
   });
 
-  it("renders DesignerBoard for admins", async () => {
+  it("renders DesignerBoard for super_admin", async () => {
     mockGetUser.mockResolvedValue({ 
       data: { user: { id: "admin-123", email: "admin@example.com" } }, 
       error: null 
     });
     
     (getOrCreateProfile as jest.Mock).mockResolvedValue({
-      profile: { role: "admin", display_name: "Admin" },
+      profile: { role: "super_admin", display_name: "Super Admin" },
     });
 
     const page = await MarketplacePage();

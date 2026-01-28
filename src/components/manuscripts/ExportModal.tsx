@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ExportProvider, useExport } from "../export/ExportContext";
 import ExportPreview from "../export/ExportPreview";
+import { performExportDownload } from "@/lib/export-download-utils";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -15,51 +16,53 @@ interface ExportModalProps {
 function ExportModalContent({ manuscriptId, title, content, onClose }: ExportModalProps) {
     const { settings, updateSettings, toggleLivePreview } = useExport();
     const [isExporting, setIsExporting] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
 
     const handleDownload = async (format: 'pdf' | 'docx') => {
         setIsExporting(true);
-        // Build URL with params
-        const query = new URLSearchParams({
-            fontSize: settings.fontSize.toString(),
-            lineHeight: settings.lineHeight.toString(),
-            pageSize: settings.pageSize,
-            fontFace: settings.fontFace
-        });
+        setExportError(null);
         
         try {
-             const url = `/api/manuscripts/${manuscriptId}/export/${format}?${query.toString()}`;
-             
-             const response = await fetch(url);
-             if (!response.ok) throw new Error("Export failed");
-             
-             // Get filename from header
-             const contentDisposition = response.headers.get("Content-Disposition");
-             let filename = `${title}.${format}`;
-             if (contentDisposition) {
-                 const match = contentDisposition.match(/filename="(.+)"/);
-                 if (match) filename = match[1];
-             }
-             
-             const blob = await response.blob();
-             const downloadUrl = window.URL.createObjectURL(blob);
-             const link = document.createElement("a");
-             link.href = downloadUrl;
-             link.download = filename;
-             document.body.appendChild(link);
-             link.click();
-             document.body.removeChild(link);
-             window.URL.revokeObjectURL(downloadUrl);
-             
-        } catch(e) {
-            console.error("Download failed", e);
-            alert("Failed to download file");
+            // Build URL with params
+            const query = new URLSearchParams({
+                fontSize: settings.fontSize.toString(),
+                lineHeight: settings.lineHeight.toString(),
+                pageSize: settings.pageSize,
+                fontFace: settings.fontFace
+            });
+            
+            const url = `/api/manuscripts/${manuscriptId}/export/${format}?${query.toString()}`;
+            const fallbackFilename = `${title}.${format}`;
+            
+            // Use the improved download utility with proper error handling
+            const result = await performExportDownload(url, fallbackFilename);
+            
+            if (!result.success) {
+                // Log error for debugging (without sensitive info)
+                console.error("Export download failed:", {
+                    format,
+                    manuscriptId,
+                    error: result.error,
+                    timestamp: new Date().toISOString(),
+                });
+                
+                setExportError(result.error || "Export failed. Please try again.");
+            }
+        } catch (e) {
+            console.error("Export download threw unexpectedly:", {
+                format,
+                manuscriptId,
+                error: e instanceof Error ? e.message : String(e),
+                timestamp: new Date().toISOString(),
+            });
+            setExportError("Export failed. Please try again.");
         } finally {
             setIsExporting(false);
         }
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 md:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 md:p-4" data-testid="export-modal">
              <div className="w-full h-full md:w-[95vw] md:h-[90vh] max-w-6xl bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b px-4 md:px-6 py-3 md:py-4">
@@ -103,6 +106,7 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                                   value={settings.fontSize}
                                   onChange={e => updateSettings({ fontSize: parseFloat(e.target.value) })}
                                   className="w-full accent-indigo-600"
+                                  data-testid="font-size-range"
                                />
                            </div>
 
@@ -114,6 +118,7 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                                   value={settings.lineHeight}
                                   onChange={e => updateSettings({ lineHeight: parseFloat(e.target.value) })}
                                   className="w-full accent-indigo-600"
+                                  data-testid="line-height-range"
                                />
                            </div>
 
@@ -141,6 +146,7 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                             <button 
                                 onClick={toggleLivePreview}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.isLivePreview ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                                data-testid="toggle-live-preview"
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.isLivePreview ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
@@ -151,23 +157,46 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                             <button
                                 onClick={() => updateSettings({ viewMode: 'pdf' })}
                                 className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${settings.viewMode === 'pdf' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
+                                data-testid="view-mode-pdf"
                             >
                                 PDF View
                             </button>
                             <button
                                 onClick={() => updateSettings({ viewMode: 'epub' })}
                                 className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${settings.viewMode === 'epub' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}
+                                data-testid="view-mode-epub"
                             >
                                 ePub View
                             </button>
                         </div>
 
                         <div className="md:mt-auto space-y-3 pt-4 md:pt-6">
+                            {/* Error Message Display */}
+                            {exportError && (
+                                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                                    <div className="flex items-start gap-2">
+                                        <svg className="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <div>
+                                            <p>{exportError}</p>
+                                            <button 
+                                                onClick={() => setExportError(null)}
+                                                className="text-red-600 underline hover:no-underline mt-1 text-xs"
+                                            >
+                                                Dismiss
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div className="flex gap-2 md:flex-col md:gap-3">
                               <button
                                   onClick={() => handleDownload('pdf')}
                                   disabled={isExporting}
                                   className="flex-1 md:flex-none md:w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors min-h-[44px]"
+                                  data-testid="download-pdf-button"
                               >
                                   {isExporting ? (
                                       <>
@@ -181,6 +210,7 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                                   onClick={() => handleDownload('docx')}
                                   disabled={isExporting}
                                   className="flex-1 md:flex-none md:w-full flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors min-h-[44px]"
+                                  data-testid="download-docx-button"
                               >
                                   DOCX
                               </button>
@@ -189,7 +219,7 @@ function ExportModalContent({ manuscriptId, title, content, onClose }: ExportMod
                     </div>
 
                     {/* Preview Area - grows to fill remaining space */}
-                    <div className="flex-1 bg-slate-100 overflow-hidden relative min-h-[30vh] md:min-h-0">
+                    <div className="flex-1 bg-slate-100 overflow-hidden relative min-h-[30vh] md:min-h-0" data-testid="export-preview-container">
                         {settings.isLivePreview ? (
                             <ExportPreview content={content} />
                         ) : (

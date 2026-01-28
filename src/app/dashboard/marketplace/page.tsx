@@ -31,7 +31,6 @@ export default async function MarketplacePage() {
   // Also showing to admins for visibility
   const isDesignerOrAdmin = 
     profile?.role === "support_agent" || 
-    profile?.role === "admin" || 
     profile?.role === "super_admin";
 
   return (

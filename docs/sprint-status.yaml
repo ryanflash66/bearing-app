@@ -42,7 +42,7 @@ development_status:
   5-5-cmdk-commander-pattern: done
   5-6-integrate-custom-models: deferred
   5-7-voice-to-text: done
-  5-8-mobile-responsive: review
+  5-8-mobile-responsive: done
   5-9-ai-cover-generator: ready-for-dev
 
   # Epic 6: Blog & Content Platform (In Progress)
@@ -57,5 +57,30 @@ development_status:
   7-2-wysiwyg-export-previewer: done
   7-3-publication-metadata: done
   7-4-coming-soon-pages: done
+
+  # Epic 8: Client Feedback & Bearing TODO (bearing-todo.md)
+  epic-8: in-progress
+  8-1-export-download-fix: done
+  8-2-autosave-retry-recovery: done
+  8-3-remove-broken-zen-mode: done
+  8-4-admin-login-maintenance-gating: review
+  8-5-move-2fa-to-settings: backlog
+  8-6-publishing-service-request-popup: backlog
+  8-7-check-consistency-enhancement: backlog
+  8-8-image-upload-ai-manuscript: backlog
+  8-9-zen-fullscreen-view: backlog
+  8-10-marketplace-redesign-subscription: backlog
+  8-11-isbn-registration-flow: backlog
+  8-12-service-submission-forms: backlog
+  8-13-my-orders-service-tracking: backlog
+  8-14-admin-user-manuscript-viewing: backlog
+  8-15-admin-orders-service-requests: backlog
+  8-16-admin-blog-view: backlog
+  8-17-admin-notifications-bell: backlog
+  8-18-admin-user-crud: backlog
+  8-19-clarify-ai-tokens-display: backlog
+  8-20-sync-manuscript-service: backlog
+  8-21-login-ui-improvements: backlog
+  8-22-marketplace-subscription-messaging: backlog
 
 

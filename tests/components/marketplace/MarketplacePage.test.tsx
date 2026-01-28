@@ -137,13 +137,16 @@ describe("MarketplacePage", () => {
     expect(screen.getByText(/future implementation/i)).toBeInTheDocument();
   });
 
-  it("renders DesignerBoard for admin users", async () => {
-    const mockUser = { id: "user-3", email: "admin@example.com" };
+  it("renders ServiceGrid for regular users (no admin role exists)", async () => {
+    // Note: "admin" is not a valid role in the type system.
+    // Valid roles are: user, support_agent, super_admin
+    // Regular users see the ServiceGrid, not the DesignerBoard.
+    const mockUser = { id: "user-3", email: "user@example.com" };
     const mockProfile = {
       id: "profile-3",
       user_id: "user-3",
-      display_name: "Admin User",
-      role: "admin",
+      display_name: "Regular User",
+      role: "user",
     };
 
     mockGetUser.mockResolvedValue({ data: { user: mockUser }, error: null });
@@ -155,8 +158,7 @@ describe("MarketplacePage", () => {
     render(result);
 
     expect(screen.getByText("Service Marketplace")).toBeInTheDocument();
-    expect(screen.getByText(/manage service requests and tasks/i)).toBeInTheDocument();
-    expect(screen.getByText(/task board view/i)).toBeInTheDocument();
+    expect(screen.getByText(/browse and request professional services/i)).toBeInTheDocument();
   });
 
   it("renders DesignerBoard for super_admin users", async () => {

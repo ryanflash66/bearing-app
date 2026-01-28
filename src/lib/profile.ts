@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/supabase";
 import { createAuditLog } from "./auditLog";
 
 export interface UserProfile {
@@ -7,7 +8,9 @@ export interface UserProfile {
   email: string;
   display_name: string | null;
   pen_name: string | null;
-  role: "author" | "admin" | "support" | "super_admin" | "support_agent";
+  // NOTE: This maps to the `users.role` database enum (public.app_role).
+  // "user" represents the normal author account; elevated roles are separate.
+  role: Database["public"]["Enums"]["app_role"];
   created_at: string;
   updated_at: string;
 }
@@ -248,7 +251,8 @@ async function createProfileWithAccount(
     .insert({
       auth_id: authId,
       email: email,
-      role: "author",
+      // Default app role for normal users (authors)
+      role: "user",
     })
     .select()
     .single();
@@ -261,6 +265,61 @@ async function createProfileWithAccount(
   });
 
   if (profileError) {
+    // If multiple requests race to create the same profile, we can hit a unique
+    // constraint violation on auth_id. In that case, fetch the existing row and
+    // continue (idempotent profile creation).
+    const code = (profileError as unknown as { code?: string }).code;
+    if (code === "23505") {
+      const { data: existingProfile } = await supabase
+        .from("users")
+        .select("*")
+        .eq("auth_id", authId)
+        .single();
+
+      if (existingProfile) {
+        // Best-effort: also ensure there is an account, matching the normal flow.
+        const { data: accountData } = await supabase
+          .from("account_members")
+          .select(
+            `
+            accounts (
+              id,
+              name,
+              owner_user_id,
+              created_at
+            )
+          `
+          )
+          .eq("user_id", existingProfile.id)
+          .limit(1)
+          .single();
+
+        const account = (Array.isArray(accountData?.accounts)
+          ? accountData?.accounts[0]
+          : accountData?.accounts) as Account | null;
+
+        if (account) {
+          return {
+            profile: existingProfile as UserProfile,
+            account,
+            error: null,
+          };
+        }
+
+        const { account: newAccount, error: createError } = await createAccountOnly(
+          supabase,
+          existingProfile.id,
+          existingProfile.email
+        );
+
+        return {
+          profile: existingProfile as UserProfile,
+          account: newAccount,
+          error: createError,
+        };
+      }
+    }
+
     console.error("Profile creation error:", JSON.stringify(profileError, null, 2));
     return {
       profile: null,

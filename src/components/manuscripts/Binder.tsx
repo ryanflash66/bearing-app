@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ConsistencyIssue } from "@/lib/gemini";
 
 interface BinderProps {
@@ -25,26 +25,7 @@ export default function Binder({ content, issues = [], onChapterClick, onBadgeCl
   const chapters = useMemo(() => {
     if (!content) return [];
 
-    const lines = content.split("\n");
     const extractedChapters: Chapter[] = [];
-    let currentChapter: Partial<Chapter> | null = null;
-    let removeCharCount = 0; // Track character position
-
-    // Regex for headings #, ##, ### (simplified to just # or ## for chapters/scenes)
-    // Adjust based on project convention. Assuming # and ## are significant.
-    const headingRegex = /^(#{1,2})\s+(.+)$/;
-
-    lines.forEach((line, lineIndex) => {
-        // Calculate start index of the line in the full text
-        // Note: content.split("\n") removes newlines, so we need to account for them
-        // This simple calculation might be off by +1 per line if we don't handle newlines carefully.
-        // Better to use regex on the full string or cumulative length.
-        
-        // Let's iterate lines but keep track of cumulative length
-        // Wait, looping lines is easier for regex matching, but mapping back to full text index can be tricky.
-        
-        // Alternative: Regex exec loop on full text.
-    });
     
     // Use exec loop for better compatibility and control
     const regex = /^\s*(#{1,2})\s+(.+)$/gm;
