@@ -233,7 +233,7 @@ export async function generatePDF(
     if (isServerless) {
       browser = await puppeteerCore.launch({
         args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: { width: 800, height: 600 },
         executablePath: await chromium.executablePath(),
         headless: chromium.headless,
       });
@@ -249,7 +249,7 @@ export async function generatePDF(
       // Local Linux path: `@sparticuz/chromium` works fine.
       browser = await puppeteerCore.launch({
         args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: { width: 800, height: 600 },
         executablePath: await chromium.executablePath(),
         headless: chromium.headless,
       });
