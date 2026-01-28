@@ -1,5 +1,10 @@
 import puppeteerCore from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
+
+// External Chromium binary URL for serverless environments
+// Using chromium-min which downloads at runtime instead of bundling (avoids Vercel size limits)
+const CHROMIUM_REMOTE_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
 import {
   Document,
   Packer,
@@ -273,10 +278,11 @@ export async function generatePDF(
       (chromium as unknown as { headless?: HeadlessMode }).headless ?? true;
 
     if (isServerless) {
+      // chromium-min downloads the binary at runtime from CHROMIUM_REMOTE_URL
       browser = (await puppeteerCore.launch({
         args: chromium.args,
         defaultViewport: { width: 800, height: 600 },
-        executablePath: await chromium.executablePath(),
+        executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
         headless: chromiumHeadless,
       })) as unknown as MinimalBrowser;
     } else if (process.platform === "win32" || process.platform === "darwin") {
@@ -288,11 +294,11 @@ export async function generatePDF(
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       })) as unknown as MinimalBrowser;
     } else {
-      // Local Linux path: `@sparticuz/chromium` works fine.
+      // Local Linux path: chromium-min downloads binary at runtime
       browser = (await puppeteerCore.launch({
         args: chromium.args,
         defaultViewport: { width: 800, height: 600 },
-        executablePath: await chromium.executablePath(),
+        executablePath: await chromium.executablePath(CHROMIUM_REMOTE_URL),
         headless: chromiumHeadless,
       })) as unknown as MinimalBrowser;
     }
