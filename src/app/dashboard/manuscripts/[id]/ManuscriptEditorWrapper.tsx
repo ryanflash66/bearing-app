@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { updateManuscript } from "@/lib/manuscripts";
 import ManuscriptEditor from "@/components/manuscripts/ManuscriptEditor";
+import type { ServiceRequest } from "@/lib/service-requests";
 
 interface ManuscriptEditorWrapperProps {
   manuscriptId: string;
@@ -12,6 +10,7 @@ interface ManuscriptEditorWrapperProps {
   initialContent: string;
   initialUpdatedAt: string;
   initialMetadata?: Record<string, any>;
+  activeServiceRequest?: ServiceRequest | null;
 }
 
 export default function ManuscriptEditorWrapper({
@@ -20,12 +19,11 @@ export default function ManuscriptEditorWrapper({
   initialContent,
   initialUpdatedAt,
   initialMetadata,
+  activeServiceRequest,
 }: ManuscriptEditorWrapperProps) {
-  const router = useRouter();
-
   // No-op for title changes in wrapper, handled by editor autosave hook
   const handleTitleChange = useCallback(async (newTitle: string) => {
-    // Just refresh router if we need to sync parent state, 
+    // Just refresh router if we need to sync parent state,
     // but the editor handles the actual DB write.
   }, []);
 
@@ -37,6 +35,7 @@ export default function ManuscriptEditorWrapper({
       initialUpdatedAt={initialUpdatedAt}
       initialMetadata={initialMetadata}
       onTitleChange={handleTitleChange}
+      activeServiceRequest={activeServiceRequest}
     />
   );
 }

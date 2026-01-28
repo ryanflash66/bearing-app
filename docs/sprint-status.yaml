@@ -64,7 +64,7 @@ development_status:
   8-2-autosave-retry-recovery: done
   8-3-remove-broken-zen-mode: done
   8-4-admin-login-maintenance-gating: review
-  8-5-move-2fa-to-settings: backlog
+  8-5-move-2fa-to-settings: ready-for-dev
   8-6-publishing-service-request-popup: backlog
   8-7-check-consistency-enhancement: backlog
   8-8-image-upload-ai-manuscript: backlog
@@ -79,8 +79,6 @@ development_status:
   8-17-admin-notifications-bell: backlog
   8-18-admin-user-crud: backlog
   8-19-clarify-ai-tokens-display: backlog
-  8-20-sync-manuscript-service: backlog
+  8-20-sync-manuscript-service: done
   8-21-login-ui-improvements: backlog
   8-22-marketplace-subscription-messaging: backlog
-
-

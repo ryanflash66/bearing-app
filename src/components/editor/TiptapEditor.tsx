@@ -59,6 +59,12 @@ export default function TiptapEditor({
     },
   });
 
+  // Handle editable state changes (AC 8.20.3: Edit Locking)
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(editable);
+  }, [editor, editable]);
+
   // Handle external content updates (like version restoration)
   useEffect(() => {
     if (!editor || !content) return;

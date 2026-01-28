@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import { getManuscript } from "@/lib/manuscripts";
+import { getActiveServiceRequest } from "@/lib/service-requests";
 import ManuscriptEditorWrapper from "./ManuscriptEditorWrapper";
 
 interface ManuscriptPageProps {
@@ -35,6 +36,9 @@ export default async function ManuscriptPage({ params }: ManuscriptPageProps) {
   if (manuscript.deleted_at) {
     return redirect("/dashboard/manuscripts?error=deleted");
   }
+
+  // Check for active service request (AC 8.20.1)
+  const { request: activeServiceRequest } = await getActiveServiceRequest(supabase, id);
 
   return (
     <div className="flex h-screen flex-col bg-white">
@@ -82,6 +86,7 @@ export default async function ManuscriptPage({ params }: ManuscriptPageProps) {
         initialContent={manuscript.content_text}
         initialUpdatedAt={manuscript.updated_at}
         initialMetadata={manuscript.metadata}
+        activeServiceRequest={activeServiceRequest}
       />
     </div>
   );

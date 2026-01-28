@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import { getManuscripts } from "@/lib/manuscripts";
+import { getActiveServiceRequestsForManuscripts } from "@/lib/service-requests";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ManuscriptListWrapper from "./ManuscriptListWrapper";
 import Link from "next/link";
@@ -80,6 +81,19 @@ export default async function ManuscriptsPage() {
     account.id
   );
 
+  // Get active service requests for all manuscripts (AC 8.20.7 - avoid N+1)
+  const manuscriptIds = manuscripts.map(m => m.id);
+  const activeServiceRequests = await getActiveServiceRequestsForManuscripts(
+    supabase,
+    manuscriptIds
+  );
+
+  // Convert Map to a serializable object for client component
+  const activeRequestsRecord: Record<string, boolean> = {};
+  activeServiceRequests.forEach((_, manuscriptId) => {
+    activeRequestsRecord[manuscriptId] = true;
+  });
+
   return (
     <DashboardLayout
       user={{
@@ -117,10 +131,11 @@ export default async function ManuscriptsPage() {
         )}
 
         {/* Manuscript list (client component for interactivity) */}
-        <ManuscriptListWrapper 
-          initialManuscripts={manuscripts} 
+        <ManuscriptListWrapper
+          initialManuscripts={manuscripts}
           accountId={account.id}
-          userId={user.id} 
+          userId={user.id}
+          activeServiceRequests={activeRequestsRecord}
         />
       </div>
     </DashboardLayout>

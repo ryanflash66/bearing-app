@@ -23,6 +23,8 @@ import BetaShareModal from "./BetaShareModal";
 import BetaCommentsPanel from "./BetaCommentsPanel";
 import ExportModal from "./ExportModal";
 import PublishingSettingsModal from "./PublishingSettingsModal";
+import ServiceStatusBanner from "./ServiceStatusBanner";
+import type { ServiceRequest } from "@/lib/service-requests";
 import {
   Sheet,
   SheetContent,
@@ -40,6 +42,7 @@ interface ManuscriptEditorProps {
   initialUpdatedAt: string;
   initialMetadata?: Record<string, any>;
   onTitleChange?: (title: string) => void;
+  activeServiceRequest?: ServiceRequest | null;
 }
 
 interface BetaComment {
@@ -55,16 +58,18 @@ interface BetaComment {
 function AutosaveIndicator({
   state,
   onSaveNow,
-  isSaving = false
+  isSaving = false,
+  disabled = false,
 }: {
   state: AutosaveState;
   onSaveNow?: () => Promise<boolean>;
   isSaving?: boolean;
+  disabled?: boolean;
 }) {
   const [isManualSaving, setIsManualSaving] = useState(false);
 
   const handleSaveNow = async () => {
-    if (!onSaveNow || isManualSaving) return;
+    if (!onSaveNow || isManualSaving || disabled) return;
     setIsManualSaving(true);
     try {
       await onSaveNow();
@@ -123,7 +128,7 @@ function AutosaveIndicator({
               {onSaveNow && (
                 <button
                   onClick={handleSaveNow}
-                  disabled={isManualSaving}
+                  disabled={isManualSaving || disabled}
                   className="ml-2 px-2 py-1 text-xs font-medium rounded bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                   title="Click to retry saving"
                 >
@@ -242,6 +247,7 @@ export default function ManuscriptEditor({
   initialUpdatedAt,
   initialMetadata,
   onTitleChange,
+  activeServiceRequest,
 }: ManuscriptEditorProps) {
   const router = useRouter();
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -258,6 +264,9 @@ export default function ManuscriptEditor({
   const [selectedChapterForReport, setSelectedChapterForReport] = useState<number | null>(null);
   const [localContent, setLocalContent] = useState(initialContent);
   const [serverState, setServerState] = useState<{ content_text: string; title: string } | null>(null);
+
+  // AC 8.20.3: Determine if editing is locked due to active service request
+  const isLocked = activeServiceRequest !== null && activeServiceRequest !== undefined;
   
   // AI Suggestion state
   const [selectedText, setSelectedText] = useState<string>("");
@@ -502,7 +511,8 @@ export default function ManuscriptEditor({
 
   // Handle ghost text acceptance - uses ref to access queueSave to avoid circular dependency
   const handleGhostTextAccept = useCallback((suggestion: string) => {
-    if (!editor) return;
+    // AC 8.20.3: Block ghost text acceptance when editing is locked
+    if (!editor || isLocked) return;
 
     // Use editor commands to insert text so Tiptap state is updated correctly
     editor.commands.insertContent(suggestion);
@@ -526,7 +536,7 @@ export default function ManuscriptEditor({
 
     // Move cursor to end of inserted text is handled by insertContent
     setCursorPosition(editor.state.selection.to);
-  }, [editor, title, metadata]);
+  }, [editor, title, metadata, isLocked]);
 
   // Initialize Ghost Text
   const ghostText = useGhostText(content, cursorPosition, {
@@ -713,6 +723,9 @@ export default function ManuscriptEditor({
 
   // Handle metadata update with autosave
   const handleMetadataUpdate = useCallback((newMetadata: any) => {
+    // AC 8.20.3: Prevent saves while locked
+    if (isLocked) return;
+
     setMetadata(newMetadata);
     const currentJson = editor ? editor.getJSON() : { type: "doc", content: [{ type: "text", text: content }] };
     queueSave(
@@ -721,10 +734,13 @@ export default function ManuscriptEditor({
       title,
       newMetadata
     );
-  }, [queueSave, content, title, editor]);
+  }, [queueSave, content, title, editor, isLocked]);
 
   // Handle content change with autosave
   const handleContentChange = useCallback((newContent: string) => {
+    // AC 8.20.3: Prevent saves while locked
+    if (isLocked) return;
+
     setContent(newContent);
     setLocalContent(newContent); // Track local content for conflict resolution
     const currentJson = editor ? editor.getJSON() : { type: "doc", content: [{ type: "text", text: newContent }] };
@@ -734,10 +750,13 @@ export default function ManuscriptEditor({
       title,
       metadata
     );
-  }, [queueSave, title, metadata, editor]);
+  }, [queueSave, title, metadata, editor, isLocked]);
 
   // Handle title change with autosave
   const handleTitleChange = useCallback((newTitle: string) => {
+    // AC 8.20.3: Prevent saves while locked
+    if (isLocked) return;
+
     setTitle(newTitle);
     onTitleChange?.(newTitle);
     // Also trigger autosave for title changes
@@ -748,7 +767,7 @@ export default function ManuscriptEditor({
       newTitle,
       metadata
     );
-  }, [onTitleChange, queueSave, content, metadata, editor]);
+  }, [onTitleChange, queueSave, content, metadata, editor, isLocked]);
 
   // Track text selection and cursor position
 
@@ -1030,28 +1049,34 @@ export default function ManuscriptEditor({
     }
   }, [editor]);
 
-  // Save on Ctrl+S
+  // Save on Ctrl+S (AC 8.20.3: disabled when locked)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        saveNow();
+        // AC 8.20.3: Block manual save when editing is locked
+        if (!isLocked) {
+          saveNow();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [saveNow]);
+  }, [saveNow, isLocked]);
 
   // Tiptap Content change handler
   const handleEditorUpdate = useCallback((data: { json: any; html: string; text: string }) => {
+    // AC 8.20.3: Prevent saves while locked
+    if (isLocked) return;
+
     // Determine content changes
     // Ideally we track JSON for rich text data
-    
+
     // Update local state
-    setLocalContent(data.text); 
+    setLocalContent(data.text);
     setContent(data.text); // Keep both in sync for UI components like Binder
-    
+
     // Trigger autosave
     queueSave(
       data.json,
@@ -1059,7 +1084,7 @@ export default function ManuscriptEditor({
       title,
       metadata
     );
-  }, [queueSave, title, setContent, setLocalContent, metadata]);
+  }, [queueSave, title, setContent, setLocalContent, metadata, isLocked]);
 
   // Tiptap Selection handler
   const handleEditorSelection = useCallback((editor: Editor) => {
@@ -1089,8 +1114,9 @@ export default function ManuscriptEditor({
           <input
             type="text"
             value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            className="w-full border border-transparent bg-transparent text-xl md:text-2xl font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-100 focus:border-indigo-200 hover:border-slate-200 hover:bg-slate-50/50 rounded-lg px-2 md:px-3 -ml-2 md:-ml-3 transition-all duration-200 cursor-text"
+            onChange={(e) => !isLocked && handleTitleChange(e.target.value)}
+            disabled={isLocked}
+            className={`w-full border border-transparent bg-transparent text-xl md:text-2xl font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-100 focus:border-indigo-200 hover:border-slate-200 hover:bg-slate-50/50 rounded-lg px-2 md:px-3 -ml-2 md:-ml-3 transition-all duration-200 ${isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
             placeholder="Untitled Manuscript"
           />
         </div>
@@ -1207,7 +1233,7 @@ export default function ManuscriptEditor({
           <span className="text-sm text-slate-500">
             {wordCount.toLocaleString()} words
           </span>
-          <AutosaveIndicator state={state} onSaveNow={saveNow} />
+          <AutosaveIndicator state={state} onSaveNow={saveNow} disabled={isLocked} />
         </div>
       </div>
 
@@ -1265,6 +1291,16 @@ export default function ManuscriptEditor({
       {/* Editor area - distraction-free, responsive padding */}
       <div className="flex-1 overflow-auto bg-slate-50">
           <div className={EDITOR_CONTENT_WRAPPER_CLASSNAME} data-testid="editor-content-wrapper">
+           {/* Service Status Banner - AC 8.20.2, 8.20.3 */}
+          {activeServiceRequest && (
+            <ServiceStatusBanner
+              request={activeServiceRequest}
+              onCancelSuccess={() => {
+                // Page will reload on successful cancel, handled in banner
+              }}
+            />
+          )}
+
            {/* AI Suggestion (if available) - Positioning might need adjustment for Tiptap integration */}
           {suggestion && (
             <AISuggestion
@@ -1375,10 +1411,11 @@ export default function ManuscriptEditor({
            {/* Replaced Textarea with TiptapEditor */}
            <TiptapEditor
               content={content} // Initial content, Tiptap manages its own state mostly
-              onUpdate={handleEditorUpdate}
+              onUpdate={isLocked ? undefined : handleEditorUpdate} // AC 8.20.3: Disable updates when locked
               onSelectionUpdate={handleEditorSelection}
               onEditorReady={setEditor}
-              className="text-lg leading-relaxed text-slate-800"
+              editable={!isLocked} // AC 8.20.3: Set editable to false when locked
+              className={`text-lg leading-relaxed text-slate-800 ${isLocked ? 'opacity-70' : ''}`}
               placeholder="Start writing..."
            />
 

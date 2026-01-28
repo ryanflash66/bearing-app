@@ -20,11 +20,29 @@ jest.mock("@/lib/marketplace-data", () => ({
   ],
 }));
 
+// Mock service-requests lib for duplicate check
+jest.mock("@/lib/service-requests", () => ({
+  __esModule: true,
+  getActiveServiceRequest: jest.fn(),
+  hasActiveServiceRequest: jest.fn().mockResolvedValue(false),
+}));
+
+import { getActiveServiceRequest } from "@/lib/service-requests";
+
+// Mock marketplace-utils
+jest.mock("@/lib/marketplace-utils", () => ({
+  __esModule: true,
+  getServiceLabel: jest.fn().mockReturnValue("Cover Design"),
+}));
+
 describe("Service Request API (/api/services/request)", () => {
+  // TODO (TEA Review): Add Story 8.20 test IDs + @p0/@p1 markers in describe/it for traceability. See _bmad-output/test-review.md
+  // TODO (TEA Review): Add Given-When-Then comments to clarify intent. See _bmad-output/test-review.md
   let mockSupabase: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // TODO (TEA Review): Extract shared Supabase mock helper to reduce duplication. See _bmad-output/test-review.md
     mockSupabase = {
       auth: {
         getUser: jest.fn(),
@@ -36,8 +54,11 @@ describe("Service Request API (/api/services/request)", () => {
       insert: jest.fn().mockReturnThis(),
     };
     (createClient as jest.Mock).mockResolvedValue(mockSupabase);
+    // Default: no active request exists
+    (getActiveServiceRequest as jest.Mock).mockResolvedValue({ request: null, error: null });
   });
 
+  // TODO (TEA Review): Consider request/data factories to avoid repeated hardcoded IDs. See _bmad-output/test-review.md
   const createMockRequest = (body: any) => {
     return new NextRequest("http://localhost:3000/api/services/request", {
       method: "POST",
@@ -97,18 +118,16 @@ describe("Service Request API (/api/services/request)", () => {
     
     expect(mockSupabase.insert).toHaveBeenCalledWith(expect.objectContaining({
       user_id: "user-123",
+      manuscript_id: "ms-789", // Now stored in column, not just metadata
       service_type: "cover_design", // DB enum uses underscores
       amount_cents: 0, // Quote-based service
-      metadata: expect.objectContaining({
-        manuscript_id: "ms-789",
-      }),
     }));
   });
 
   it("successfully creates request for super_admins without subscription check", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({ 
-      data: { user: { id: "admin-123" } }, 
-      error: null 
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: "admin-123" } },
+      error: null
     });
     mockSupabase.single
       .mockResolvedValueOnce({ data: { role: "super_admin" }, error: null })
@@ -116,11 +135,65 @@ describe("Service Request API (/api/services/request)", () => {
 
     const req = createMockRequest({ serviceId: "isbn" });
     const res = await POST(req);
-    
+
     expect(res.status).toBe(200);
     expect(mockSupabase.insert).toHaveBeenCalledWith(expect.objectContaining({
       service_type: "isbn",
       amount_cents: 12500, // Fixed price for ISBN
     }));
+  });
+
+  it("returns 409 when manuscript already has an active request (API-level check)", async () => {
+    const existingRequest = {
+      id: "existing-req-123",
+      manuscript_id: "ms-789",
+      status: "pending",
+      service_type: "cover_design",
+    };
+
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null
+    });
+    mockSupabase.single.mockResolvedValueOnce({
+      data: { role: "user" },
+      error: null
+    });
+    (getActiveServiceRequest as jest.Mock).mockResolvedValue({
+      request: existingRequest,
+      error: null
+    });
+
+    const req = createMockRequest({ serviceId: "cover-design", manuscriptId: "ms-789" });
+    const res = await POST(req);
+
+    expect(res.status).toBe(409);
+    const data = await res.json();
+    expect(data.code).toBe("DUPLICATE_ACTIVE_REQUEST");
+    expect(data.existingRequestId).toBe("existing-req-123");
+    expect(data.error).toContain("already has an active");
+  });
+
+  it("returns 409 when database unique constraint is violated", async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null
+    });
+    mockSupabase.single
+      .mockResolvedValueOnce({ data: { role: "user" }, error: null }) // Profile check
+      .mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "23505",
+          message: "duplicate key value violates unique constraint \"idx_service_requests_manuscript_active\""
+        }
+      }); // Insert fails with constraint violation
+
+    const req = createMockRequest({ serviceId: "cover-design", manuscriptId: "ms-789" });
+    const res = await POST(req);
+
+    expect(res.status).toBe(409);
+    const data = await res.json();
+    expect(data.code).toBe("DUPLICATE_ACTIVE_REQUEST");
   });
 });

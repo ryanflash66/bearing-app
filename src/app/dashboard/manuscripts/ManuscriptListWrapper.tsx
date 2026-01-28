@@ -11,12 +11,14 @@ interface ManuscriptListWrapperProps {
   initialManuscripts: Manuscript[];
   accountId: string;
   userId: string;
+  activeServiceRequests?: Record<string, boolean>;
 }
 
 export default function ManuscriptListWrapper({
   initialManuscripts,
   accountId,
   userId,
+  activeServiceRequests = {},
 }: ManuscriptListWrapperProps) {
   const router = useRouter();
   const [manuscripts, setManuscripts] = useState<Manuscript[]>(initialManuscripts);
@@ -72,7 +74,11 @@ export default function ManuscriptListWrapper({
         </div>
       )}
       
-      <ManuscriptList manuscripts={manuscripts} onDelete={handleDelete} />
+      <ManuscriptList
+        manuscripts={manuscripts}
+        onDelete={handleDelete}
+        activeServiceRequests={activeServiceRequests}
+      />
     </div>
   );
 }

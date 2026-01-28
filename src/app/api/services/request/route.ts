@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { MARKETPLACE_SERVICES } from "@/lib/marketplace-data";
+import { getActiveServiceRequest } from "@/lib/service-requests";
+import { getServiceLabel } from "@/lib/marketplace-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -100,16 +102,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Create service request
+    // 4. Check for existing active request on this manuscript (AC 8.20.5)
+    if (manuscriptId) {
+      const { request: existingRequest } = await getActiveServiceRequest(supabase, manuscriptId);
+      if (existingRequest) {
+        const existingServiceLabel = getServiceLabel(existingRequest.service_type);
+        return NextResponse.json(
+          {
+            error: `This manuscript already has an active ${existingServiceLabel} request`,
+            code: "DUPLICATE_ACTIVE_REQUEST",
+            existingRequestId: existingRequest.id,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 5. Create service request with manuscript_id in the column (not just metadata)
     const { data: serviceRequest, error: insertError } = await supabase
       .from("service_requests")
       .insert({
         user_id: user.id,
+        manuscript_id: manuscriptId || null, // Store in actual column for proper indexing/constraints
         service_type: dbServiceType,
         status: "pending",
         amount_cents: amountCents,
         metadata: {
-          manuscript_id: manuscriptId || null,
           requested_at: new Date().toISOString(),
           service_title: service.title,
         },
@@ -119,6 +137,18 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("Error creating service request:", insertError);
+
+      // Check if it's a unique constraint violation (duplicate active request)
+      if (insertError.code === "23505" && insertError.message.includes("idx_service_requests_manuscript_active")) {
+        return NextResponse.json(
+          {
+            error: "This manuscript already has an active service request",
+            code: "DUPLICATE_ACTIVE_REQUEST",
+          },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { error: "Failed to create service request" },
         { status: 500 }
