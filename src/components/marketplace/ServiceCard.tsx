@@ -6,9 +6,10 @@ import { navigateTo } from "@/lib/navigation";
 
 interface ServiceCardProps {
   service: ServiceItem;
+  manuscriptId?: string;
 }
 
-export default function ServiceCard({ service }: ServiceCardProps) {
+export default function ServiceCard({ service, manuscriptId }: ServiceCardProps) {
   const [isRequesting, setIsRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPoolWarning, setShowPoolWarning] = useState(false);
@@ -51,7 +52,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         const response = await fetch("/api/services/request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ serviceId: service.id }),
+          body: JSON.stringify({ 
+            serviceId: service.id,
+            manuscriptId 
+          }),
         });
 
         const data = await response.json();
@@ -63,6 +67,11 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         // Show success state (could be improved with a toast, but using error state for feedback for now)
         setError(null);
         alert(data.message || "Request submitted successfully!");
+        
+        // If we are in manuscript context, reload to show lock state
+        if (manuscriptId) {
+          window.location.reload();
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

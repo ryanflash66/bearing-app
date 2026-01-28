@@ -3,9 +3,10 @@ import ServiceCard from "./ServiceCard";
 
 interface ServiceGridProps {
   services: ServiceItem[];
+  manuscriptId?: string;
 }
 
-export default function ServiceGrid({ services }: ServiceGridProps) {
+export default function ServiceGrid({ services, manuscriptId }: ServiceGridProps) {
   if (!services || services.length === 0) {
     return (
       <div className="text-center py-12">
@@ -21,7 +22,7 @@ export default function ServiceGrid({ services }: ServiceGridProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {services.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+        <ServiceCard key={service.id} service={service} manuscriptId={manuscriptId} />
       ))}
     </div>
   );

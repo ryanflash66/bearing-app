@@ -63,6 +63,18 @@ export default async function ManuscriptPage({ params }: ManuscriptPageProps) {
             <div className="h-4 w-px bg-slate-300"></div>
 
             <a 
+                href={`/dashboard/manuscripts/${id}/services`}
+                className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1"
+            >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Services
+            </a>
+            
+            <div className="h-4 w-px bg-slate-300"></div>
+
+            <a 
                 href={`/dashboard/manuscripts/${id}/marketing`}
                 className="text-sm font-medium text-slate-600 hover:text-indigo-600 flex items-center gap-1"
             >
