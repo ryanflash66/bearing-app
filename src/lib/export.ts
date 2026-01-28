@@ -1,21 +1,30 @@
-import fs from "fs/promises";
-import os from "os";
-import path from "path";
-import puppeteer from "puppeteer";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, PageBreak } from "docx";
+import puppeteerCore from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  PageBreak,
+} from "docx";
 import { Manuscript, getManuscript } from "./manuscripts";
 import { ManuscriptVersion, getVersion } from "./manuscriptVersions";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { ConsistencyReport } from "./gemini";
 import { tiptapToDocx } from "./tiptap-convert";
-import { ExportSettings, defaultExportSettings, PageSize } from "./export-types";
+import {
+  ExportSettings,
+  defaultExportSettings,
+  PageSize,
+} from "./export-types";
 
 /**
  * Generate RFC 5987-compliant Content-Disposition header value
- * 
+ *
  * Provides both ASCII fallback (filename) and UTF-8 encoded (filename*)
  * for maximum browser compatibility.
- * 
+ *
  * @param filename - The filename to encode
  * @returns Content-Disposition header value
  */
@@ -24,13 +33,12 @@ export function generateContentDisposition(filename: string): string {
   const asciiFallback = filename
     .replace(/[^\x20-\x7E]/g, "_") // Replace non-printable ASCII with underscore
     .replace(/["\\]/g, "_"); // Replace quotes and backslash
-  
+
   // RFC 5987 encoding: percent-encode non-ASCII and special chars
   // Use encodeURIComponent and then convert %20 back to space for readability
   // Note: We need to encode more characters than encodeURIComponent does by default
-  const rfc5987Encoded = encodeURIComponent(filename)
-    .replace(/'/g, "%27"); // Single quotes need encoding in RFC 5987
-  
+  const rfc5987Encoded = encodeURIComponent(filename).replace(/'/g, "%27"); // Single quotes need encoding in RFC 5987
+
   // Return both formats for maximum compatibility
   // Some older browsers only understand filename="...", newer ones prefer filename*
   return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${rfc5987Encoded}`;
@@ -71,20 +79,25 @@ function sanitizeExportHtml(html: string): string {
   // Neutralize javascript: URLs in href/src.
   out = out.replace(
     /\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi,
-    ' $1=$2#$2'
+    " $1=$2#$2",
   );
 
   return out;
 }
 
 function getPageDimensions(size: PageSize): { width: string; height: string } {
-   switch(size) {
-       case "6x9": return { width: "6in", height: "9in" };
-       case "5x8": return { width: "5in", height: "8in" };
-       case "a4": return { width: "210mm", height: "297mm" };
-       case "a5": return { width: "148mm", height: "210mm" };
-       default: return { width: "6in", height: "9in" };
-   }
+  switch (size) {
+    case "6x9":
+      return { width: "6in", height: "9in" };
+    case "5x8":
+      return { width: "5in", height: "8in" };
+    case "a4":
+      return { width: "210mm", height: "297mm" };
+    case "a5":
+      return { width: "148mm", height: "210mm" };
+    default:
+      return { width: "6in", height: "9in" };
+  }
 }
 
 /**
@@ -92,7 +105,7 @@ function getPageDimensions(size: PageSize): { width: string; height: string } {
  * AC 3.2.5: A downloadable file is generated with the report contents
  */
 export async function generateConsistencyReportPDF(
-  report: ConsistencyReport
+  report: ConsistencyReport,
 ): Promise<Buffer> {
   // Keeping PDFKit for reports as they don't require WYSIWYG book formatting
   // and PDFKit is lighter for simple structured data
@@ -107,11 +120,16 @@ export async function generateConsistencyReportPDF(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", (error) => reject(error));
 
-      doc.fontSize(20).font("Helvetica-Bold").text("Consistency Report", { align: "center" });
+      doc
+        .fontSize(20)
+        .font("Helvetica-Bold")
+        .text("Consistency Report", { align: "center" });
       doc.moveDown();
       // ... (rest of simple PDFKit logic for reports is fine)
       doc.end();
-    } catch (e) { reject(e); }
+    } catch (e) {
+      reject(e);
+    }
   });
 }
 
@@ -127,13 +145,25 @@ export interface ExportOptions {
 export async function getManuscriptForExport(
   supabase: SupabaseClient,
   manuscriptId: string,
-  versionId?: number
-): Promise<{ title: string; content: string; content_json: any; metadata?: any; error: string | null }> {
+  versionId?: number,
+): Promise<{
+  title: string;
+  content: string;
+  content_json: any;
+  metadata?: any;
+  error: string | null;
+}> {
   try {
     if (versionId !== undefined) {
       const versionResult = await getVersion(supabase, manuscriptId, versionId);
       if (versionResult.error || !versionResult.version) {
-        return { title: "", content: "", content_json: null, metadata: null, error: versionResult.error || "Version not found" };
+        return {
+          title: "",
+          content: "",
+          content_json: null,
+          metadata: null,
+          error: versionResult.error || "Version not found",
+        };
       }
       // Only query manuscript if version exists
       const manuscriptResult = await getManuscript(supabase, manuscriptId);
@@ -147,7 +177,13 @@ export async function getManuscriptForExport(
     } else {
       const manuscriptResult = await getManuscript(supabase, manuscriptId);
       if (manuscriptResult.error || !manuscriptResult.manuscript) {
-        return { title: "", content: "", content_json: null, metadata: null, error: manuscriptResult.error || "Manuscript not found" };
+        return {
+          title: "",
+          content: "",
+          content_json: null,
+          metadata: null,
+          error: manuscriptResult.error || "Manuscript not found",
+        };
       }
       return {
         title: manuscriptResult.manuscript.title,
@@ -158,7 +194,13 @@ export async function getManuscriptForExport(
       };
     }
   } catch (err) {
-    return { title: "", content: "", content_json: null, metadata: null, error: "Failed to get manuscript content" };
+    return {
+      title: "",
+      content: "",
+      content_json: null,
+      metadata: null,
+      error: "Failed to get manuscript content",
+    };
   }
 }
 
@@ -170,21 +212,48 @@ export async function generatePDF(
   content: string, // HTML content from Tiptap
   contentJson?: any,
   settings: ExportSettings = defaultExportSettings,
-  metadata?: any
+  metadata?: any,
 ): Promise<Buffer> {
-  let userDataDir: string | null = null;
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
+  let browser: Awaited<ReturnType<typeof puppeteerCore.launch>> | null = null;
   try {
-    const profileDir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "bearing-puppeteer-profile-")
-    );
-    userDataDir = profileDir;
+    /**
+     * PDF generation runs in a serverless function on Vercel.
+     *
+     * - In serverless (Vercel/Lambda): use `puppeteer-core` + `@sparticuz/chromium`
+     *   to provide a compatible Chromium binary.
+     * - In local dev (esp. Windows/macOS): prefer full `puppeteer` if available,
+     *   since `@sparticuz/chromium` only ships Linux binaries.
+     */
+    const isServerless =
+      process.env.VERCEL === "1" ||
+      process.env.VERCEL === "true" ||
+      typeof process.env.AWS_LAMBDA_FUNCTION_NAME === "string" ||
+      typeof process.env.AWS_EXECUTION_ENV === "string";
 
-    browser = await puppeteer.launch({
-      headless: true,
-      userDataDir: profileDir,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    if (isServerless) {
+      browser = await puppeteerCore.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    } else if (process.platform === "win32" || process.platform === "darwin") {
+      // Local dev path: use the bundled Chromium from full Puppeteer.
+      // This dependency is dev-only (not deployed to Vercel).
+      const puppeteer = (await import("puppeteer")).default;
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    } else {
+      // Local Linux path: `@sparticuz/chromium` works fine.
+      browser = await puppeteerCore.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    }
 
     const page = await browser.newPage();
 
@@ -199,29 +268,41 @@ export async function generatePDF(
     });
 
     const { width, height } = getPageDimensions(settings.pageSize);
-    
+
     // Construct HTML identical to ExportPreview.tsx
     let frontmatterHtml = "";
     const safeTitle = escapeHtml(title);
     const safeContentHtml = sanitizeExportHtml(content);
     if (metadata) {
-        const publisherName = metadata.publisher_name ? escapeHtml(String(metadata.publisher_name)) : null;
-        const copyrightHolder = metadata.copyright_holder ? escapeHtml(String(metadata.copyright_holder)) : "Author";
-        const isbn13 = metadata.isbn13 ? escapeHtml(String(metadata.isbn13)) : null;
-        const isbn10 = metadata.isbn10 ? escapeHtml(String(metadata.isbn10)) : null;
-        const editionNumber = metadata.edition_number ? escapeHtml(String(metadata.edition_number)) : null;
+      const publisherName = metadata.publisher_name
+        ? escapeHtml(String(metadata.publisher_name))
+        : null;
+      const copyrightHolder = metadata.copyright_holder
+        ? escapeHtml(String(metadata.copyright_holder))
+        : "Author";
+      const isbn13 = metadata.isbn13
+        ? escapeHtml(String(metadata.isbn13))
+        : null;
+      const isbn10 = metadata.isbn10
+        ? escapeHtml(String(metadata.isbn10))
+        : null;
+      const editionNumber = metadata.edition_number
+        ? escapeHtml(String(metadata.edition_number))
+        : null;
 
-        // 1. Title Page
-        frontmatterHtml += `
+      // 1. Title Page
+      frontmatterHtml += `
             <div class="page title-page">
                 <h1 class="main-title">${safeTitle}</h1>
                 ${publisherName ? `<p class="publisher">${publisherName}</p>` : ""}
             </div>
         `;
 
-        // 2. Copyright Page
-        const copyrightYear = escapeHtml(String(metadata.copyright_year || new Date().getFullYear()));
-        frontmatterHtml += `
+      // 2. Copyright Page
+      const copyrightYear = escapeHtml(
+        String(metadata.copyright_year || new Date().getFullYear()),
+      );
+      frontmatterHtml += `
             <div class="page copyright-page">
                 <p><strong>${safeTitle}</strong></p>
                 <p>Copyright © ${copyrightYear} by ${copyrightHolder}</p>
@@ -233,47 +314,51 @@ export async function generatePDF(
             </div>
         `;
 
-        // 3. Dedication
-        if (metadata.dedication) {
-            let dedicationText = "";
-            if (typeof metadata.dedication === "string") {
-                dedicationText = escapeHtml(metadata.dedication);
-            } else if (metadata.dedication.content) {
-                // Very basic conversion of Tiptap JSON to simple HTML for dedication
-                dedicationText = metadata.dedication.content
-                    .map((p: any) => {
-                      const text = (p.content || []).map((c: any) => escapeHtml(String(c.text ?? ""))).join("");
-                      return `<p>${text}</p>`;
-                    })
-                    .join("");
-            }
-            frontmatterHtml += `
+      // 3. Dedication
+      if (metadata.dedication) {
+        let dedicationText = "";
+        if (typeof metadata.dedication === "string") {
+          dedicationText = escapeHtml(metadata.dedication);
+        } else if (metadata.dedication.content) {
+          // Very basic conversion of Tiptap JSON to simple HTML for dedication
+          dedicationText = metadata.dedication.content
+            .map((p: any) => {
+              const text = (p.content || [])
+                .map((c: any) => escapeHtml(String(c.text ?? "")))
+                .join("");
+              return `<p>${text}</p>`;
+            })
+            .join("");
+        }
+        frontmatterHtml += `
                 <div class="page dedication-page">
                     <div class="dedication-content">${dedicationText}</div>
                 </div>
             `;
-        }
+      }
 
-        // 4. Acknowledgements
-        if (metadata.acknowledgements) {
-             let ackText = "";
-             if (typeof metadata.acknowledgements === "string") {
-                 ackText = escapeHtml(metadata.acknowledgements);
-             } else if (metadata.acknowledgements.content) {
-                 ackText = metadata.acknowledgements.content
-                    .map((p: any) => {
-                      const text = (p.content || []).map((c: any) => escapeHtml(String(c.text ?? ""))).join("");
-                      return `<p>${text}</p>`;
-                    })
-                    .join("");
-             }
-             frontmatterHtml += `
+      // 4. Acknowledgements
+      if (metadata.acknowledgements) {
+        let ackText = "";
+        if (typeof metadata.acknowledgements === "string") {
+          ackText = escapeHtml(metadata.acknowledgements);
+        } else if (metadata.acknowledgements.content) {
+          ackText = metadata.acknowledgements.content
+            .map((p: any) => {
+              const text = (p.content || [])
+                .map((c: any) => escapeHtml(String(c.text ?? "")))
+                .join("");
+              return `<p>${text}</p>`;
+            })
+            .join("");
+        }
+        frontmatterHtml += `
                 <div class="page acknowledgements-page">
                     <h2>Acknowledgements</h2>
                     ${ackText}
                 </div>
             `;
-        }
+      }
     }
 
     const html = `
@@ -318,17 +403,17 @@ export async function generatePDF(
     `;
 
     await page.setContent(html, { waitUntil: "domcontentloaded" });
-    
-    // Use PagedJS in the browser to handle pagination if needed, 
+
+    // Use PagedJS in the browser to handle pagination if needed,
     // but Puppeteer's PDF engine with @page CSS is often sufficient for simple books.
     // To be 100% consistent with Paged.js preview, we'd inject Paged.js here too.
-    
+
     const pdf = await page.pdf({
       width,
       height,
       printBackground: true,
       displayHeaderFooter: false,
-      margin: { top: 0, bottom: 0, left: 0, right: 0 } // Margins handled by @page CSS
+      margin: { top: 0, bottom: 0, left: 0, right: 0 }, // Margins handled by @page CSS
     });
 
     return Buffer.from(pdf);
@@ -338,13 +423,6 @@ export async function generatePDF(
         await browser.close();
       } catch {
         // Best-effort cleanup: browser may already be closed/crashed.
-      }
-    }
-    if (userDataDir) {
-      try {
-        await fs.rm(userDataDir, { recursive: true, force: true });
-      } catch {
-        // Best-effort cleanup: Windows can keep the profile lockfile busy briefly.
       }
     }
   }
@@ -360,108 +438,134 @@ export async function generateDOCX(
   title: string,
   content: string,
   contentJson?: any,
-  metadata?: any
+  metadata?: any,
 ): Promise<Buffer> {
   try {
     // Frontmatter Sections
     const frontmatterChildren: any[] = [];
-    
+
     // 1. Title Page
     frontmatterChildren.push(
-        new Paragraph({
-            text: title,
-            heading: HeadingLevel.TITLE,
-            alignment: "center",
-            spacing: { before: 2000, after: 400 },
-        })
+      new Paragraph({
+        text: title,
+        heading: HeadingLevel.TITLE,
+        alignment: "center",
+        spacing: { before: 2000, after: 400 },
+      }),
     );
-    
+
     if (metadata?.publisher_name) {
-         frontmatterChildren.push(
-            new Paragraph({
-                text: metadata.publisher_name,
-                alignment: "center",
-                spacing: { before: 4000 },
-            })
-         );
+      frontmatterChildren.push(
+        new Paragraph({
+          text: metadata.publisher_name,
+          alignment: "center",
+          spacing: { before: 4000 },
+        }),
+      );
     }
-    
-    frontmatterChildren.push(new Paragraph({
+
+    frontmatterChildren.push(
+      new Paragraph({
         children: [new PageBreak()],
-    }));
+      }),
+    );
 
     // 2. Copyright Page
     if (metadata) {
-         frontmatterChildren.push(
-            new Paragraph({ text: title, spacing: { before: 4000 } })
-         );
-         frontmatterChildren.push(
-             new Paragraph({ 
-                 text: `Copyright © ${metadata.copyright_year || new Date().getFullYear()} by ${metadata.copyright_holder || "Author"}` 
-             })
-         );
-         frontmatterChildren.push(new Paragraph({ text: "All rights reserved." }));
-         
-         if (metadata.publisher_name) {
-             frontmatterChildren.push(new Paragraph({ text: `Published by ${metadata.publisher_name}`, spacing: { before: 200 } }));
-         }
-         
-         if (metadata.isbn13) frontmatterChildren.push(new Paragraph({ text: `ISBN-13: ${metadata.isbn13}` }));
-         if (metadata.isbn10) frontmatterChildren.push(new Paragraph({ text: `ISBN-10: ${metadata.isbn10}` }));
-         if (metadata.edition_number) frontmatterChildren.push(new Paragraph({ text: `Edition: ${metadata.edition_number}` }));
-         
-         frontmatterChildren.push(new Paragraph({
-             children: [new PageBreak()],
-         }));
+      frontmatterChildren.push(
+        new Paragraph({ text: title, spacing: { before: 4000 } }),
+      );
+      frontmatterChildren.push(
+        new Paragraph({
+          text: `Copyright © ${metadata.copyright_year || new Date().getFullYear()} by ${metadata.copyright_holder || "Author"}`,
+        }),
+      );
+      frontmatterChildren.push(new Paragraph({ text: "All rights reserved." }));
+
+      if (metadata.publisher_name) {
+        frontmatterChildren.push(
+          new Paragraph({
+            text: `Published by ${metadata.publisher_name}`,
+            spacing: { before: 200 },
+          }),
+        );
+      }
+
+      if (metadata.isbn13)
+        frontmatterChildren.push(
+          new Paragraph({ text: `ISBN-13: ${metadata.isbn13}` }),
+        );
+      if (metadata.isbn10)
+        frontmatterChildren.push(
+          new Paragraph({ text: `ISBN-10: ${metadata.isbn10}` }),
+        );
+      if (metadata.edition_number)
+        frontmatterChildren.push(
+          new Paragraph({ text: `Edition: ${metadata.edition_number}` }),
+        );
+
+      frontmatterChildren.push(
+        new Paragraph({
+          children: [new PageBreak()],
+        }),
+      );
     }
 
     // 3. Dedication
     if (metadata?.dedication) {
-        let text = "";
-        if (typeof metadata.dedication === 'string') {
-             text = metadata.dedication;
-        } else if (metadata.dedication.content) {
-             text = metadata.dedication.content.map((p: any) => p.content?.map((c: any) => c.text).join('')).join('\n');
-        }
-        
-        frontmatterChildren.push(
-            new Paragraph({
-                alignment: "center",
-                spacing: { before: 3000 },
-                children: [
-                  new TextRun({
-                    text,
-                    italics: true,
-                  }),
-                ],
-            })
-        );
-        frontmatterChildren.push(new Paragraph({
-             children: [new PageBreak()],
-         }));
+      let text = "";
+      if (typeof metadata.dedication === "string") {
+        text = metadata.dedication;
+      } else if (metadata.dedication.content) {
+        text = metadata.dedication.content
+          .map((p: any) => p.content?.map((c: any) => c.text).join(""))
+          .join("\n");
+      }
+
+      frontmatterChildren.push(
+        new Paragraph({
+          alignment: "center",
+          spacing: { before: 3000 },
+          children: [
+            new TextRun({
+              text,
+              italics: true,
+            }),
+          ],
+        }),
+      );
+      frontmatterChildren.push(
+        new Paragraph({
+          children: [new PageBreak()],
+        }),
+      );
     }
-    
+
     // 4. Acknowledgements
     if (metadata?.acknowledgements) {
-        frontmatterChildren.push(
-            new Paragraph({
-                text: "Acknowledgements",
-                heading: HeadingLevel.HEADING_1,
-                alignment: "center",
-            })
-        );
-        
-        let text = "";
-        if (typeof metadata.acknowledgements === 'string') {
-             text = metadata.acknowledgements;
-        } else if (metadata.acknowledgements.content) {
-             text = metadata.acknowledgements.content.map((p: any) => p.content?.map((c: any) => c.text).join('')).join('\n\n');
-        }
-        
-        frontmatterChildren.push(new Paragraph({ text: text }));
-        frontmatterChildren.push(new Paragraph({
-             children: [new PageBreak()],
-         }));
+      frontmatterChildren.push(
+        new Paragraph({
+          text: "Acknowledgements",
+          heading: HeadingLevel.HEADING_1,
+          alignment: "center",
+        }),
+      );
+
+      let text = "";
+      if (typeof metadata.acknowledgements === "string") {
+        text = metadata.acknowledgements;
+      } else if (metadata.acknowledgements.content) {
+        text = metadata.acknowledgements.content
+          .map((p: any) => p.content?.map((c: any) => c.text).join(""))
+          .join("\n\n");
+      }
+
+      frontmatterChildren.push(new Paragraph({ text: text }));
+      frontmatterChildren.push(
+        new Paragraph({
+          children: [new PageBreak()],
+        }),
+      );
     }
 
     // Split content into paragraphs (by double newlines or single newlines)
@@ -483,10 +587,15 @@ export async function generateDOCX(
               spacing: { after: 400 },
             }),
             // Content
-            ...(contentJson 
-                ? tiptapToDocx(contentJson) 
-                : paragraphs.map(para => new Paragraph({ children: [new TextRun({ text: para })], spacing: { after: 200 } }))
-            ),
+            ...(contentJson
+              ? tiptapToDocx(contentJson)
+              : paragraphs.map(
+                  (para) =>
+                    new Paragraph({
+                      children: [new TextRun({ text: para })],
+                      spacing: { after: 200 },
+                    }),
+                )),
           ],
         },
       ],
@@ -495,7 +604,9 @@ export async function generateDOCX(
     const buffer = await Packer.toBuffer(doc);
     return buffer;
   } catch (error) {
-    throw new Error(`Failed to generate DOCX: ${error instanceof Error ? error.message : "Unknown error"}`);
+    throw new Error(
+      `Failed to generate DOCX: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -507,14 +618,14 @@ export async function generateDOCX(
 export async function exportManuscript(
   supabase: SupabaseClient,
   manuscriptId: string,
-  options: ExportOptions
+  options: ExportOptions,
 ): Promise<{ buffer: Buffer; filename: string; error: string | null }> {
   try {
     // Get manuscript content (current or specific version)
     const manuscriptData = await getManuscriptForExport(
       supabase,
       manuscriptId,
-      options.versionId
+      options.versionId,
     );
 
     if (manuscriptData.error) {
@@ -532,7 +643,13 @@ export async function exportManuscript(
     let extension: string;
 
     if (options.format === "pdf") {
-      buffer = await generatePDF(title, content, content_json, options.settings, metadata);
+      buffer = await generatePDF(
+        title,
+        content,
+        content_json,
+        options.settings,
+        metadata,
+      );
       extension = "pdf";
     } else {
       buffer = await generateDOCX(title, content, content_json, metadata);
@@ -560,8 +677,8 @@ export async function exportManuscript(
     return {
       buffer: Buffer.alloc(0),
       filename: "",
-      error: error instanceof Error ? error.message : "Failed to export manuscript",
+      error:
+        error instanceof Error ? error.message : "Failed to export manuscript",
     };
   }
 }
-
