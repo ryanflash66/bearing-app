@@ -33,11 +33,6 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
     return redirect("/dashboard/manuscripts?error=not_found");
   }
 
-  // Verify ownership
-  if (manuscript.owner_user_id !== user.id) {
-     return redirect("/dashboard/manuscripts?error=unauthorized");
-  }
-
   // Check if manuscript is deleted
   if (manuscript.deleted_at) {
     return redirect("/dashboard/manuscripts?error=deleted");
