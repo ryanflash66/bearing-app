@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ServiceRequest, isActiveStatus } from "@/lib/service-requests";
 import { getServiceLabel, getStatusConfig } from "@/lib/marketplace-utils";
 
