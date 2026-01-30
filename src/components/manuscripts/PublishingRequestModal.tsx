@@ -12,7 +12,7 @@ export interface PublishingRequestModalProps {
   onMetadataSave: (metadata: PublishingRequestMetadata) => Promise<void>;
 }
 
-export { PublishingRequestMetadata };
+export type { PublishingRequestMetadata };
 
 export default function PublishingRequestModal({
   isOpen,
