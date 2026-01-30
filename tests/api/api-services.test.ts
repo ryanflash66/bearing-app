@@ -17,6 +17,11 @@ jest.mock("@/lib/marketplace-data", () => ({
   MARKETPLACE_SERVICES: [
     { id: "cover-design", title: "Cover Design" },
     { id: "isbn", title: "ISBN Registration" },
+    { id: "publishing-help", title: "Publishing Help" },
+    { id: "author-website", title: "Author Website" },
+    { id: "marketing", title: "Marketing Package" },
+    { id: "social-media", title: "Social Media Launch" },
+    { id: "unknown-service", title: "Unknown Service" },
   ],
 }));
 
@@ -124,6 +129,38 @@ describe("Service Request API (/api/services/request)", () => {
     }));
   });
 
+  describe("Additional service type mappings", () => {
+    const serviceCases = [
+      { serviceId: "author-website", dbType: "author_website" },
+      { serviceId: "marketing", dbType: "marketing" },
+      { serviceId: "social-media", dbType: "social_media" },
+    ];
+
+    it.each(serviceCases)(
+      "maps $serviceId to $dbType and creates request",
+      async ({ serviceId, dbType }) => {
+        mockSupabase.auth.getUser.mockResolvedValue({
+          data: { user: { id: "user-123" } },
+          error: null
+        });
+        mockSupabase.single
+          .mockResolvedValueOnce({ data: { role: "user" }, error: null })
+          .mockResolvedValueOnce({ data: { id: "req-789" }, error: null });
+
+        const req = createMockRequest({ serviceId });
+        const res = await POST(req);
+
+        expect(res.status).toBe(200);
+        expect(mockSupabase.insert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            service_type: dbType,
+            amount_cents: 0,
+          })
+        );
+      }
+    );
+  });
+
   it("successfully creates request for super_admins without subscription check", async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: "admin-123" } },
@@ -195,5 +232,144 @@ describe("Service Request API (/api/services/request)", () => {
     expect(res.status).toBe(409);
     const data = await res.json();
     expect(data.code).toBe("DUPLICATE_ACTIVE_REQUEST");
+  });
+
+  // Story 8.6: Publishing-help metadata validation tests
+  describe("Publishing-help metadata validation (AC 8.6.6)", () => {
+    beforeEach(() => {
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: { id: "user-123" } },
+        error: null
+      });
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { role: "user" },
+        error: null
+      });
+    });
+
+    it("returns 400 when publishing-help request has no keywords", async () => {
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: ["FIC000000"],
+          keywords: [], // Empty keywords
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("keyword");
+    });
+
+    it("returns 400 when publishing-help request has no BISAC codes", async () => {
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: [], // Empty categories
+          keywords: ["fantasy", "adventure"],
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("category");
+    });
+
+    it("returns 400 when publishing-help request has invalid ISBN", async () => {
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: ["FIC000000"],
+          keywords: ["fantasy"],
+          isbn: "123-invalid-isbn",
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain("ISBN");
+    });
+
+    it("successfully creates publishing-help request with valid metadata", async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { id: "req-publish-123" },
+        error: null
+      });
+
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: ["FIC009000", "FIC002000"],
+          keywords: ["fantasy", "adventure", "epic"],
+          isbn: "978-0-06-112008-4", // Valid ISBN-13
+          education_level: "general",
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+
+      // Verify metadata is merged with server metadata
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          service_type: "publishing_help",
+          metadata: expect.objectContaining({
+            bisac_codes: ["FIC009000", "FIC002000"],
+            keywords: ["fantasy", "adventure", "epic"],
+            requested_at: expect.any(String),
+            service_title: "Publishing Help",
+          }),
+        })
+      );
+    });
+
+    it("accepts valid ISBN-10 in publishing-help request", async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { id: "req-publish-456" },
+        error: null
+      });
+
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: ["FIC000000"],
+          keywords: ["fiction"],
+          isbn: "0-13-110362-8", // Valid ISBN-10 (K&R C Programming)
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(200);
+    });
+
+    it("allows publishing-help request without ISBN (optional field)", async () => {
+      mockSupabase.single.mockResolvedValueOnce({
+        data: { id: "req-publish-789" },
+        error: null
+      });
+
+      const req = createMockRequest({
+        serviceId: "publishing-help",
+        manuscriptId: "ms-789",
+        metadata: {
+          bisac_codes: ["FIC000000"],
+          keywords: ["fiction"],
+          // No ISBN provided
+        },
+      });
+      const res = await POST(req);
+
+      expect(res.status).toBe(200);
+    });
   });
 });

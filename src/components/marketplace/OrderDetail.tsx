@@ -143,6 +143,70 @@ export default function OrderDetail({ order }: OrderDetailProps) {
           </div>
         )}
 
+        {/* Publishing request metadata display (AC 8.6.6) */}
+        {order.service_type === "publishing_help" && metadata && (
+          <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4 space-y-4">
+            <h3 className="text-sm font-semibold text-indigo-900 flex items-center gap-2">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Publishing Request Details
+            </h3>
+
+            {/* ISBN if provided */}
+            {metadata.isbn && (
+              <div>
+                <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">ISBN</dt>
+                <dd className="mt-1 text-sm text-slate-900 font-mono">{metadata.isbn as string}</dd>
+              </div>
+            )}
+
+            {/* Categories */}
+            {metadata.bisac_codes && (metadata.bisac_codes as string[]).length > 0 && (
+              <div>
+                <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Categories</dt>
+                <dd className="mt-1 flex flex-wrap gap-1">
+                  {(metadata.bisac_codes as string[]).map((code) => (
+                    <span
+                      key={code}
+                      className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-xs font-medium"
+                    >
+                      {code}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+
+            {/* Keywords */}
+            {metadata.keywords && (metadata.keywords as string[]).length > 0 && (
+              <div>
+                <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Keywords</dt>
+                <dd className="mt-1 flex flex-wrap gap-1">
+                  {(metadata.keywords as string[]).map((keyword, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-medium"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+            )}
+
+            {/* Education Level */}
+            {metadata.education_level && (
+              <div>
+                <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Education Level</dt>
+                <dd className="mt-1 text-sm text-slate-900 capitalize">
+                  {(metadata.education_level as string).replace(/_/g, " ")}
+                </dd>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Order details */}
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg bg-slate-50 p-4">
