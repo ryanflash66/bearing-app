@@ -1,8 +1,9 @@
 "use client";
 
 import { ServiceItem } from "@/lib/marketplace-data";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { navigateTo } from "@/lib/navigation";
+import ServiceRequestModal, { ServiceType } from "./ServiceRequestModal";
 
 interface ServiceCardProps {
   service: ServiceItem;
@@ -14,16 +15,25 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
   const [error, setError] = useState<string | null>(null);
   const [showPoolWarning, setShowPoolWarning] = useState(false);
   const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isISBN = service.id === "isbn";
+  const isPublishingHelp = service.id === "publishing-help";
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timeout = setTimeout(() => setToastMessage(null), 3000);
+    return () => clearTimeout(timeout);
+  }, [toastMessage]);
 
   const handleRequest = async () => {
     setError(null);
-    setIsRequesting(true);
 
-    try {
-      if (isISBN) {
-        // ISBN purchase flow via Stripe
+    if (isISBN) {
+      // ISBN purchase flow via Stripe (no modal, direct checkout)
+      setIsRequesting(true);
+      try {
         const response = await fetch("/api/checkout/isbn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -47,36 +57,16 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
 
         // Redirect to Stripe Checkout
         navigateTo(url);
-      } else {
-        // Other services - Call the new request API
-        const response = await fetch("/api/services/request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            serviceId: service.id,
-            manuscriptId 
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to submit request");
-        }
-
-        // Show success state (could be improved with a toast, but using error state for feedback for now)
-        setError(null);
-        alert(data.message || "Request submitted successfully!");
-        
-        // If we are in manuscript context, reload to show lock state
-        if (manuscriptId) {
-          window.location.reload();
-        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        setIsRequesting(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsRequesting(false);
+    } else if (isPublishingHelp) {
+      // Publishing assistance requires selecting a manuscript first
+      navigateTo("/dashboard/manuscripts");
+    } else {
+      // Other services - Open the ServiceRequestModal
+      setShowModal(true);
     }
   };
 
@@ -89,6 +79,18 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
   const handleCancelWarning = () => {
     setShowPoolWarning(false);
     setPendingCheckoutUrl(null);
+  };
+
+  const handleModalSuccess = () => {
+    // Show success feedback
+    setError(null);
+    if (!manuscriptId) {
+      setToastMessage(`${service.title} request submitted successfully.`);
+    }
+    // If we are in manuscript context, reload to show lock state
+    if (manuscriptId) {
+      window.location.reload();
+    }
   };
 
   return (
@@ -132,6 +134,26 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
           </button>
         </div>
       </div>
+
+      {toastMessage && (
+        <div
+          className="fixed bottom-4 right-4 z-[120] rounded-lg bg-emerald-600 px-4 py-3 text-sm font-medium text-white shadow-lg"
+          role="status"
+          aria-live="polite"
+        >
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Service Request Modal */}
+      <ServiceRequestModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        serviceId={service.id as ServiceType}
+        serviceTitle={service.title}
+        manuscriptId={manuscriptId}
+        onSuccess={handleModalSuccess}
+      />
 
       {/* ISBN Pool Warning Modal */}
       {showPoolWarning && (

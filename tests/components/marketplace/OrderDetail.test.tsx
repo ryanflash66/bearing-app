@@ -203,4 +203,76 @@ describe("OrderDetail", () => {
       expect(screen.getByText(/could not copy to clipboard/i)).toBeInTheDocument();
     });
   });
+
+  // Story 8.6: Publishing-help metadata display (AC 8.6.6)
+  describe("Publishing Help order metadata display", () => {
+    const publishingOrder = createMockOrder({
+      id: "order-pub-1",
+      service_type: "publishing_help",
+      status: "pending",
+      amount_cents: 0,
+      created_at: "2026-01-15T12:00:00Z",
+      updated_at: "2026-01-15T12:00:00Z",
+      metadata: {
+        isbn: "978-0-06-112008-4",
+        bisac_codes: ["FIC009000", "FIC002000"],
+        keywords: ["fantasy", "adventure", "epic"],
+        education_level: "general",
+        service_title: "Publishing Help",
+      },
+    });
+
+    it("displays publishing request details section", () => {
+      render(<OrderDetail order={publishingOrder} />);
+
+      expect(screen.getByText("Publishing Request Details")).toBeInTheDocument();
+    });
+
+    it("displays ISBN when provided", () => {
+      render(<OrderDetail order={publishingOrder} />);
+
+      expect(screen.getByText("ISBN")).toBeInTheDocument();
+      expect(screen.getByText("978-0-06-112008-4")).toBeInTheDocument();
+    });
+
+    it("displays BISAC categories as tags", () => {
+      render(<OrderDetail order={publishingOrder} />);
+
+      expect(screen.getByText("Categories")).toBeInTheDocument();
+      expect(screen.getByText("FIC009000")).toBeInTheDocument();
+      expect(screen.getByText("FIC002000")).toBeInTheDocument();
+    });
+
+    it("displays keywords as tags", () => {
+      render(<OrderDetail order={publishingOrder} />);
+
+      expect(screen.getByText("Keywords")).toBeInTheDocument();
+      expect(screen.getByText("fantasy")).toBeInTheDocument();
+      expect(screen.getByText("adventure")).toBeInTheDocument();
+      expect(screen.getByText("epic")).toBeInTheDocument();
+    });
+
+    it("displays education level formatted", () => {
+      render(<OrderDetail order={publishingOrder} />);
+
+      expect(screen.getByText("Education Level")).toBeInTheDocument();
+      expect(screen.getByText("general")).toBeInTheDocument();
+    });
+
+    it("does not show ISBN section when ISBN not provided", () => {
+      const orderWithoutIsbn = createMockOrder({
+        service_type: "publishing_help",
+        status: "pending",
+        metadata: {
+          bisac_codes: ["FIC000000"],
+          keywords: ["fiction"],
+        },
+      });
+
+      render(<OrderDetail order={orderWithoutIsbn} />);
+
+      expect(screen.getByText("Publishing Request Details")).toBeInTheDocument();
+      expect(screen.queryByText("ISBN")).not.toBeInTheDocument();
+    });
+  });
 });

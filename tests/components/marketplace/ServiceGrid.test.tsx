@@ -1,6 +1,46 @@
+/**
+ * @jest-environment jsdom
+ */
 import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import ServiceGrid from "@/components/marketplace/ServiceGrid";
 import { ServiceItem } from "@/lib/marketplace-data";
+
+// Mock next/navigation for ServiceCard -> ServiceRequestModal
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: jest.fn(),
+    push: jest.fn(),
+  }),
+}));
+
+// Mock navigation module (used by ServiceCard for ISBN checkout)
+jest.mock("@/lib/navigation", () => ({
+  navigateTo: jest.fn(),
+}));
+
+// Mock ServiceRequestModal to avoid TiptapEditor and complex dependencies
+jest.mock("@/components/marketplace/ServiceRequestModal", () => {
+  return function MockServiceRequestModal({
+    isOpen,
+    onClose,
+    serviceId,
+    serviceTitle,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    serviceId: string;
+    serviceTitle: string;
+  }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="service-request-modal" data-service-id={serviceId}>
+        <span>Request {serviceTitle}</span>
+        <button onClick={onClose}>Close Modal</button>
+      </div>
+    );
+  };
+});
 
 describe("ServiceGrid", () => {
   const mockServices: ServiceItem[] = [

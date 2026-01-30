@@ -1,9 +1,11 @@
+/**
+ * @jest-environment jsdom
+ */
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ServiceItem } from "@/lib/marketplace-data";
 import { navigateTo } from "@/lib/navigation";
-
-const ASYNC_TIMEOUT = 2000;
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -15,6 +17,47 @@ jest.mock("@/lib/navigation", () => ({
 }));
 
 const mockNavigateTo = navigateTo as jest.MockedFunction<typeof navigateTo>;
+
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: jest.fn(),
+    push: jest.fn(),
+  }),
+}));
+
+// Mock ServiceRequestModal
+jest.mock("@/components/marketplace/ServiceRequestModal", () => {
+  return function MockServiceRequestModal({
+    isOpen,
+    onClose,
+    serviceId,
+    serviceTitle,
+    onSuccess,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    serviceId: string;
+    serviceTitle: string;
+    onSuccess?: () => void;
+  }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="service-request-modal" data-service-id={serviceId}>
+        <span>Request {serviceTitle}</span>
+        <button onClick={onClose}>Close Modal</button>
+        <button
+          onClick={() => {
+            if (onSuccess) onSuccess();
+            onClose();
+          }}
+        >
+          Submit Request
+        </button>
+      </div>
+    );
+  };
+});
 
 describe("ServiceCard", () => {
   const mockService: ServiceItem = {
@@ -31,6 +74,14 @@ describe("ServiceCard", () => {
     priceRange: "$125",
     description: "Official ISBN assignment for your book",
     turnaroundTime: "24-48 hours",
+  };
+
+  const mockWebsiteService: ServiceItem = {
+    id: "author-website",
+    title: "Author Website",
+    priceRange: "$500 - $1,500",
+    description: "A professional website to showcase your books",
+    turnaroundTime: "2-3 weeks",
   };
 
   beforeEach(() => {
@@ -74,70 +125,6 @@ describe("ServiceCard", () => {
     expect(trackButton).toHaveClass("cursor-not-allowed");
   });
 
-  it("changes button state when requesting service", async () => {
-    // Mock fetch to simulate API request with slight delay
-    mockFetch.mockImplementation(() => 
-      new Promise((resolve) => 
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ success: true, message: "Request submitted!" }),
-        }), 100)
-      )
-    );
-    const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
-
-    render(<ServiceCard service={mockService} />);
-
-    const button = screen.getByRole("button", { name: /request service/i });
-
-    fireEvent.click(button);
-
-    // Button should show "Processing..." and be disabled
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /processing/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /processing/i })).toBeDisabled();
-    });
-
-    // Button should return to normal state after request completes
-    await waitFor(
-      () => {
-        expect(screen.getByRole("button", { name: /request service/i })).toBeInTheDocument();
-      },
-      { timeout: ASYNC_TIMEOUT }
-    );
-
-    mockAlert.mockRestore();
-  });
-
-  it("prevents multiple simultaneous requests", async () => {
-    // Mock fetch to simulate API request with delay
-    mockFetch.mockImplementation(() => 
-      new Promise((resolve) => 
-        setTimeout(() => resolve({
-          ok: true,
-          json: async () => ({ success: true, message: "Request submitted!" }),
-        }), 500)
-      )
-    );
-    const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
-
-    render(<ServiceCard service={mockService} />);
-
-    const button = screen.getByRole("button", { name: /request service/i });
-
-    // Click button multiple times rapidly
-    fireEvent.click(button);
-    fireEvent.click(button);
-    fireEvent.click(button);
-
-    // Button should be disabled
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /processing/i })).toBeDisabled();
-    });
-
-    mockAlert.mockRestore();
-  });
-
   it("displays turnaround time with correct formatting", () => {
     render(<ServiceCard service={mockService} />);
 
@@ -150,6 +137,75 @@ describe("ServiceCard", () => {
 
     const card = container.querySelector(".rounded-xl");
     expect(card).toHaveClass("hover:border-blue-200", "hover:shadow-md");
+  });
+
+  // Modal behavior tests for non-ISBN services
+  describe("Service Request Modal Flow", () => {
+    it("opens ServiceRequestModal when clicking Request Service", async () => {
+      render(<ServiceCard service={mockWebsiteService} />);
+
+      const requestButton = screen.getByRole("button", { name: /Request Service/i });
+      fireEvent.click(requestButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("service-request-modal")).toBeInTheDocument();
+        expect(screen.getByTestId("service-request-modal")).toHaveAttribute(
+          "data-service-id",
+          "author-website"
+        );
+      });
+    });
+
+    it("closes modal when clicking close button", async () => {
+      render(<ServiceCard service={mockWebsiteService} />);
+
+      // Open modal
+      const requestButton = screen.getByRole("button", { name: /Request Service/i });
+      fireEvent.click(requestButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("service-request-modal")).toBeInTheDocument();
+      });
+
+      // Close modal
+      const closeButton = screen.getByRole("button", { name: /Close Modal/i });
+      fireEvent.click(closeButton);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("service-request-modal")).not.toBeInTheDocument();
+      });
+    });
+
+    it("passes correct service info to modal", async () => {
+      render(<ServiceCard service={mockWebsiteService} />);
+
+      const requestButton = screen.getByRole("button", { name: /Request Service/i });
+      fireEvent.click(requestButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Request Author Website")).toBeInTheDocument();
+      });
+    });
+
+    it("shows a success toast after request submission", async () => {
+      render(<ServiceCard service={mockWebsiteService} />);
+
+      const requestButton = screen.getByRole("button", { name: /Request Service/i });
+      fireEvent.click(requestButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("service-request-modal")).toBeInTheDocument();
+      });
+
+      const submitButton = screen.getByRole("button", { name: /Submit Request/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Author Website request submitted successfully.")
+        ).toBeInTheDocument();
+      });
+    });
   });
 
   // ISBN-specific tests
@@ -305,35 +361,25 @@ describe("ServiceCard", () => {
       });
     });
 
-    it("makes API request for non-ISBN services", async () => {
-      // Mock successful response
-      const mockAlert = jest.spyOn(window, "alert").mockImplementation(() => {});
+    it("does not open modal for ISBN service (uses direct checkout)", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, message: "Request submitted successfully!" }),
+        json: () =>
+          Promise.resolve({
+            url: "https://checkout.stripe.com/pay/cs_test",
+            poolWarning: false,
+          }),
       });
 
-      render(<ServiceCard service={mockService} />);
+      render(<ServiceCard service={mockISBNService} />);
 
-      const button = screen.getByRole("button", { name: /request service/i });
+      const button = screen.getByRole("button", { name: /buy isbn/i });
       fireEvent.click(button);
 
-      await waitFor(
-        () => {
-          expect(mockFetch).toHaveBeenCalledWith("/api/services/request", expect.objectContaining({
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          }));
-        },
-        { timeout: ASYNC_TIMEOUT }
-      );
-
-      // Verify alert was called with success message
+      // The service request modal should NOT be shown for ISBN
       await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith("Request submitted successfully!");
+        expect(screen.queryByTestId("service-request-modal")).not.toBeInTheDocument();
       });
-
-      mockAlert.mockRestore();
     });
   });
 });

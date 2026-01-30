@@ -1,0 +1,925 @@
+
+> bearing-app@1.0.0 test
+> jest tests/components/manuscripts/PublishingRequestModal.test.tsx
+
+FAIL tests/components/manuscripts/PublishingRequestModal.test.tsx
+  PublishingRequestModal (Story 8.6)
+    Modal visibility
+      ΓêÜ renders modal when isOpen is true (39 ms)
+      ΓêÜ does not render when isOpen is false (2 ms)
+    Form fields
+      ├ù displays ISBN field as optional (21 ms)
+      ΓêÜ displays Category field as required (9 ms)
+      ΓêÜ displays Keywords field as required (8 ms)
+      ΓêÜ displays Acknowledgements field (7 ms)
+      ΓêÜ displays Education Level dropdown (8 ms)
+    Warning and CTA
+      ΓêÜ shows warning text about manuscript lock (8 ms)
+      ΓêÜ shows Send publishing request button (41 ms)
+    Form validation
+      ΓêÜ disables submit button when no categories selected (12 ms)
+      ΓêÜ disables submit button when no keywords entered (14 ms)
+      ΓêÜ enables submit button when all required fields are filled (13 ms)
+      ├ù shows ISBN validation error for invalid ISBN (1037 ms)
+      ΓêÜ accepts valid ISBN-13 (27 ms)
+    Form submission
+      ΓêÜ saves metadata and calls API on submit (46 ms)
+      ΓêÜ closes modal and refreshes on successful submission (31 ms)
+      ΓêÜ shows loading state during submission (30 ms)
+    Duplicate request handling
+      ΓêÜ shows error with link to orders on 409 response (24 ms)
+      ΓêÜ links to correct order detail page (22 ms)
+    Close behavior
+      ΓêÜ calls onClose when Cancel button is clicked (8 ms)
+      ΓêÜ calls onClose when Close button in header is clicked (9 ms)
+
+  ΓùÅ PublishingRequestModal (Story 8.6) ΓÇ║ Form fields ΓÇ║ displays ISBN field as optional
+
+    TestingLibraryElementError: Found multiple elements with the text: /optional/i
+
+    Here are the matching elements:
+
+    Ignored nodes: comments, script, style
+    <span
+      class="text-slate-400"
+    >
+      (optional)
+    </span>
+
+    Ignored nodes: comments, script, style
+    <span
+      class="text-slate-400"
+    >
+      (optional)
+    </span>
+
+    Ignored nodes: comments, script, style
+    <span
+      class="text-slate-400"
+    >
+      (optional)
+    </span>
+
+    Ignored nodes: comments, script, style
+    <option
+      value=""
+    >
+      Select education level (optional)
+    </option>
+
+    (If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            class="w-full h-full md:max-w-2xl md:h-[85vh] flex flex-col rounded-xl md:rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div
+              class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6 py-3 md:py-4 flex-shrink-0"
+            >
+              <div>
+                <h3
+                  class="text-lg md:text-xl font-bold text-slate-900"
+                >
+                  Publishing Request
+                </h3>
+                <p
+                  class="text-xs md:text-sm text-slate-500 hidden sm:block"
+                >
+                  Submit your manuscript for publishing
+                </p>
+              </div>
+              <button
+                class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+            <div
+              class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50 space-y-6"
+            >
+              <div
+                class="rounded-lg bg-amber-50 border border-amber-200 p-4"
+              >
+                <div
+                  class="flex items-start gap-3"
+                >
+                  <div
+                    class="flex-shrink-0"
+                  >
+                    <svg
+                      class="h-5 w-5 text-amber-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  </div>
+                  <p
+                    class="text-sm text-amber-800 font-medium"
+                  >
+                    Before you publish this book, your manuscript will be sent to NGANDIWEB for publishing. You cannot edit this manuscript while the request is active.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6"
+              >
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="isbn"
+                  >
+                    ISBN 
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <input
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm "
+                    id="isbn"
+                    placeholder="978-0-00-000000-0 or 0-00-000000-0"
+                    type="text"
+                    value=""
+                  />
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Supports ISBN-10 and ISBN-13 formats
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="bisac_codes"
+                  >
+                    Category 
+                    <span
+                      class="text-red-500"
+                    >
+                      *
+                    </span>
+                  </label>
+                  <input
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Search categories..."
+                    type="text"
+                    value=""
+                  />
+                  <select
+                    class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32"
+                    id="bisac_codes"
+                    multiple=""
+                  >
+                    <option
+                      value="FIC000000"
+                    >
+                      FIC000000
+                       - 
+                      FICTION / General
+                    </option>
+                    <option
+                      value="FIC002000"
+                    >
+                      FIC002000
+                       - 
+                      FICTION / Action & Adventure
+                    </option>
+                    <option
+                      value="FIC004000"
+                    >
+                      FIC004000
+                       - 
+                      FICTION / Classics
+                    </option>
+                    <option
+                      value="FIC009000"
+                    >
+                      FIC009000
+                       - 
+                      FICTION / Fantasy / General
+                    </option>
+                    <option
+                      value="FIC009010"
+                    >
+                      FIC009010
+                       - 
+                      FICTION / Fantasy / Epic
+                    </option>
+                    <option
+                      value="FIC014000"
+                    >
+                      FIC014000
+                       - 
+                      FICTION / Historical / General
+                    </option>
+                    <option
+                      value="FIC015000"
+                    >
+                      FIC015000
+                       - 
+                      FICTION / Horror
+                    </option>
+                    <option
+                      value="FIC019000"
+                    >
+                      FIC019000
+                       - 
+                      FICTION / Literary
+                    </option>
+                    <option
+                      value="FIC022000"
+                    >
+                      FIC022000
+                       - 
+                      FICTION / Mystery & Detective / General
+                    </option>
+                    <option
+                      value="FIC024000"
+                    >
+                      FIC024000
+                       - 
+                      FICTION / Noir
+                    </option>
+                    <option
+                      value="FIC027000"
+                    >
+                      FIC027000
+                       - 
+                      FICTION / Romance / General
+                    </option>
+                    <option
+                      value="FIC028000"
+                    >
+                      FIC028000
+                       - 
+                      FICTION / Science Fiction / General
+                    </option>
+                    <option
+                      value="FIC028010"
+                    >
+                      FIC028010
+                       - 
+                      FICTION / Science Fiction / Space Opera
+                    </option>
+                    <option
+                      value="FIC031000"
+                    >
+                      FIC031000
+                       - 
+                      FICTION / Thrillers / General
+                    </option>
+                    <option
+                      value="FIC033000"
+                    >
+                      FIC033000
+                       - 
+                      FICTION / Westerns
+                    </option>
+                    <option
+                      value="BIO000000"
+                    >
+                      BIO000000
+                       - 
+                      BIOGRAPHY & AUTOBIOGRAPHY / General
+                    </option>
+                    <option
+                      value="BUS000000"
+                    >
+                      BUS000000
+                       - 
+                      BUSINESS & ECONOMICS / General
+                    </option>
+                    <option
+                      value="HIS000000"
+                    >
+                      HIS000000
+                       - 
+                      HISTORY / General
+                    </option>
+                    <option
+                      value="SOC000000"
+                    >
+                      SOC000000
+                       - 
+                      SOCIAL SCIENCE / General
+                    </option>
+                    <option
+                      value="PHI000000"
+                    >
+                      PHI000000
+                       - 
+                      PHILOSOPHY / General
+                    </option>
+                  </select>
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Hold Ctrl/Cmd to select multiple. At least one category required.
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="keywords"
+                  >
+                    Keywords 
+                    <span
+                      class="text-red-500"
+                    >
+                      *
+                    </span>
+                  </label>
+                  <div
+                    class="mt-1 flex flex-wrap gap-2 p-2 border border-slate-300 rounded-md bg-white min-h-[42px]"
+                  >
+                    <input
+                      class="flex-1 min-w-[150px] border-none focus:ring-0 sm:text-sm p-0"
+                      id="keywords"
+                      placeholder="Type keyword and press Enter..."
+                      type="text"
+                    />
+                  </div>
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Press Enter or comma to add. At least one keyword required.
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700 mb-2"
+                  >
+                    Acknowledgements
+                     
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <div
+                    class="border border-slate-200 rounded-md overflow-hidden bg-white"
+                  >
+                    <div
+                      data-testid="tiptap-editor"
+                    >
+                      <textarea
+                        placeholder="I would like to thank..."
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="education_level"
+                  >
+                    Education Level
+                     
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <select
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    id="education_level"
+                  >
+                    <option
+                      value=""
+                    >
+                      Select education level (optional)
+                    </option>
+                    <option
+                      value="elementary"
+                    >
+                      Elementary (K-5)
+                    </option>
+                    <option
+                      value="middle_school"
+                    >
+                      Middle School (6-8)
+                    </option>
+                    <option
+                      value="high_school"
+                    >
+                      High School (9-12)
+                    </option>
+                    <option
+                      value="undergraduate"
+                    >
+                      Undergraduate
+                    </option>
+                    <option
+                      value="graduate"
+                    >
+                      Graduate
+                    </option>
+                    <option
+                      value="professional"
+                    >
+                      Professional
+                    </option>
+                    <option
+                      value="general"
+                    >
+                      General Audience
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div
+              class="border-t border-slate-200 bg-white px-4 md:px-6 py-3 md:py-4 flex justify-end gap-2 md:gap-3 flex-shrink-0"
+            >
+              <button
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors min-h-[44px] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                class="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] flex items-center gap-2"
+                disabled=""
+              >
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                Send publishing request
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      72 |
+      73 |       expect(screen.getByLabelText(/ISBN/i)).toBeInTheDocument();
+    > 74 |       expect(screen.getByText(/optional/i)).toBeInTheDocument();
+         |                     ^
+      75 |     });
+      76 |
+      77 |     it("displays Category field as required", () => {
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getElementError (node_modules/@testing-library/dom/dist/query-helpers.js:20:35)
+      at getMultipleElementsFoundError (node_modules/@testing-library/dom/dist/query-helpers.js:23:10)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByText (tests/components/manuscripts/PublishingRequestModal.test.tsx:74:21)
+
+  ΓùÅ PublishingRequestModal (Story 8.6) ΓÇ║ Form validation ΓÇ║ shows ISBN validation error for invalid ISBN
+
+    Unable to find an element with the text: /invalid isbn/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    <body>
+      <div>
+        <div
+          class="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4 animate-in fade-in duration-200"
+        >
+          <div
+            class="w-full h-full md:max-w-2xl md:h-[85vh] flex flex-col rounded-xl md:rounded-2xl bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div
+              class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 md:px-6 py-3 md:py-4 flex-shrink-0"
+            >
+              <div>
+                <h3
+                  class="text-lg md:text-xl font-bold text-slate-900"
+                >
+                  Publishing Request
+                </h3>
+                <p
+                  class="text-xs md:text-sm text-slate-500 hidden sm:block"
+                >
+                  Submit your manuscript for publishing
+                </p>
+              </div>
+              <button
+                class="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
+              >
+                Close
+              </button>
+            </div>
+            <div
+              class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50 space-y-6"
+            >
+              <div
+                class="rounded-lg bg-amber-50 border border-amber-200 p-4"
+              >
+                <div
+                  class="flex items-start gap-3"
+                >
+                  <div
+                    class="flex-shrink-0"
+                  >
+                    <svg
+                      class="h-5 w-5 text-amber-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  </div>
+                  <p
+                    class="text-sm text-amber-800 font-medium"
+                  >
+                    Before you publish this book, your manuscript will be sent to NGANDIWEB for publishing. You cannot edit this manuscript while the request is active.
+                  </p>
+                </div>
+              </div>
+              <div
+                class="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6"
+              >
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="isbn"
+                  >
+                    ISBN 
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <input
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border-red-300 focus:border-red-500 focus:ring-red-500"
+                    id="isbn"
+                    placeholder="978-0-00-000000-0 or 0-00-000000-0"
+                    type="text"
+                    value="123-invalid-isbn"
+                  />
+                  <p
+                    class="mt-1 text-xs text-red-600"
+                  >
+                    ISBN must be 10 or 13 digits
+                  </p>
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Supports ISBN-10 and ISBN-13 formats
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="bisac_codes"
+                  >
+                    Category 
+                    <span
+                      class="text-red-500"
+                    >
+                      *
+                    </span>
+                  </label>
+                  <input
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Search categories..."
+                    type="text"
+                    value=""
+                  />
+                  <select
+                    class="mt-2 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-32"
+                    id="bisac_codes"
+                    multiple=""
+                  >
+                    <option
+                      value="FIC000000"
+                    >
+                      FIC000000
+                       - 
+                      FICTION / General
+                    </option>
+                    <option
+                      value="FIC002000"
+                    >
+                      FIC002000
+                       - 
+                      FICTION / Action & Adventure
+                    </option>
+                    <option
+                      value="FIC004000"
+                    >
+                      FIC004000
+                       - 
+                      FICTION / Classics
+                    </option>
+                    <option
+                      value="FIC009000"
+                    >
+                      FIC009000
+                       - 
+                      FICTION / Fantasy / General
+                    </option>
+                    <option
+                      value="FIC009010"
+                    >
+                      FIC009010
+                       - 
+                      FICTION / Fantasy / Epic
+                    </option>
+                    <option
+                      value="FIC014000"
+                    >
+                      FIC014000
+                       - 
+                      FICTION / Historical / General
+                    </option>
+                    <option
+                      value="FIC015000"
+                    >
+                      FIC015000
+                       - 
+                      FICTION / Horror
+                    </option>
+                    <option
+                      value="FIC019000"
+                    >
+                      FIC019000
+                       - 
+                      FICTION / Literary
+                    </option>
+                    <option
+                      value="FIC022000"
+                    >
+                      FIC022000
+                       - 
+                      FICTION / Mystery & Detective / General
+                    </option>
+                    <option
+                      value="FIC024000"
+                    >
+                      FIC024000
+                       - 
+                      FICTION / Noir
+                    </option>
+                    <option
+                      value="FIC027000"
+                    >
+                      FIC027000
+                       - 
+                      FICTION / Romance / General
+                    </option>
+                    <option
+                      value="FIC028000"
+                    >
+                      FIC028000
+                       - 
+                      FICTION / Science Fiction / General
+                    </option>
+                    <option
+                      value="FIC028010"
+                    >
+                      FIC028010
+                       - 
+                      FICTION / Science Fiction / Space Opera
+                    </option>
+                    <option
+                      value="FIC031000"
+                    >
+                      FIC031000
+                       - 
+                      FICTION / Thrillers / General
+                    </option>
+                    <option
+                      value="FIC033000"
+                    >
+                      FIC033000
+                       - 
+                      FICTION / Westerns
+                    </option>
+                    <option
+                      value="BIO000000"
+                    >
+                      BIO000000
+                       - 
+                      BIOGRAPHY & AUTOBIOGRAPHY / General
+                    </option>
+                    <option
+                      value="BUS000000"
+                    >
+                      BUS000000
+                       - 
+                      BUSINESS & ECONOMICS / General
+                    </option>
+                    <option
+                      value="HIS000000"
+                    >
+                      HIS000000
+                       - 
+                      HISTORY / General
+                    </option>
+                    <option
+                      value="SOC000000"
+                    >
+                      SOC000000
+                       - 
+                      SOCIAL SCIENCE / General
+                    </option>
+                    <option
+                      value="PHI000000"
+                    >
+                      PHI000000
+                       - 
+                      PHILOSOPHY / General
+                    </option>
+                  </select>
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Hold Ctrl/Cmd to select multiple. At least one category required.
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="keywords"
+                  >
+                    Keywords 
+                    <span
+                      class="text-red-500"
+                    >
+                      *
+                    </span>
+                  </label>
+                  <div
+                    class="mt-1 flex flex-wrap gap-2 p-2 border border-slate-300 rounded-md bg-white min-h-[42px]"
+                  >
+                    <input
+                      class="flex-1 min-w-[150px] border-none focus:ring-0 sm:text-sm p-0"
+                      id="keywords"
+                      placeholder="Type keyword and press Enter..."
+                      type="text"
+                    />
+                  </div>
+                  <p
+                    class="mt-1 text-xs text-slate-500"
+                  >
+                    Press Enter or comma to add. At least one keyword required.
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700 mb-2"
+                  >
+                    Acknowledgements
+                     
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <div
+                    class="border border-slate-200 rounded-md overflow-hidden bg-white"
+                  >
+                    <div
+                      data-testid="tiptap-editor"
+                    >
+                      <textarea
+                        placeholder="I would like to thank..."
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    class="block text-sm font-medium text-slate-700"
+                    for="education_level"
+                  >
+                    Education Level
+                     
+                    <span
+                      class="text-slate-400"
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <select
+                    class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    id="education_level"
+                  >
+                    <option
+                      value=""
+                    >
+                      Select education level (optional)
+                    </option>
+                    <option
+                      value="elementary"
+                    >
+                      Elementary (K-5)
+                    </option>
+                    <option
+                      value="middle_school"
+                    >
+                      Middle School (6-8)
+                    </option>
+                    <option
+                      value="high_school"
+                    >
+                      High School (9-12)
+                    </option>
+                    <option
+                      value="undergraduate"
+                    >
+                      Undergraduate
+                    </option>
+                    <option
+                      value="graduate"
+                    >
+                      Graduate
+                    </option>
+                    <option
+                      value="professional"
+                    >
+                      Professional
+                    </option>
+                    <option
+                      value="general"
+                    >
+                      General Audience
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div
+              class="border-t border-slate-200 bg-white px-4 md:px-6 py-3 md:py-4 flex justify-end gap-2 md:gap-3 flex-shrink-0"
+            >
+              <button
+                class="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors min-h-[44px] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                class="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] flex items-center gap-2"
+                disabled=""
+              >
+                <svg
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                  />
+                </svg>
+                Send publishing request
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+
+      156 |       fireEvent.change(isbnInput, { target: { value: "123-invalid-isbn" } });
+      157 |
+    > 158 |       await waitFor(() => {
+          |                    ^
+      159 |         expect(screen.getByText(/invalid isbn/i)).toBeInTheDocument();
+      160 |       });
+      161 |     });
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (tests/components/manuscripts/PublishingRequestModal.test.tsx:158:20)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 19 passed, 21 total
+Snapshots:   0 total
+Time:        2.766 s, estimated 3 s
+Ran all test suites matching tests/components/manuscripts/PublishingRequestModal.test.tsx.

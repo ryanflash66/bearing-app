@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { MARKETPLACE_SERVICES } from "@/lib/marketplace-data";
 import { getActiveServiceRequest } from "@/lib/service-requests";
 import { getServiceLabel } from "@/lib/marketplace-utils";
+import { cleanISBN, isValidISBN10, isValidISBN13 } from "@/lib/publication-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse and validate request
     const body = await request.json();
-    const { serviceId, manuscriptId } = body;
+    const { serviceId, manuscriptId, metadata: clientMetadata } = body;
 
     const service = MARKETPLACE_SERVICES.find((s) => s.id === serviceId);
     if (!service) {
@@ -118,7 +119,68 @@ export async function POST(request: NextRequest) {
       }
     }
 
+
+
+    // 4b. Validate publishing-help specific metadata (AC 8.6.6, 8.6.7)
+    if (serviceId === "publishing-help") {
+      // REQUIRE manuscriptId for publishing requests to avoid orphan records
+      if (!manuscriptId) {
+        return NextResponse.json(
+          { error: "Manuscript ID is required for publishing requests" },
+          { status: 400 }
+        );
+      }
+
+      if (clientMetadata) {
+        const { keywords, bisac_codes, isbn } = clientMetadata as {
+          keywords?: string[];
+          bisac_codes?: string[];
+          isbn?: string;
+        };
+
+        // At least one keyword required
+        if (!keywords || keywords.length === 0) {
+          return NextResponse.json(
+            { error: "At least one keyword is required for publishing requests" },
+            { status: 400 }
+          );
+        }
+
+        // At least one BISAC code required
+        if (!bisac_codes || bisac_codes.length === 0) {
+          return NextResponse.json(
+            { error: "At least one category (BISAC code) is required for publishing requests" },
+            { status: 400 }
+          );
+        }
+
+        // ISBN validation (if provided)
+        if (isbn) {
+          const cleanedIsbn = cleanISBN(isbn);
+          if (cleanedIsbn) {
+            const isValid10 = cleanedIsbn.length === 10 && isValidISBN10(cleanedIsbn);
+            const isValid13 = cleanedIsbn.length === 13 && isValidISBN13(cleanedIsbn);
+            if (!isValid10 && !isValid13) {
+              return NextResponse.json(
+                { error: "Invalid ISBN format. Must be a valid ISBN-10 or ISBN-13" },
+                { status: 400 }
+              );
+            }
+          }
+        }
+      }
+    }
+
     // 5. Create service request with manuscript_id in the column (not just metadata)
+    // Merge client-provided metadata with server-set metadata (AC 8.6.6)
+    const serverMetadata = {
+      requested_at: new Date().toISOString(),
+      service_title: service.title,
+    };
+    const mergedMetadata = clientMetadata
+      ? { ...clientMetadata, ...serverMetadata }
+      : serverMetadata;
+
     const { data: serviceRequest, error: insertError } = await supabase
       .from("service_requests")
       .insert({
@@ -127,10 +189,7 @@ export async function POST(request: NextRequest) {
         service_type: dbServiceType,
         status: "pending",
         amount_cents: amountCents,
-        metadata: {
-          requested_at: new Date().toISOString(),
-          service_title: service.title,
-        },
+        metadata: mergedMetadata,
       })
       .select()
       .single();

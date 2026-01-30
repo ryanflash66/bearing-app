@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ServiceCard from "@/components/marketplace/ServiceCard";
@@ -11,6 +14,47 @@ global.fetch = jest.fn();
 jest.mock("@/lib/navigation", () => ({
   navigateTo: jest.fn(),
 }));
+
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: jest.fn(),
+    push: jest.fn(),
+  }),
+}));
+
+// Mock ServiceRequestModal
+jest.mock("@/components/marketplace/ServiceRequestModal", () => {
+  return function MockServiceRequestModal({
+    isOpen,
+    onClose,
+    serviceId,
+    serviceTitle,
+    onSuccess,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    serviceId: string;
+    serviceTitle: string;
+    onSuccess?: () => void;
+  }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="service-request-modal" data-service-id={serviceId}>
+        <span>Request {serviceTitle}</span>
+        <button onClick={onClose}>Close Modal</button>
+        <button
+          onClick={() => {
+            if (onSuccess) onSuccess();
+            onClose();
+          }}
+        >
+          Submit Request
+        </button>
+      </div>
+    );
+  };
+});
 
 const mockIsbnService: ServiceItem = {
   id: "isbn",
@@ -112,6 +156,26 @@ describe("ServiceCard", () => {
     await waitFor(() => {
       expect(screen.getByText("Stripe error")).toBeInTheDocument();
       expect(button).not.toBeDisabled();
+    });
+  });
+
+  it("shows a success toast after service request submission", async () => {
+    render(<ServiceCard service={mockOtherService} />);
+
+    const button = screen.getByRole("button", { name: /Request Service/i });
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("service-request-modal")).toBeInTheDocument();
+    });
+
+    const submitButton = screen.getByRole("button", { name: /Submit Request/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Cover Design request submitted successfully.")
+      ).toBeInTheDocument();
     });
   });
 });

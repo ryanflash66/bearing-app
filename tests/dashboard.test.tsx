@@ -148,6 +148,24 @@ describe("Dashboard", () => {
       expect(screen.getByTestId("test-content")).toBeInTheDocument();
       expect(screen.getByText("Test dashboard content")).toBeInTheDocument();
     });
+
+    it("does not render the Two-Factor Authentication card (Story 8.5)", async () => {
+      const DashboardLayout = (
+        await import("@/components/layout/DashboardLayout")
+      ).default;
+
+      render(
+        <DashboardLayout
+          user={{ email: "test@example.com", role: "author" }}
+        >
+          <div>Dashboard content</div>
+        </DashboardLayout>
+      );
+
+      // AC 8.5.1: Verify 2FA card is not visible on dashboard
+      expect(screen.queryByText(/Two-Factor Authentication/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Enable 2FA/i)).not.toBeInTheDocument();
+    });
   });
 
   describe("ErrorBanner", () => {

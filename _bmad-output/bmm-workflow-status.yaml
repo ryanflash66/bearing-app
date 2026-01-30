@@ -30,12 +30,12 @@ workflow_status:
         status: "optional"
         agent: "analyst"
         command: "brainstorming"
-        
+
       - id: "research"
         status: "optional"
         agent: "analyst"
         command: "research"
-        
+
       - id: "product-brief"
         status: "docs/system-brief.md"
         agent: "analyst"
@@ -53,7 +53,7 @@ workflow_status:
         command: "create-prd"
         completed: "2024-12-22"
         note: "Found existing PRD with 4 epic PRDs"
-        
+
       - id: "create-ux-design"
         status: "_bmad-output/ux-design-specification.md"
         agent: "ux-designer"
@@ -71,14 +71,14 @@ workflow_status:
         command: "create-architecture"
         completed: "2024-12-22"
         note: "Found comprehensive architecture with 6 domain files"
-        
+
       - id: "create-epics-and-stories"
         status: "docs/epic-files-index.md"
         agent: "pm"
         command: "create-epics-and-stories"
         completed: "2024-12-22"
         note: "Found 4 epics with 13 stories total"
-        
+
       - id: "test-design"
         status: "done"
         artifact_path: "_bmad-output/test-design-epic-4.md"
@@ -86,12 +86,12 @@ workflow_status:
         command: "testarch-test-design"
         completed: "2026-01-10"
         note: "Epic-level test plan for Story 4.3 completed with risk assessment."
-        
+
       - id: "validate-architecture"
         status: "optional"
         agent: "architect"
         command: "validate-architecture"
-        
+
       - id: "implementation-readiness"
         status: "_bmad-output/implementation-readiness-report-2025-12-29.md"
         agent: "architect"
@@ -251,17 +251,41 @@ workflow_status:
             completed: "2026-01-23"
             qa_passed: true
             notes: "Removed Zen mode toggle, hook, CSS, and tests. Editor remains fully usable; Story 8.9 will add fullscreen view."
+          - id: "story-8.20"
+            name: "Sync & State (Manuscript ↔ Service)"
+            status: "completed"
+            completed: "2026-01-28"
+            qa_passed: true
+            notes: "Implemented manuscript locking, status banners, and cancellation sync between services and editor."
+          - id: "story-8.5"
+            name: "Move 2FA to Settings"
+            status: "completed"
+            completed: "2026-01-28"
+            qa_passed: true
+            notes: "Extracted 2FA from dashboard into SecuritySettings component. Verified removal from dashboard and integration with real Supabase Auth via E2E interception."
+          - id: "story-8.6"
+            name: "Publishing flow — Service request popup"
+            status: "completed"
+            completed: "2026-01-29"
+            qa_passed: true
+            notes: "Implemented publishing popup modal with ISBN/Category/Keywords validation. API endpoint secured and validates metadata. 100% test coverage."
+          - id: "story-8.10"
+            name: "Marketplace Redesign (Subscription)"
+            status: "completed"
+            completed: "2026-01-29"
+            qa_passed: true
+            notes: "Subscription banner, service grid, unified ServiceRequestModal, API integration. Traceability and gate PASS (TEA)."
 
 # Story Progress Summary
 # Counts: Epic 0.5(5) + Epic 1(4) + Epic 2(7) + Epic 3(4) + Epic 4(6) + Epic 5(9) + Epic 6(3) + Epic 7(4) + Epic 8(22) = 64 total
-# Completed: 5 + 4 + 7 + 4 + 6 + 7 + 3 + 4 + 3 = 43
+# Completed: 5 + 4 + 7 + 4 + 6 + 7 + 3 + 4 + 4 = 44
 story_progress:
-  total: 64
-  completed: 43
+  total: 65
+  completed: 48
   ux_rework: 0
   ready: 1
-  pending: 22
-  
+  pending: 18
+
 epic_progress:
   - epic: 1
     name: "Foundation & Auth"
@@ -338,7 +362,7 @@ epic_progress:
         status: "completed"
         notes: "Email notifications via Resend"
 
-# Next Action
+  # Next Action
   - epic: 5
     name: "Services & Intelligence"
     stories: 9
@@ -428,9 +452,9 @@ epic_progress:
   - epic: 8
     name: "Client Feedback & Stability"
     stories: 22
-    completed: 3
+    completed: 8
     status: "in-progress"
-    notes: "Addressing P0 bugs and P1 features from client feedback loop (Jan 2026)."
+    notes: "Addressing P0 bugs and P1 features from client feedback loop (Jan 2026). Story 8.5 Move 2FA complete with E2E validation."
     story_list:
       - id: "story-8.1"
         name: "Export Download Fix"
@@ -444,6 +468,32 @@ epic_progress:
         name: "Remove Broken Zen Mode"
         status: "completed"
         completed: "2026-01-23"
+      - id: "story-8.20"
+        name: "Sync & State (Manuscript ↔ Service)"
+        status: "completed"
+        completed: "2026-01-28"
+      - id: "story-8.5"
+        name: "Move 2FA to Settings"
+        status: "completed"
+        completed: "2026-01-28"
+        qa_passed: true
+      - id: "story-8.6"
+        name: "Publishing flow — Service request popup"
+        status: "completed"
+        completed: "2026-01-29"
+        qa_passed: true
+      - id: "story-8.9"
+        name: "Zen mode → Fullscreen view"
+        status: "completed"
+        completed: "2026-01-29"
+        qa_passed: true
+        notes: "Implemented fullscreen overlay with theme persistence and autosave controls. NFR and gate decision artifacts generated; a11y and smoke E2E passing."
+      - id: "story-8.10"
+        name: "Marketplace Redesign (Subscription)"
+        status: "completed"
+        completed: "2026-01-29"
+        qa_passed: true
+        notes: "Subscription banner, service grid, unified ServiceRequestModal; traceability and gate PASS."
 
 # Gate History
 gate_history:
@@ -483,6 +533,36 @@ gate_history:
     decision: "PASS"
     reason: "100% coverage (4/4 criteria), Zen removed and verified, 542 Jest tests passed. Gate PASS."
     document: "_bmad-output/gate-decision-story-8.3.md"
+  - story_id: "8.20"
+    name: "Sync & State (Manuscript ↔ Service)"
+    date: "2026-01-28"
+    decision: "PASS"
+    reason: "Backend secured (100% P0), UI/UX verified by manual QA. Lock/Unlock/Duplicate prevention functional."
+    document: "_bmad-output/traceability-matrix-story-8.20.md"
+  - story_id: "8.5"
+    name: "Move 2FA to Settings"
+    date: "2026-01-28"
+    decision: "PASS"
+    reason: "Critical P0 security gap closed with E2E API interception. 100% coverage of AC."
+    document: "_bmad-output/traceability-matrix-story-8.5.md"
+  - story_id: "8.6"
+    name: "Publishing flow — Service request popup"
+    date: "2026-01-29"
+    decision: "PASS"
+    reason: "100% coverage of all P0/P1 criteria. 53/53 tests passed. Robust API and UI validation verified."
+    document: "_bmad-output/traceability-matrix-story-8.6.md"
+  - story_id: "8.9"
+    name: "Zen mode → Fullscreen view"
+    date: "2026-01-29"
+    decision: "PASS"
+    reason: "All fullscreen ACs covered with component + E2E tests; NFR assessment PASS with performance CONCERNS tracked and mitigated via smoke checks."
+    document: "_bmad-output/gate-decision-story-8.9.md"
+  - story_id: "8.10"
+    name: "Marketplace Redesign (Subscription)"
+    date: "2026-01-29"
+    decision: "PASS"
+    reason: "100% coverage (4/4 AC), 100% pass rate. P0/P1 FULL; gate PASS."
+    document: "_bmad-output/gate-decision-story-8.10.md"
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5
@@ -518,10 +598,10 @@ gate_history:
 
 # Next Action
 next_workflow:
-  id: "story-5.9"
-  name: "AI Cover Generator"
+  id: "story-8.7"
+  name: "Check consistency enhancement (AI)"
   agent: "pm"
   command: "/plan-story"
-  description: "Plan implementation of AI Cover Generator."
-  priority: "medium"
-  reason: "Mobile Responsive Layout (5.8) completed. Proceeding to final feature in Epic 5."
+  description: "Enhance the AI consistency check UI/UX (sidebar, grammar/style/tone)."
+  priority: "high"
+  reason: "Required for P1 MVP features."

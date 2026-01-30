@@ -77,3 +77,14 @@ epics:
         status: backlog
       - id: 6.3 # Public Profile
         status: backlog
+
+  - id: 8
+    name: "Client Feedback & Bearing TODO"
+    status: in_progress
+    stories:
+      - id: 8.7 # Check consistency enhancement (AI)
+        status: ready-for-dev
+      - id: 8.9 # Zen mode → Fullscreen view
+        status: ready-for-dev
+      - id: 8.10 # Marketplace redesign (subscription)
+        status: ready-for-dev
