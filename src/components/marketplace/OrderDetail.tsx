@@ -20,6 +20,9 @@ export default function OrderDetail({ order }: OrderDetailProps) {
   const statusConfig = getStatusConfig(order.status);
   const metadata = order.metadata as Record<string, unknown> | null;
   const isbn = metadata?.isbn as string | undefined;
+  const bisacCodes = metadata?.bisac_codes as string[] | undefined;
+  const keywords = metadata?.keywords as string[] | undefined;
+  const educationLevel = metadata?.education_level as string | undefined;
   const isPending = order.status === "pending" || order.status === "paid";
   const isInProgress = order.status === "in_progress";
 
@@ -154,19 +157,19 @@ export default function OrderDetail({ order }: OrderDetailProps) {
             </h3>
 
             {/* ISBN if provided */}
-            {metadata.isbn && (
+            {isbn && (
               <div>
                 <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">ISBN</dt>
-                <dd className="mt-1 text-sm text-slate-900 font-mono">{metadata.isbn as string}</dd>
+                <dd className="mt-1 text-sm text-slate-900 font-mono">{isbn}</dd>
               </div>
             )}
 
             {/* Categories */}
-            {metadata.bisac_codes && (metadata.bisac_codes as string[]).length > 0 && (
+            {bisacCodes && bisacCodes.length > 0 && (
               <div>
                 <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Categories</dt>
                 <dd className="mt-1 flex flex-wrap gap-1">
-                  {(metadata.bisac_codes as string[]).map((code) => (
+                  {bisacCodes.map((code) => (
                     <span
                       key={code}
                       className="inline-flex items-center px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-xs font-medium"
@@ -179,11 +182,11 @@ export default function OrderDetail({ order }: OrderDetailProps) {
             )}
 
             {/* Keywords */}
-            {metadata.keywords && (metadata.keywords as string[]).length > 0 && (
+            {keywords && keywords.length > 0 && (
               <div>
                 <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Keywords</dt>
                 <dd className="mt-1 flex flex-wrap gap-1">
-                  {(metadata.keywords as string[]).map((keyword, idx) => (
+                  {keywords.map((keyword, idx) => (
                     <span
                       key={idx}
                       className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-medium"
@@ -196,11 +199,11 @@ export default function OrderDetail({ order }: OrderDetailProps) {
             )}
 
             {/* Education Level */}
-            {metadata.education_level && (
+            {educationLevel && (
               <div>
                 <dt className="text-xs font-medium text-indigo-700 uppercase tracking-wide">Education Level</dt>
                 <dd className="mt-1 text-sm text-slate-900 capitalize">
-                  {(metadata.education_level as string).replace(/_/g, " ")}
+                  {educationLevel.replace(/_/g, " ")}
                 </dd>
               </div>
             )}
