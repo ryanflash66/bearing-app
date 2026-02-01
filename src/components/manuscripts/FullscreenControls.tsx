@@ -10,6 +10,8 @@ interface FullscreenControlsProps {
   autosaveState: AutosaveState;
   onSaveNow?: () => Promise<boolean>;
   disabled?: boolean;
+  onExport?: () => void;
+  onVersionHistory?: () => void;
 }
 
 // Inline AutosaveIndicator for fullscreen mode (simplified display)
@@ -239,6 +241,8 @@ export default function FullscreenControls({
   autosaveState,
   onSaveNow,
   disabled = false,
+  onExport,
+  onVersionHistory,
 }: FullscreenControlsProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -322,6 +326,64 @@ export default function FullscreenControls({
             </svg>
           )}
         </button>
+
+        {/* Export button */}
+        {onExport && (
+          <button
+            onClick={onExport}
+            className={`rounded-full p-1.5 transition-colors ${
+              isDarkMode
+                ? "hover:bg-slate-700 text-slate-300"
+                : "hover:bg-slate-100 text-slate-500"
+            }`}
+            title="Export Manuscript"
+            aria-label="Export Manuscript"
+            data-testid="fullscreen-export-button"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+          </button>
+        )}
+
+        {/* Version History (Backups) button */}
+        {onVersionHistory && (
+          <button
+            onClick={onVersionHistory}
+            className={`rounded-full p-1.5 transition-colors ${
+              isDarkMode
+                ? "hover:bg-slate-700 text-slate-300"
+                : "hover:bg-slate-100 text-slate-500"
+            }`}
+            title="Version History"
+            aria-label="Version History"
+            data-testid="fullscreen-version-history-button"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+        )}
 
         {/* Exit fullscreen button */}
         <button

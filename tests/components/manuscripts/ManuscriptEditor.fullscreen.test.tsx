@@ -178,25 +178,22 @@ jest.mock("@/components/manuscripts/BetaShareModal", () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock("@/components/manuscripts/PublishingSettingsModal", () => ({
-  __esModule: true,
-  default: () => null,
-}));
-jest.mock("@/components/manuscripts/PublishingRequestModal", () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock("@/components/manuscripts/ServiceStatusBanner", () => ({
   __esModule: true,
   default: () => null,
 }));
 jest.mock("@/components/manuscripts/VersionHistory", () => ({
   __esModule: true,
-  default: () => null,
+  default: function MockVersionHistory({ onClose }: { onClose: () => void }) {
+    return <div data-testid="version-history-panel">Version History Panel</div>;
+  },
 }));
 jest.mock("@/components/manuscripts/ExportModal", () => ({
   __esModule: true,
-  default: () => null,
+  default: function MockExportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+    if (!isOpen) return null;
+    return <div data-testid="export-modal">Export Modal</div>;
+  },
 }));
 jest.mock("@/components/manuscripts/ConflictResolutionModal", () => ({
   __esModule: true,
@@ -448,5 +445,81 @@ describe("ManuscriptEditor Fullscreen Logic", () => {
       "publishing-help"
     );
     expect(screen.getByText("Request Publishing Assistance")).toBeInTheDocument();
+  });
+
+  it("shows Export button in fullscreen floating controls", async () => {
+    await act(async () => {
+      render(<ManuscriptEditor {...defaultProps} />);
+    });
+
+    // Enter fullscreen
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "\\", metaKey: true });
+    });
+
+    // Check Export button exists in fullscreen controls
+    const exportButton = screen.getByTestId("fullscreen-export-button");
+    expect(exportButton).toBeInTheDocument();
+    expect(exportButton).toHaveAttribute("title", "Export Manuscript");
+  });
+
+  it("shows Version History button in fullscreen floating controls", async () => {
+    await act(async () => {
+      render(<ManuscriptEditor {...defaultProps} />);
+    });
+
+    // Enter fullscreen
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "\\", metaKey: true });
+    });
+
+    // Check Version History button exists in fullscreen controls
+    const versionHistoryButton = screen.getByTestId("fullscreen-version-history-button");
+    expect(versionHistoryButton).toBeInTheDocument();
+    expect(versionHistoryButton).toHaveAttribute("title", "Version History");
+  });
+
+  it("opens Export modal when Export button is clicked in fullscreen", async () => {
+    await act(async () => {
+      render(<ManuscriptEditor {...defaultProps} />);
+    });
+
+    // Enter fullscreen
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "\\", metaKey: true });
+    });
+
+    // Click Export button
+    const exportButton = screen.getByTestId("fullscreen-export-button");
+    await act(async () => {
+      fireEvent.click(exportButton);
+    });
+
+    // Export modal should be visible
+    await waitFor(() => {
+      expect(screen.getByTestId("export-modal")).toBeInTheDocument();
+    });
+  });
+
+  it("opens Version History panel when Version History button is clicked in fullscreen", async () => {
+    await act(async () => {
+      render(<ManuscriptEditor {...defaultProps} />);
+    });
+
+    // Enter fullscreen
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "\\", metaKey: true });
+    });
+
+    // Click Version History button
+    const versionHistoryButton = screen.getByTestId("fullscreen-version-history-button");
+    await act(async () => {
+      fireEvent.click(versionHistoryButton);
+    });
+
+    // Version History panel should be visible
+    await waitFor(() => {
+      expect(screen.getByTestId("version-history-panel")).toBeInTheDocument();
+    });
   });
 });
