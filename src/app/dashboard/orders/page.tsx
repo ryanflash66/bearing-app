@@ -24,10 +24,10 @@ export default async function MyOrdersPage() {
   // Fetch profile
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
-  // Fetch user's service requests
+  // Fetch user's service requests with manuscript details (AC 8.13.1, 8.13.5)
   const { data: orders, error: ordersError } = await supabase
     .from("service_requests")
-    .select("*")
+    .select("*, manuscripts(id, title)")
     .order("created_at", { ascending: false });
 
   if (ordersError) {

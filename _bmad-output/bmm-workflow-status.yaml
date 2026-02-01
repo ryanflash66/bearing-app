@@ -494,6 +494,12 @@ epic_progress:
         completed: "2026-01-29"
         qa_passed: true
         notes: "Subscription banner, service grid, unified ServiceRequestModal; traceability and gate PASS."
+      - id: "story-8.11"
+        name: "ISBN Registration Flow"
+        status: "completed"
+        completed: "2026-02-01"
+        qa_passed: true
+        notes: "Full ISBN purchase flow with Stripe integration and duplicate request prevention. Gate PASS."
 
 # Gate History
 gate_history:
@@ -563,6 +569,12 @@ gate_history:
     decision: "PASS"
     reason: "100% coverage (4/4 AC), 100% pass rate. P0/P1 FULL; gate PASS."
     document: "_bmad-output/gate-decision-story-8.10.md"
+  - story_id: "8.11"
+    name: "ISBN Registration Flow"
+    date: "2026-02-01"
+    decision: "PASS"
+    reason: "100% coverage (7/7 AC), 100% pass rate (35 tests). Payment and duplicate checks verified."
+    document: "_bmad-output/gate-decision-story-8.11.md"
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5

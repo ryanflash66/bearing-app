@@ -5,10 +5,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ServiceItem } from "@/lib/marketplace-data";
-import { navigateTo } from "@/lib/navigation";
-
-// Mock global fetch
-global.fetch = jest.fn();
 
 // Mock navigation module
 jest.mock("@/lib/navigation", () => ({
@@ -56,6 +52,25 @@ jest.mock("@/components/marketplace/ServiceRequestModal", () => {
   };
 });
 
+// Mock IsbnRegistrationModal
+jest.mock("@/components/marketplace/IsbnRegistrationModal", () => {
+  return function MockIsbnRegistrationModal({
+    isOpen,
+    onClose,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+  }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="isbn-registration-modal">
+        <span>ISBN Registration</span>
+        <button onClick={onClose}>Close ISBN Modal</button>
+      </div>
+    );
+  };
+});
+
 const mockIsbnService: ServiceItem = {
   id: "isbn",
   title: "ISBN Assignment",
@@ -96,66 +111,14 @@ describe("ServiceCard", () => {
     expect(button).toBeInTheDocument();
   });
 
-  it("initiates Stripe checkout when Buy ISBN is clicked", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ url: "https://stripe.com/checkout/session" }),
-    });
-
+  it("opens ISBN modal when Buy ISBN is clicked", async () => {
     render(<ServiceCard service={mockIsbnService} />);
-    
-    const button = screen.getByRole("button", { name: /Buy ISBN/i });
-    fireEvent.click(button);
 
-    expect(button).toBeDisabled();
-    expect(button).toHaveTextContent("Processing...");
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/checkout/isbn", expect.objectContaining({
-        method: "POST"
-      }));
-      // Check if navigateTo was called
-      expect(navigateTo).toHaveBeenCalledWith("https://stripe.com/checkout/session");
-    });
-  });
-
-  it("shows pool warning modal when API returns poolWarning: true", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ url: "https://stripe.com/checkout/delayed", poolWarning: true }),
-    });
-
-    render(<ServiceCard service={mockIsbnService} />);
-    
     const button = screen.getByRole("button", { name: /Buy ISBN/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText("ISBN Pool Notice")).toBeInTheDocument();
-      expect(navigateTo).not.toHaveBeenCalled(); // Should not navigate yet
-    });
-
-    // Test Confirm
-    const confirmButton = screen.getByRole("button", { name: /Continue to Payment/i });
-    fireEvent.click(confirmButton);
-    
-    expect(navigateTo).toHaveBeenCalledWith("https://stripe.com/checkout/delayed");
-  });
-
-  it("handles API errors gracefully", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "Stripe error" }),
-    });
-
-    render(<ServiceCard service={mockIsbnService} />);
-    
-    const button = screen.getByRole("button", { name: /Buy ISBN/i });
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      expect(screen.getByText("Stripe error")).toBeInTheDocument();
-      expect(button).not.toBeDisabled();
+      expect(screen.getByTestId("isbn-registration-modal")).toBeInTheDocument();
     });
   });
 

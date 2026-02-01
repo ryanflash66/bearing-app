@@ -67,7 +67,7 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
             </p>
         </div>
 
-        <ServiceGrid services={MARKETPLACE_SERVICES} manuscriptId={id} />
+        <ServiceGrid services={MARKETPLACE_SERVICES} manuscriptId={id} userDisplayName={profile?.display_name || undefined} />
       </main>
     </div>
   );

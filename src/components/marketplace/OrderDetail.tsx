@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   ServiceRequest,
@@ -15,14 +16,19 @@ interface OrderDetailProps {
 }
 
 export default function OrderDetail({ order }: OrderDetailProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const statusConfig = getStatusConfig(order.status);
   const metadata = order.metadata as Record<string, unknown> | null;
   const isbn = metadata?.isbn as string | undefined;
   const bisacCodes = metadata?.bisac_codes as string[] | undefined;
   const keywords = metadata?.keywords as string[] | undefined;
   const educationLevel = metadata?.education_level as string | undefined;
+  const adminNotes = metadata?.admin_notes as string | undefined;
+  const canCancel = order.status === "pending"; // AC 8.13.3: Only pending orders can be cancelled
   const isPending = order.status === "pending" || order.status === "paid";
   const isInProgress = order.status === "in_progress";
 
@@ -37,6 +43,38 @@ export default function OrderDetail({ order }: OrderDetailProps) {
         setCopyError(true);
         setTimeout(() => setCopyError(false), 3000);
       }
+    }
+  };
+
+  // AC 8.13.3: Cancel Request handler
+  const handleCancelRequest = async () => {
+    if (!canCancel || cancelling) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this request? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    setCancelling(true);
+    setCancelError(null);
+
+    try {
+      const response = await fetch(`/api/service-requests/${order.id}/cancel`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel request");
+      }
+
+      // Refresh the page to show updated status
+      router.refresh();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Failed to cancel request");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -235,6 +273,55 @@ export default function OrderDetail({ order }: OrderDetailProps) {
             </div>
           )}
         </dl>
+
+        {/* AC 8.13.3: Admin Notes (if visible to user) */}
+        {adminNotes && (
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+            <h3 className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Admin Notes
+            </h3>
+            <p className="text-sm text-slate-600 whitespace-pre-wrap">{adminNotes}</p>
+          </div>
+        )}
+
+        {/* AC 8.13.3: Cancel Request button (only for pending orders) */}
+        {canCancel && (
+          <div className="pt-4 border-t border-slate-200">
+            {cancelError && (
+              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
+                <p className="text-sm text-red-700">{cancelError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleCancelRequest}
+              disabled={cancelling}
+              className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {cancelling ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-red-700" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <svg className="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel Request
+                </>
+              )}
+            </button>
+            <p className="mt-2 text-xs text-slate-500">
+              You can only cancel pending requests. Once processing begins, cancellation is no longer available.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

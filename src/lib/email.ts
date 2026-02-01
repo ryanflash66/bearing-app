@@ -285,3 +285,75 @@ export async function notifyBlogPostSuspended(
 
     return result;
 }
+
+// Status display configuration for emails
+const STATUS_DISPLAY: Record<string, { label: string; color: string; bgColor: string }> = {
+    pending: { label: 'Pending', color: '#92400e', bgColor: '#fef3c7' },
+    paid: { label: 'Paid - Awaiting Fulfillment', color: '#6b21a8', bgColor: '#f3e8ff' },
+    in_progress: { label: 'In Progress', color: '#1d4ed8', bgColor: '#dbeafe' },
+    completed: { label: 'Completed', color: '#166534', bgColor: '#dcfce7' },
+    cancelled: { label: 'Cancelled', color: '#b91c1c', bgColor: '#fef2f2' },
+    failed: { label: 'Failed', color: '#b91c1c', bgColor: '#fef2f2' },
+};
+
+// Service type display names for emails
+const SERVICE_DISPLAY: Record<string, string> = {
+    isbn: 'ISBN Registration',
+    cover_design: 'Cover Design',
+    editing: 'Editing',
+    author_website: 'Author Website',
+    marketing: 'Marketing Package',
+    social_media: 'Social Media Kit',
+    publishing_help: 'Publishing Assistance',
+    printing: 'Printing Support',
+};
+
+/**
+ * AC 8.13.4: Notify user when service request status changes
+ * Subject: "Update on your [Service Name] Request"
+ * Body includes: Current Status, Link to /dashboard/orders/[id]
+ *
+ * @returns Result from sendEmail for caller error handling
+ */
+export async function notifyOrderStatusChange(
+    userEmail: string,
+    orderId: string,
+    serviceType: string,
+    newStatus: string,
+    additionalInfo?: string
+) {
+    const orderUrl = `${APP_URL}/dashboard/orders/${orderId}`;
+    const serviceName = SERVICE_DISPLAY[serviceType] || serviceType;
+    const safeServiceName = escapeHtml(serviceName);
+    const statusInfo = STATUS_DISPLAY[newStatus] || { label: newStatus, color: '#374151', bgColor: '#f3f4f6' };
+    const safeAdditionalInfo = additionalInfo ? escapeHtml(additionalInfo) : null;
+
+    const subject = `Update on your ${serviceName} Request`;
+
+    const textBody = `Your ${serviceName} request status has been updated.\n\nCurrent Status: ${statusInfo.label}${safeAdditionalInfo ? `\n\nNote: ${additionalInfo}` : ''}\n\nView your order: ${orderUrl}`;
+
+    const htmlBody = `
+        <p>Your <strong>${safeServiceName}</strong> request status has been updated.</p>
+        <div style="background-color: ${statusInfo.bgColor}; border: 1px solid ${statusInfo.color}20; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">Current Status</p>
+            <p style="margin: 0.25rem 0 0; font-size: 1.125rem; font-weight: 600; color: ${statusInfo.color};">
+                ${statusInfo.label}
+            </p>
+        </div>
+        ${safeAdditionalInfo ? `<p style="color: #6b7280; font-size: 0.875rem;">${safeAdditionalInfo}</p>` : ''}
+        <p><a href="${orderUrl}" style="color: #4f46e5; text-decoration: underline;">View Order Details</a></p>
+    `;
+
+    const result = await sendEmail({
+        to: userEmail,
+        subject,
+        text: textBody,
+        html: htmlBody,
+    });
+
+    if (!result.success) {
+        console.error('[NOTIFY_ORDER_STATUS_CHANGE_FAILED]', { userEmail, orderId, serviceType, newStatus, error: result.error });
+    }
+
+    return result;
+}

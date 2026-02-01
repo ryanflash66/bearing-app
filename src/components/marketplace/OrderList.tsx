@@ -1,14 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { format } from "date-fns";
-import {
-  ServiceRequest,
-  formatCents,
-  getServiceLabel,
-  getStatusConfig,
-} from "@/lib/marketplace-utils";
+import OrderItem, { OrderWithManuscript } from "./OrderItem";
 
 interface OrderListProps {
-  orders: ServiceRequest[];
+  orders: OrderWithManuscript[];
 }
 
 export default function OrderList({ orders }: OrderListProps) {
@@ -35,45 +31,9 @@ export default function OrderList({ orders }: OrderListProps) {
   return (
     <div className="overflow-hidden bg-white shadow sm:rounded-md">
       <ul role="list" className="divide-y divide-slate-200">
-        {orders.map((order) => {
-          const statusConfig = getStatusConfig(order.status);
-          return (
-            <li key={order.id}>
-              <Link
-                href={`/dashboard/orders/${order.id}`}
-                className="block hover:bg-slate-50 transition-colors"
-              >
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <p className="truncate text-sm font-medium text-indigo-600">
-                        {getServiceLabel(order.service_type)}
-                      </p>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig.className}`}
-                      >
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                    <div className="ml-2 flex flex-shrink-0">
-                      <p className="text-sm font-medium text-slate-900">
-                        {formatCents(order.amount_cents)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex justify-between">
-                    <p className="text-sm text-slate-500">
-                      {format(new Date(order.created_at), "MMM d, yyyy")}
-                    </p>
-                    <svg className="h-5 w-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
+        {orders.map((order) => (
+          <OrderItem key={order.id} order={order} />
+        ))}
       </ul>
     </div>
   );
