@@ -1658,6 +1658,8 @@ export default function ManuscriptEditor({
               autosaveState={state}
               onSaveNow={saveNow}
               disabled={isLocked}
+              onExport={() => setShowExportModal(true)}
+              onVersionHistory={() => setShowVersionHistory(true)}
             />
           )}
 
