@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { navigateTo } from "@/lib/navigation";
@@ -40,7 +40,9 @@ export default function IsbnRegistrationModal({
   // Manuscript state
   const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
-  const [manuscriptsError, setManuscriptsError] = useState<string | null>(null);
+  const [_manuscriptsError, setManuscriptsError] = useState<string | null>(
+    null,
+  );
 
   // Form state
   const [formData, setFormData] = useState<IsbnFormData>({
@@ -53,14 +55,38 @@ export default function IsbnRegistrationModal({
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [duplicateRequestId, setDuplicateRequestId] = useState<string | null>(null);
+  const [duplicateRequestId, setDuplicateRequestId] = useState<string | null>(
+    null,
+  );
 
   // Pool warning state
   const [showPoolWarning, setShowPoolWarning] = useState(false);
-  const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(null);
+  const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(
+    null,
+  );
 
   const isManuscriptProvided = Boolean(initialManuscriptId);
   const supabase = createClient();
+
+  // Prefill form from manuscript metadata
+  const prefillFromManuscript = useCallback(
+    (manuscript: Manuscript) => {
+      const metadata = manuscript.metadata;
+
+      // Prefill author name: manuscript metadata > user display name > empty
+      const authorName = metadata?.author_name?.trim() || userDisplayName || "";
+
+      // Prefill BISAC code: first code from manuscript metadata or empty
+      const bisacCode = metadata?.bisac_codes?.[0] || "";
+
+      setFormData((prev) => ({
+        ...prev,
+        authorName,
+        bisacCode,
+      }));
+    },
+    [userDisplayName],
+  );
 
   // Fetch manuscripts when modal opens (marketplace context only)
   useEffect(() => {
@@ -73,31 +99,36 @@ export default function IsbnRegistrationModal({
     setShowPoolWarning(false);
     setPendingCheckoutUrl(null);
 
-    if (isManuscriptProvided) {
+    if (isManuscriptProvided && initialManuscriptId) {
       // If manuscript ID provided, fetch just that manuscript for metadata prefill
-      fetchSingleManuscript(initialManuscriptId!);
+      fetchSingleManuscript(initialManuscriptId);
     } else {
       // Fetch all manuscripts for the dropdown
       fetchManuscripts();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialManuscriptId, isManuscriptProvided]);
 
   // Prefill form when selected manuscript changes
   useEffect(() => {
     if (formData.manuscriptId) {
-      const selectedManuscript = manuscripts.find(m => m.id === formData.manuscriptId);
+      const selectedManuscript = manuscripts.find(
+        (m) => m.id === formData.manuscriptId,
+      );
       if (selectedManuscript) {
         prefillFromManuscript(selectedManuscript);
       }
     }
-  }, [formData.manuscriptId, manuscripts]);
+  }, [formData.manuscriptId, manuscripts, prefillFromManuscript]);
 
   async function fetchManuscripts() {
     setIsLoadingManuscripts(true);
     setManuscriptsError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setManuscriptsError("Please sign in to continue");
         return;
@@ -169,7 +200,7 @@ export default function IsbnRegistrationModal({
 
       if (data) {
         setManuscripts([data]);
-        setFormData(prev => ({ ...prev, manuscriptId: data.id }));
+        setFormData((prev) => ({ ...prev, manuscriptId: data.id }));
         prefillFromManuscript(data);
       }
     } catch (err) {
@@ -180,22 +211,6 @@ export default function IsbnRegistrationModal({
     }
   }
 
-  function prefillFromManuscript(manuscript: Manuscript) {
-    const metadata = manuscript.metadata;
-
-    // Prefill author name: manuscript metadata > user display name > empty
-    const authorName = metadata?.author_name?.trim() || userDisplayName || "";
-
-    // Prefill BISAC code: first code from manuscript metadata or empty
-    const bisacCode = metadata?.bisac_codes?.[0] || "";
-
-    setFormData(prev => ({
-      ...prev,
-      authorName,
-      bisacCode,
-    }));
-  }
-
   // Filter BISAC codes based on search
   const filteredBisac = useMemo(() => {
     if (!bisacSearch.trim()) return BISAC_CODES;
@@ -203,7 +218,7 @@ export default function IsbnRegistrationModal({
     return BISAC_CODES.filter(
       (b) =>
         b.code.toLowerCase().includes(search) ||
-        b.label.toLowerCase().includes(search)
+        b.label.toLowerCase().includes(search),
     );
   }, [bisacSearch]);
 
@@ -218,7 +233,7 @@ export default function IsbnRegistrationModal({
 
   // Handle form field changes
   function handleChange(field: keyof IsbnFormData, value: string) {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
     setDuplicateRequestId(null);
   }
@@ -253,7 +268,10 @@ export default function IsbnRegistrationModal({
 
       if (!response.ok) {
         // Handle duplicate active request (409)
-        if (response.status === 409 && data.code === "DUPLICATE_ACTIVE_REQUEST") {
+        if (
+          response.status === 409 &&
+          data.code === "DUPLICATE_ACTIVE_REQUEST"
+        ) {
           setError("This manuscript already has an active ISBN request.");
           setDuplicateRequestId(data.existingRequestId || null);
           return;
@@ -294,7 +312,9 @@ export default function IsbnRegistrationModal({
 
   if (!isOpen) return null;
 
-  const selectedManuscript = manuscripts.find(m => m.id === formData.manuscriptId);
+  const selectedManuscript = manuscripts.find(
+    (m) => m.id === formData.manuscriptId,
+  );
   const hasNoManuscripts = !isLoadingManuscripts && manuscripts.length === 0;
 
   return (
@@ -455,7 +475,9 @@ export default function IsbnRegistrationModal({
                       className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm disabled:bg-slate-100"
                     >
                       <option value="">
-                        {isLoadingManuscripts ? "Loading manuscripts..." : "Select a manuscript"}
+                        {isLoadingManuscripts
+                          ? "Loading manuscripts..."
+                          : "Select a manuscript"}
                       </option>
                       {manuscripts.map((m) => (
                         <option key={m.id} value={m.id}>
@@ -523,11 +545,22 @@ export default function IsbnRegistrationModal({
                 {/* Price info */}
                 <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
                   <div className="flex items-center gap-2">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="h-5 w-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     <p className="text-sm text-blue-800">
-                      ISBN Registration: <strong>$125</strong> • Turnaround: 24-48 hours
+                      ISBN Registration: <strong>$125</strong> • Turnaround:
+                      24-48 hours
                     </p>
                   </div>
                 </div>
@@ -586,17 +619,32 @@ export default function IsbnRegistrationModal({
           <div className="mx-4 max-w-md rounded-xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-                <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="h-5 w-5 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">ISBN Pool Notice</h3>
+              <h3 className="text-lg font-semibold text-slate-900">
+                ISBN Pool Notice
+              </h3>
             </div>
             <p className="mb-6 text-sm text-slate-600">
-              Our pre-purchased ISBN pool is currently empty. Your ISBN will be manually assigned by our team, which may take <strong>24-48 hours</strong> after payment confirmation.
+              Our pre-purchased ISBN pool is currently empty. Your ISBN will be
+              manually assigned by our team, which may take{" "}
+              <strong>24-48 hours</strong> after payment confirmation.
             </p>
             <p className="mb-6 text-sm text-slate-600">
-              You will receive an email notification once your ISBN has been assigned.
+              You will receive an email notification once your ISBN has been
+              assigned.
             </p>
             <div className="flex gap-3">
               <button
