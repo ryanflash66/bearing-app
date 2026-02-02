@@ -31,7 +31,7 @@ test.describe('My Orders Page', () => {
 
     // Should see either orders list or empty state
     const ordersList = page.locator('ul[role="list"]');
-    const emptyState = page.getByText('No orders found');
+    const emptyState = page.getByText('No service requests found');
 
     // One of these should be visible
     const hasOrders = await ordersList.isVisible().catch(() => false);
@@ -44,7 +44,7 @@ test.describe('My Orders Page', () => {
     await page.goto('/dashboard/orders');
 
     // If empty state is shown, it should have marketplace link
-    const emptyState = page.getByText('No orders found');
+    const emptyState = page.getByText('No service requests found');
     const hasEmptyState = await emptyState.isVisible().catch(() => false);
 
     if (hasEmptyState) {
@@ -83,7 +83,7 @@ test.describe('My Orders Page', () => {
     const hasOrders = await ordersList.isVisible().catch(() => false);
 
     if (hasOrders) {
-      const firstOrder = ordersList.locator('li a').first();
+      const firstOrder = ordersList.locator('[role="link"]').first();
       await firstOrder.click();
 
       // Should navigate to detail page
@@ -107,7 +107,9 @@ test.describe('My Orders Page', () => {
 
     if (hasPending) {
       // Click the row containing the pending badge
-      const pendingOrder = pendingBadge.first().locator('..').locator('..').locator('a');
+      const pendingOrder = pendingBadge
+        .first()
+        .locator('xpath=ancestor::*[@role="link"][1]');
       await pendingOrder.click();
 
       // Should see cancel button on pending order
@@ -124,7 +126,9 @@ test.describe('My Orders Page', () => {
 
     if (hasCompleted) {
       // Click the row containing the completed badge
-      const completedOrder = completedBadge.first().locator('..').locator('..').locator('a');
+      const completedOrder = completedBadge
+        .first()
+        .locator('xpath=ancestor::*[@role="link"][1]');
       await completedOrder.click();
 
       // Should NOT see cancel button on completed order

@@ -37,6 +37,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
     .from("service_requests")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (orderError || !order) {

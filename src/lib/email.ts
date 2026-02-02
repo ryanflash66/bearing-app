@@ -315,7 +315,7 @@ const SERVICE_DISPLAY: Record<string, string> = {
  *
  * @returns Result from sendEmail for caller error handling
  */
-export async function notifyOrderStatusChange(
+export async function sendOrderStatusEmail(
     userEmail: string,
     orderId: string,
     serviceType: string,
@@ -356,4 +356,23 @@ export async function notifyOrderStatusChange(
     }
 
     return result;
+}
+
+/**
+ * Backwards-compatible alias for existing call sites.
+ */
+export async function notifyOrderStatusChange(
+    userEmail: string,
+    orderId: string,
+    serviceType: string,
+    newStatus: string,
+    additionalInfo?: string
+) {
+    return sendOrderStatusEmail(
+        userEmail,
+        orderId,
+        serviceType,
+        newStatus,
+        additionalInfo
+    );
 }

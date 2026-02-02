@@ -1,6 +1,6 @@
 # Story 8.13: My Orders / Service tracking
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -116,7 +116,16 @@ so that I know when my ISBN or other services are ready.
 - Created generic status update endpoint `PATCH /api/services/request/[id]` which triggers the email notification.
 - Added comprehensive API tests for status updates (`tests/api/request-status-update.test.ts`).
 - Verified E2E tests (`tests/e2e/orders.spec.ts`) pass, fixed a strict mode locator issue.
-- Note: `src/emails/OrderStatusEmail.tsx` was not created as a separate file because the project currently uses inline HTML templates in `src/lib/email.ts` for consistency. The logic is fully implemented.
+- Review fixes: added GET `/api/services/request` and switched Orders list to call it with explicit user scoping; detail view now also scopes by `user_id`.
+- Review fixes: added full metadata rendering in Order Detail and aligned empty-state copy and paid status label with ACs.
+- Review fixes: added `src/emails/OrderStatusEmail.tsx` template and `sendOrderStatusEmail` helper (aliasing existing notification logic).
+- Review fixes: added API GET test file (`tests/api/api-services.test.ts`) and updated E2E empty state expectations.
+- Note: Working tree currently includes unrelated changes (e.g., Story 8.11 and test fixes); file list below reflects all files touched in this change set for transparency.
+- Review fixes: corrected status update email lookup to resolve public user profiles by `auth_id`, with fallback to admin auth for email and safe notification inserts.
+- Review fixes: avoided duplicate metadata rendering in Order Detail when ISBN/publishing fields are already displayed.
+- Review fixes: made OrderItem row keyboard-navigable and used a dedicated manuscript link; updated E2E selectors accordingly.
+- Test fix: aligned SubscriptionBanner upgrade link expectation with `/dashboard/settings`.
+- Note: `_bmad-output/bmm-workflow-status.yaml` updated by workflow runner; PM to reconcile if needed.
 
 ### File List
 - src/app/dashboard/orders/page.tsx
@@ -124,7 +133,20 @@ so that I know when my ISBN or other services are ready.
 - src/components/marketplace/OrderList.tsx
 - src/components/marketplace/OrderItem.tsx
 - src/components/marketplace/OrderDetail.tsx
+- src/app/api/services/request/route.ts
 - src/app/api/services/request/[id]/route.ts
 - src/lib/email.ts
+- src/emails/OrderStatusEmail.tsx
+- src/lib/marketplace-utils.ts
 - tests/e2e/orders.spec.ts
+- tests/api/api-services.test.ts
 - tests/api/request-status-update.test.ts
+- tests/components/marketplace/OrderDetail.test.tsx
+- tests/components/marketplace/SubscriptionBanner.test.tsx
+- tests/components/settings/SecuritySettings.test.tsx
+- tests/manuscripts/versionHistory.test.ts
+- src/components/manuscripts/PublishingSettingsForm.tsx
+- src/components/manuscripts/PublishingSettingsModal.tsx
+- docs/story8.13.md
+- _bmad-output/bmm-workflow-status.yaml
+- docs/sprint-status.yaml

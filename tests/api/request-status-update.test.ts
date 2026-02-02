@@ -32,6 +32,7 @@ describe("PATCH /api/services/request/[id]", () => {
   let selectBuilder: any;
   let updateBuilder: any;
   let insertBuilder: any;
+  let userProfileBuilder: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -56,6 +57,19 @@ describe("PATCH /api/services/request/[id]", () => {
         insert: jest.fn().mockResolvedValue({ error: null })
     };
 
+    userProfileBuilder = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id: "profile-1",
+          email: "user@example.com",
+          auth_id: "auth-1",
+        },
+        error: null,
+      }),
+    };
+
     mockAdminClient = {
       from: jest.fn((table) => {
         if (table === "service_requests") {
@@ -67,10 +81,21 @@ describe("PATCH /api/services/request/[id]", () => {
         if (table === "notifications") {
             return insertBuilder;
         }
+        if (table === "users") {
+          return userProfileBuilder;
+        }
         return {
             select: jest.fn().mockReturnThis(),
         };
       }),
+      auth: {
+        admin: {
+          getUserById: jest.fn().mockResolvedValue({
+            data: { user: { email: "user@example.com" } },
+            error: null,
+          }),
+        },
+      },
     };
     (getServiceSupabaseClient as jest.Mock).mockReturnValue(mockAdminClient);
   });
@@ -111,7 +136,7 @@ describe("PATCH /api/services/request/[id]", () => {
         id: "req-123",
         status: "pending",
         service_type: "cover_design",
-        users: { id: "user-1", email: "user@example.com", auth_id: "auth-1" },
+        user_id: "auth-1",
         metadata: {},
       },
       error: null,
@@ -151,7 +176,7 @@ describe("PATCH /api/services/request/[id]", () => {
         id: "req-123",
         status: "in_progress", // Same as update
         service_type: "cover_design",
-        users: { id: "user-1", email: "user@example.com" },
+        user_id: "auth-1",
         metadata: { admin_notes: "Old note" },
       },
       error: null,

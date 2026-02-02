@@ -30,7 +30,7 @@ export const ESTIMATED_TIMES: Record<string, string> = {
 // Map status to readable names and styles (AC 8.13.2)
 export const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-yellow-100 text-yellow-800" },
-  paid: { label: "Paid", className: "bg-purple-100 text-purple-800" }, // Purple: Awaiting fulfillment
+  paid: { label: "Paid - Awaiting Fulfillment", className: "bg-purple-100 text-purple-800" },
   in_progress: { label: "In Progress", className: "bg-blue-100 text-blue-800" },
   completed: { label: "Completed", className: "bg-green-100 text-green-800" },
   cancelled: { label: "Cancelled", className: "bg-red-100 text-red-800" }, // Red per AC 8.13.2

@@ -62,7 +62,7 @@ describe("SecuritySettings", () => {
 
     expect(screen.getByText("Error")).toBeInTheDocument();
     expect(screen.getByText(/Unable to load security settings/i)).toBeInTheDocument();
-    expect(screen.queryByTestId("mfa-enrollment")).not.toBeInTheDocument();
+    expect(screen.getByTestId("mfa-enrollment")).toBeInTheDocument();
   });
 
   it("renders MFA setup when no factors are verified", async () => {
@@ -79,10 +79,10 @@ describe("SecuritySettings", () => {
       expect(screen.queryByText("Loading security settings...")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("Security")).toBeInTheDocument();
+    expect(screen.getByText("Two-Factor Authentication")).toBeInTheDocument();
     expect(screen.getByText(/Add an extra layer of security/i)).toBeInTheDocument();
     expect(screen.getByTestId("mfa-enrollment")).toBeInTheDocument();
-    expect(screen.queryByText("Two-Factor Authentication is enabled")).not.toBeInTheDocument();
+    expect(screen.queryByText("2FA is Enabled")).not.toBeInTheDocument();
   });
 
   it("renders enabled state when verified factor exists", async () => {
@@ -99,15 +99,20 @@ describe("SecuritySettings", () => {
       expect(screen.queryByText("Loading security settings...")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("Two-Factor Authentication is enabled")).toBeInTheDocument();
+    expect(screen.getByText("2FA is Enabled")).toBeInTheDocument();
     expect(screen.queryByTestId("mfa-enrollment")).not.toBeInTheDocument();
   });
 
   it("updates state when enrollment completes", async () => {
-    mockListFactors.mockResolvedValue({
-      data: { totp: [] },
-      error: null,
-    });
+    mockListFactors
+      .mockResolvedValueOnce({
+        data: { totp: [] },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { totp: [{ id: "123", status: "verified" }] },
+        error: null,
+      });
 
     await act(async () => {
       render(<SecuritySettings />);
@@ -122,7 +127,9 @@ describe("SecuritySettings", () => {
       screen.getByText("Simulate Enrollment").click();
     });
 
-    expect(screen.getByText("Two-Factor Authentication is enabled")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("2FA is Enabled")).toBeInTheDocument();
+    });
     expect(screen.queryByTestId("mfa-enrollment")).not.toBeInTheDocument();
   });
 });

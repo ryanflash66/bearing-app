@@ -63,7 +63,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   // Get current request to check for changes and get user info
   const { data: serviceRequest, error: fetchError } = await adminClient
     .from("service_requests")
-    .select("*, users!service_requests_user_id_fkey(id, email, display_name, auth_id)")
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -103,30 +103,65 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   // Send email notification if status changed
-  if (serviceRequest.status !== status && serviceRequest.users) {
-    const user = serviceRequest.users as { id: string; email: string };
-    
-    // Create notification record
-    await adminClient
-      .from("notifications")
-      .insert({
-        user_id: user.id,
-        auth_user_id: (serviceRequest.users as any).auth_id,
-        title: "Service request updated",
-        message: `Your service request status is now: ${status}`,
-        type: "service_update",
-        entity_type: "service_request",
-        entity_id: id,
-      });
+  if (serviceRequest.status !== status) {
+    let userProfile: { id: string; email: string; auth_id: string } | null = null;
 
-    // Send email
-    await notifyOrderStatusChange(
-      user.email,
-      id,
-      serviceRequest.service_type,
-      status,
-      adminNotes
-    );
+    const { data: profileData, error: profileError } = await adminClient
+      .from("users")
+      .select("id, email, display_name, auth_id")
+      .eq("auth_id", serviceRequest.user_id)
+      .single();
+
+    if (!profileError && profileData) {
+      userProfile = profileData as { id: string; email: string; auth_id: string };
+    } else if (profileError && profileError.code !== "PGRST116") {
+      console.error("Error fetching user profile for service request:", profileError);
+    }
+
+    const adminAuth = adminClient.auth?.admin;
+    let userEmail = userProfile?.email || null;
+
+    if (!userEmail && adminAuth) {
+      const { data: authData, error: authError } = await adminAuth.getUserById(
+        serviceRequest.user_id
+      );
+
+      if (authError) {
+        console.error("Error fetching auth user for service request:", authError);
+      } else {
+        userEmail = authData?.user?.email || null;
+      }
+    }
+
+    if (userProfile) {
+      await adminClient
+        .from("notifications")
+        .insert({
+          user_id: userProfile.id,
+          auth_user_id: userProfile.auth_id,
+          title: "Service request updated",
+          message: `Your service request status is now: ${status}`,
+          type: "service_update",
+          entity_type: "service_request",
+          entity_id: id,
+        });
+    } else {
+      console.warn("Skipping notification insert; user profile not found", {
+        requestId: id,
+      });
+    }
+
+    if (userEmail) {
+      await notifyOrderStatusChange(
+        userEmail,
+        id,
+        serviceRequest.service_type,
+        status,
+        adminNotes
+      );
+    } else {
+      console.warn("Skipping email; user email not found", { requestId: id });
+    }
   }
 
   return NextResponse.json({

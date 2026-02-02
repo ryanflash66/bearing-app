@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import OrderList from "@/components/marketplace/OrderList";
+import { headers } from "next/headers";
+import type { OrderWithManuscript } from "@/components/marketplace/OrderItem";
 
 export default async function MyOrdersPage() {
   const supabase = await createClient();
@@ -24,14 +26,35 @@ export default async function MyOrdersPage() {
   // Fetch profile
   const { profile } = await getOrCreateProfile(supabase, user.id, user.email || "");
 
-  // Fetch user's service requests with manuscript details (AC 8.13.1, 8.13.5)
-  const { data: orders, error: ordersError } = await supabase
-    .from("service_requests")
-    .select("*, manuscripts(id, title)")
-    .order("created_at", { ascending: false });
+  // Fetch user's service requests via API (AC 8.13.1, 8.13.5)
+  let orders: OrderWithManuscript[] = [];
+  let ordersError: string | null = null;
 
-  if (ordersError) {
-    console.error("Error fetching orders:", ordersError);
+  try {
+    const headerList = headers();
+    const host = headerList.get("host");
+    const protocol = headerList.get("x-forwarded-proto") ?? "http";
+    const baseUrl = host ? `${protocol}://${host}` : "";
+    const requestUrl = baseUrl
+      ? `${baseUrl}/api/services/request?user_id=me`
+      : "/api/services/request?user_id=me";
+    const cookieHeader = headerList.get("cookie");
+
+    const response = await fetch(requestUrl, {
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      ordersError = errorBody.error || "Failed to load orders";
+    } else {
+      const result = await response.json();
+      orders = (result.data || []) as OrderWithManuscript[];
+    }
+  } catch (err) {
+    console.error("Error fetching orders:", err);
+    ordersError = "Failed to load orders";
   }
 
   return (

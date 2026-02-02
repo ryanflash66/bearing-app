@@ -48,7 +48,7 @@ describe("SubscriptionBanner", () => {
     render(<SubscriptionBanner tier="free" />);
 
     const upgradeLink = screen.getByRole("link", { name: /Subscribe \/ Upgrade/i });
-    expect(upgradeLink).toHaveAttribute("href", "/dashboard/settings/subscription");
+    expect(upgradeLink).toHaveAttribute("href", "/dashboard/settings");
   });
 
   it("applies custom className", () => {

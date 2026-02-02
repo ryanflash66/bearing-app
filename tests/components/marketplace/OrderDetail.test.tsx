@@ -6,6 +6,13 @@ import "@testing-library/jest-dom";
 import OrderDetail from "@/components/marketplace/OrderDetail";
 import type { ServiceRequest } from "@/lib/marketplace-utils";
 
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: jest.fn(),
+  }),
+}));
+
 // Mock clipboard API
 Object.assign(navigator, {
   clipboard: {

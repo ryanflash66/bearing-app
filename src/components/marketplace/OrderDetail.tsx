@@ -28,9 +28,47 @@ export default function OrderDetail({ order }: OrderDetailProps) {
   const keywords = metadata?.keywords as string[] | undefined;
   const educationLevel = metadata?.education_level as string | undefined;
   const adminNotes = metadata?.admin_notes as string | undefined;
+  const metadataKeysToExclude = new Set(["admin_notes"]);
+
+  if (order.service_type === "publishing_help") {
+    metadataKeysToExclude.add("isbn");
+    metadataKeysToExclude.add("bisac_codes");
+    metadataKeysToExclude.add("keywords");
+    metadataKeysToExclude.add("education_level");
+  }
+
+  if (order.service_type === "isbn" && order.status === "completed" && isbn) {
+    metadataKeysToExclude.add("isbn");
+  }
+
+  const metadataEntries = metadata
+    ? Object.entries(metadata).filter(([key]) => !metadataKeysToExclude.has(key))
+    : [];
+  const hasMetadata = metadataEntries.length > 0;
   const canCancel = order.status === "pending"; // AC 8.13.3: Only pending orders can be cancelled
   const isPending = order.status === "pending" || order.status === "paid";
   const isInProgress = order.status === "in_progress";
+
+  const formatMetadataKey = (key: string) => {
+    return key
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const formatMetadataValue = (value: unknown) => {
+    if (value === null || value === undefined) return "—";
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(", ") : "—";
+    }
+    if (typeof value === "object") {
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  };
 
   const handleCopyIsbn = async () => {
     if (isbn) {
@@ -245,6 +283,25 @@ export default function OrderDetail({ order }: OrderDetailProps) {
                 </dd>
               </div>
             )}
+          </div>
+        )}
+
+        {/* AC 8.13.3: Full Metadata (submitted form data, etc.) */}
+        {hasMetadata && (
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 space-y-3">
+            <h3 className="text-sm font-medium text-slate-700">Request Details</h3>
+            <dl className="space-y-2">
+              {metadataEntries.map(([key, value]) => (
+                <div key={key} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+                  <dt className="text-xs font-medium text-slate-500 sm:w-48">
+                    {formatMetadataKey(key)}
+                  </dt>
+                  <dd className="text-sm text-slate-900 whitespace-pre-wrap">
+                    {formatMetadataValue(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         )}
 
