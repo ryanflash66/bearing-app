@@ -41,7 +41,7 @@ jest.mock("@/utils/supabase/server", () => ({
         getUser: mockGetUser,
       },
       from: mockFrom,
-    })
+    }),
   ),
 }));
 
@@ -52,9 +52,15 @@ jest.mock("@/lib/profile", () => ({
 }));
 
 describe("MyOrdersPage", () => {
+  const originalFetch = global.fetch;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockRedirect.mockClear();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("redirects to login if user is not authenticated", async () => {
@@ -64,7 +70,7 @@ describe("MyOrdersPage", () => {
     await MyOrdersPage();
 
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/login?returnUrl=%2Fdashboard%2Forders"
+      "/login?returnUrl=%2Fdashboard%2Forders",
     );
   });
 
@@ -114,8 +120,12 @@ describe("MyOrdersPage", () => {
     render(result);
 
     // Find the page heading specifically (h2, level 2)
-    expect(screen.getByRole("heading", { name: "My Orders", level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/view your past service requests/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "My Orders", level: 2 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/view your past service requests/i),
+    ).toBeInTheDocument();
   });
 
   it("shows empty state when no orders exist", async () => {

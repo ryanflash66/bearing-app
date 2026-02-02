@@ -40,7 +40,7 @@ export default function IsbnRegistrationModal({
   // Manuscript state
   const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
-  const [_manuscriptsError, setManuscriptsError] = useState<string | null>(
+  const [manuscriptsError, setManuscriptsError] = useState<string | null>(
     null,
   );
 
@@ -392,6 +392,37 @@ export default function IsbnRegistrationModal({
                         View My Orders
                       </Link>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manuscripts fetch error */}
+            {manuscriptsError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-red-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-red-800 font-medium">
+                      Failed to load manuscripts
+                    </p>
+                    <p className="mt-1 text-xs text-red-700">
+                      {manuscriptsError}
+                    </p>
                   </div>
                 </div>
               </div>
