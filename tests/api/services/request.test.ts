@@ -272,8 +272,8 @@ describe("POST /api/services/request", () => {
 
       const req = {
         json: jest.fn().mockResolvedValue({
-          serviceType: "social_media",
-          formData: {
+          serviceId: "social-media",
+          metadata: {
             target_platforms: ["instagram", "tiktok"],
             current_handles: "@myauthor",
           },
