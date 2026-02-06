@@ -4,18 +4,18 @@ import { ServiceItem } from "@/lib/marketplace-data";
 import { useEffect, useState } from "react";
 import { navigateTo } from "@/lib/navigation";
 import ServiceRequestModal, { ServiceType } from "./ServiceRequestModal";
+import IsbnRegistrationModal from "./IsbnRegistrationModal";
 
 interface ServiceCardProps {
   service: ServiceItem;
   manuscriptId?: string;
+  userDisplayName?: string;
 }
 
-export default function ServiceCard({ service, manuscriptId }: ServiceCardProps) {
-  const [isRequesting, setIsRequesting] = useState(false);
+export default function ServiceCard({ service, manuscriptId, userDisplayName }: ServiceCardProps) {
   const [error, setError] = useState<string | null>(null);
-  const [showPoolWarning, setShowPoolWarning] = useState(false);
-  const [pendingCheckoutUrl, setPendingCheckoutUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showIsbnModal, setShowIsbnModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isISBN = service.id === "isbn";
@@ -27,40 +27,12 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
     return () => clearTimeout(timeout);
   }, [toastMessage]);
 
-  const handleRequest = async () => {
+  const handleRequest = () => {
     setError(null);
 
     if (isISBN) {
-      // ISBN purchase flow via Stripe (no modal, direct checkout)
-      setIsRequesting(true);
-      try {
-        const response = await fetch("/api/checkout/isbn", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Failed to create checkout session");
-        }
-
-        const { url, poolWarning } = await response.json();
-
-        if (poolWarning) {
-          // Show warning modal before proceeding
-          setPendingCheckoutUrl(url);
-          setShowPoolWarning(true);
-          setIsRequesting(false);
-          return;
-        }
-
-        // Redirect to Stripe Checkout
-        navigateTo(url);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        setIsRequesting(false);
-      }
+      // ISBN purchase flow - open modal to collect details before Stripe checkout
+      setShowIsbnModal(true);
     } else if (isPublishingHelp) {
       // Publishing assistance requires selecting a manuscript first
       navigateTo("/dashboard/manuscripts");
@@ -68,17 +40,6 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
       // Other services - Open the ServiceRequestModal
       setShowModal(true);
     }
-  };
-
-  const handleConfirmPurchase = () => {
-    if (pendingCheckoutUrl) {
-      navigateTo(pendingCheckoutUrl);
-    }
-  };
-
-  const handleCancelWarning = () => {
-    setShowPoolWarning(false);
-    setPendingCheckoutUrl(null);
   };
 
   const handleModalSuccess = () => {
@@ -127,10 +88,9 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
         <div className="mt-6 pt-4 border-t border-slate-100">
           <button
             onClick={handleRequest}
-            disabled={isRequesting}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            {isRequesting ? "Processing..." : isISBN ? "Buy ISBN" : "Request Service"}
+            {isISBN ? "Buy ISBN" : "Request Service"}
           </button>
         </div>
       </div>
@@ -145,7 +105,7 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
         </div>
       )}
 
-      {/* Service Request Modal */}
+      {/* Service Request Modal (for non-ISBN services) */}
       <ServiceRequestModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -155,41 +115,13 @@ export default function ServiceCard({ service, manuscriptId }: ServiceCardProps)
         onSuccess={handleModalSuccess}
       />
 
-      {/* ISBN Pool Warning Modal */}
-      {showPoolWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-                <svg className="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900">ISBN Pool Notice</h3>
-            </div>
-            <p className="mb-6 text-sm text-slate-600">
-              Our pre-purchased ISBN pool is currently empty. Your ISBN will be manually assigned by our team, which may take <strong>24-48 hours</strong> after payment confirmation.
-            </p>
-            <p className="mb-6 text-sm text-slate-600">
-              You will receive an email notification once your ISBN has been assigned.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleCancelWarning}
-                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmPurchase}
-                className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
-              >
-                Continue to Payment
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ISBN Registration Modal */}
+      <IsbnRegistrationModal
+        isOpen={showIsbnModal}
+        onClose={() => setShowIsbnModal(false)}
+        manuscriptId={manuscriptId}
+        userDisplayName={userDisplayName}
+      />
     </>
   );
 }

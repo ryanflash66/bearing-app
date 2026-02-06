@@ -281,7 +281,7 @@ workflow_status:
 # Completed: 5 + 4 + 7 + 4 + 6 + 7 + 3 + 4 + 4 = 44
 story_progress:
   total: 65
-  completed: 48
+  completed: 50
   ux_rework: 0
   ready: 1
   pending: 18
@@ -452,7 +452,7 @@ epic_progress:
   - epic: 8
     name: "Client Feedback & Stability"
     stories: 22
-    completed: 8
+    completed: 10
     status: "in-progress"
     notes: "Addressing P0 bugs and P1 features from client feedback loop (Jan 2026). Story 8.5 Move 2FA complete with E2E validation."
     story_list:
@@ -494,6 +494,18 @@ epic_progress:
         completed: "2026-01-29"
         qa_passed: true
         notes: "Subscription banner, service grid, unified ServiceRequestModal; traceability and gate PASS."
+      - id: "story-8.11"
+        name: "ISBN Registration Flow"
+        status: "completed"
+        completed: "2026-02-01"
+        qa_passed: true
+        notes: "Full ISBN purchase flow with Stripe integration and duplicate request prevention. Gate PASS."
+      - id: "story-8.13"
+        name: "My Orders / Service tracking"
+        status: "completed"
+        completed: "2026-02-01"
+        qa_passed: true
+        notes: "Implemented Order Tracking UI, API, and Email notifications. API/E2E tests passed."
 
 # Gate History
 gate_history:
@@ -563,6 +575,12 @@ gate_history:
     decision: "PASS"
     reason: "100% coverage (4/4 AC), 100% pass rate. P0/P1 FULL; gate PASS."
     document: "_bmad-output/gate-decision-story-8.10.md"
+  - story_id: "8.11"
+    name: "ISBN Registration Flow"
+    date: "2026-02-01"
+    decision: "PASS"
+    reason: "100% coverage (7/7 AC), 100% pass rate (35 tests). Payment and duplicate checks verified."
+    document: "_bmad-output/gate-decision-story-8.11.md"
   - epic: 0.5
     name: "Stabilization & Hardening"
     stories: 5

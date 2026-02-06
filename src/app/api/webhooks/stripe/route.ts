@@ -94,6 +94,22 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     return;
   }
 
+  // Build metadata object - merge ISBN-specific fields from Stripe session metadata
+  const requestMetadata: Record<string, unknown> = {
+    customer_email: session.customer_email,
+    payment_status: session.payment_status,
+  };
+
+  // AC 8.11.6: Merge ISBN request details (author_name + category) into service_requests.metadata
+  if (serviceType === "isbn") {
+    if (session.metadata?.isbn_author_name) {
+      requestMetadata.author_name = session.metadata.isbn_author_name;
+    }
+    if (session.metadata?.isbn_bisac_code) {
+      requestMetadata.bisac_code = session.metadata.isbn_bisac_code;
+    }
+  }
+
   // Create service request record
   const { error: insertError } = await supabase.from("service_requests").insert({
     user_id: userId,
@@ -101,15 +117,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     service_type: serviceType,
     status: "pending",
     stripe_session_id: session.id,
-    stripe_payment_intent_id: 
-      typeof session.payment_intent === "string" 
-        ? session.payment_intent 
+    stripe_payment_intent_id:
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
         : session.payment_intent?.id || null,
     amount_cents: session.amount_total || 0,
-    metadata: {
-      customer_email: session.customer_email,
-      payment_status: session.payment_status,
-    },
+    metadata: requestMetadata,
   });
 
   if (insertError) {

@@ -220,4 +220,118 @@ describe("POST /api/webhooks/stripe", () => {
     const data = await res.json();
     expect(data.error).toBe("Webhook not configured");
   });
+
+  // Story 8.11 - AC 8.11.6: ISBN metadata merge in webhook
+  it("should merge ISBN metadata (author_name, bisac_code) into service_requests.metadata", async () => {
+    const mockSession = {
+      id: "cs_test_isbn_meta",
+      payment_intent: "pi_test_isbn",
+      amount_total: 12500,
+      customer_email: "author@example.com",
+      payment_status: "paid",
+      metadata: {
+        user_id: "user-123",
+        manuscript_id: "manuscript-456",
+        service_type: "isbn",
+        isbn_author_name: "Jane Author",
+        isbn_bisac_code: "FIC009000",
+      },
+    };
+
+    (stripe.webhooks.constructEvent as jest.Mock).mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: mockSession },
+    });
+
+    const mockInsert = jest.fn().mockResolvedValue({ error: null });
+    const mockMaybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const mockEq = jest.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+    const mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
+    const mockFrom = jest.fn().mockReturnValue({
+      select: mockSelect,
+      insert: mockInsert,
+    });
+
+    (getServiceSupabaseClient as jest.Mock).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const req = createMockRequest({
+      headers: { "stripe-signature": "valid_sig" },
+      body: JSON.stringify(mockSession),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    // Verify insert was called with merged ISBN metadata
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: "user-123",
+        manuscript_id: "manuscript-456",
+        service_type: "isbn",
+        status: "pending",
+        metadata: expect.objectContaining({
+          customer_email: "author@example.com",
+          payment_status: "paid",
+          author_name: "Jane Author",
+          bisac_code: "FIC009000",
+        }),
+      })
+    );
+  });
+
+  it("should not include ISBN fields in metadata for non-ISBN service types", async () => {
+    const mockSession = {
+      id: "cs_test_other",
+      payment_intent: "pi_test_other",
+      amount_total: 50000,
+      customer_email: "user@example.com",
+      payment_status: "paid",
+      metadata: {
+        user_id: "user-123",
+        manuscript_id: "manuscript-789",
+        service_type: "cover_design", // Non-ISBN service
+        isbn_author_name: "Should Be Ignored",
+        isbn_bisac_code: "SHOULD_IGNORE",
+      },
+    };
+
+    (stripe.webhooks.constructEvent as jest.Mock).mockReturnValue({
+      type: "checkout.session.completed",
+      data: { object: mockSession },
+    });
+
+    const mockInsert = jest.fn().mockResolvedValue({ error: null });
+    const mockMaybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const mockEq = jest.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+    const mockSelect = jest.fn().mockReturnValue({ eq: mockEq });
+    const mockFrom = jest.fn().mockReturnValue({
+      select: mockSelect,
+      insert: mockInsert,
+    });
+
+    (getServiceSupabaseClient as jest.Mock).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const req = createMockRequest({
+      headers: { "stripe-signature": "valid_sig" },
+      body: JSON.stringify(mockSession),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+
+    // Verify insert was called without ISBN-specific metadata
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service_type: "cover_design",
+        metadata: expect.not.objectContaining({
+          author_name: expect.any(String),
+          bisac_code: expect.any(String),
+        }),
+      })
+    );
+  });
 });

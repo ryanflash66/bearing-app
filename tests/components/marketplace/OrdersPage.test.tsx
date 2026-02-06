@@ -15,6 +15,18 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/orders",
 }));
 
+// Mock next/headers
+jest.mock("next/headers", () => ({
+  headers: jest.fn(() => ({
+    get: jest.fn((key: string) => {
+      if (key === "host") return "localhost:3000";
+      if (key === "x-forwarded-proto") return "http";
+      if (key === "cookie") return "session=test";
+      return null;
+    }),
+  })),
+}));
+
 // Mock Supabase client
 const mockGetUser = jest.fn();
 const mockSelect = jest.fn();
@@ -29,7 +41,7 @@ jest.mock("@/utils/supabase/server", () => ({
         getUser: mockGetUser,
       },
       from: mockFrom,
-    })
+    }),
   ),
 }));
 
@@ -40,9 +52,15 @@ jest.mock("@/lib/profile", () => ({
 }));
 
 describe("MyOrdersPage", () => {
+  const originalFetch = global.fetch;
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockRedirect.mockClear();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("redirects to login if user is not authenticated", async () => {
@@ -52,7 +70,7 @@ describe("MyOrdersPage", () => {
     await MyOrdersPage();
 
     expect(mockRedirect).toHaveBeenCalledWith(
-      "/login?returnUrl=%2Fdashboard%2Forders"
+      "/login?returnUrl=%2Fdashboard%2Forders",
     );
   });
 
@@ -90,14 +108,24 @@ describe("MyOrdersPage", () => {
       order: jest.fn().mockResolvedValue({ data: mockOrders, error: null }),
     });
 
+    // Mock fetch for the orders API call
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: mockOrders }),
+    }) as jest.Mock;
+
     const MyOrdersPage = (await import("@/app/dashboard/orders/page")).default;
     const result = await MyOrdersPage();
 
     render(result);
 
     // Find the page heading specifically (h2, level 2)
-    expect(screen.getByRole("heading", { name: "My Orders", level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/view your past service requests/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "My Orders", level: 2 }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/view your past service requests/i),
+    ).toBeInTheDocument();
   });
 
   it("shows empty state when no orders exist", async () => {
@@ -115,11 +143,17 @@ describe("MyOrdersPage", () => {
       order: jest.fn().mockResolvedValue({ data: [], error: null }),
     });
 
+    // Mock fetch for the orders API call
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: [] }),
+    }) as jest.Mock;
+
     const MyOrdersPage = (await import("@/app/dashboard/orders/page")).default;
     const result = await MyOrdersPage();
 
     render(result);
 
-    expect(screen.getByText(/no orders found/i)).toBeInTheDocument();
+    expect(screen.getByText(/no service requests found/i)).toBeInTheDocument();
   });
 });

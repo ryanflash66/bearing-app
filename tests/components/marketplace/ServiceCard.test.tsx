@@ -5,18 +5,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ServiceItem } from "@/lib/marketplace-data";
-import { navigateTo } from "@/lib/navigation";
-
-// Mock fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
 // Mock navigation module
 jest.mock("@/lib/navigation", () => ({
   navigateTo: jest.fn(),
 }));
-
-const mockNavigateTo = navigateTo as jest.MockedFunction<typeof navigateTo>;
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
@@ -59,6 +51,33 @@ jest.mock("@/components/marketplace/ServiceRequestModal", () => {
   };
 });
 
+// Mock IsbnRegistrationModal
+jest.mock("@/components/marketplace/IsbnRegistrationModal", () => {
+  return function MockIsbnRegistrationModal({
+    isOpen,
+    onClose,
+    manuscriptId,
+    userDisplayName,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    manuscriptId?: string;
+    userDisplayName?: string;
+  }) {
+    if (!isOpen) return null;
+    return (
+      <div
+        data-testid="isbn-registration-modal"
+        data-manuscript-id={manuscriptId || ""}
+        data-user-display-name={userDisplayName || ""}
+      >
+        <span>ISBN Registration</span>
+        <button onClick={onClose}>Close ISBN Modal</button>
+      </div>
+    );
+  };
+});
+
 describe("ServiceCard", () => {
   const mockService: ServiceItem = {
     id: "test-service",
@@ -86,8 +105,6 @@ describe("ServiceCard", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFetch.mockReset();
-    mockNavigateTo.mockReset();
   });
 
   it("renders service information correctly", () => {
@@ -210,173 +227,42 @@ describe("ServiceCard", () => {
 
   // ISBN-specific tests
   describe("ISBN Purchase Flow", () => {
-    it("calls checkout API when ISBN Buy button is clicked", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: "https://checkout.stripe.com/pay/cs_test",
-            poolWarning: false,
-          }),
-      });
-
+    it("opens ISBN modal when Buy ISBN is clicked", async () => {
       render(<ServiceCard service={mockISBNService} />);
 
       const button = screen.getByRole("button", { name: /buy isbn/i });
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith("/api/checkout/isbn", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        });
+        expect(screen.getByTestId("isbn-registration-modal")).toBeInTheDocument();
       });
     });
 
-    it("shows pool warning modal when ISBN pool is empty", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: "https://checkout.stripe.com/pay/cs_test",
-            poolWarning: true,
-          }),
-      });
-
-      render(<ServiceCard service={mockISBNService} />);
+    it("passes manuscriptId and userDisplayName to ISBN modal when provided", async () => {
+      render(
+        <ServiceCard
+          service={mockISBNService}
+          manuscriptId="manuscript-123"
+          userDisplayName="Jane Author"
+        />
+      );
 
       const button = screen.getByRole("button", { name: /buy isbn/i });
       fireEvent.click(button);
 
-      // Wait for modal to appear
       await waitFor(() => {
-        expect(screen.getByText(/ISBN Pool Notice/i)).toBeInTheDocument();
-      });
-
-      // Verify modal buttons are present
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /continue to payment/i })).toBeInTheDocument();
-    });
-
-    it("closes pool warning modal when Cancel is clicked", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: "https://checkout.stripe.com/pay/cs_test",
-            poolWarning: true,
-          }),
-      });
-
-      render(<ServiceCard service={mockISBNService} />);
-
-      const button = screen.getByRole("button", { name: /buy isbn/i });
-      fireEvent.click(button);
-
-      // Wait for modal
-      await waitFor(() => {
-        expect(screen.getByText(/ISBN Pool Notice/i)).toBeInTheDocument();
-      });
-
-      // Click Cancel
-      const cancelButton = screen.getByRole("button", { name: /cancel/i });
-      fireEvent.click(cancelButton);
-
-      // Modal should be closed
-      await waitFor(() => {
-        expect(screen.queryByText(/ISBN Pool Notice/i)).not.toBeInTheDocument();
+        const modal = screen.getByTestId("isbn-registration-modal");
+        expect(modal).toHaveAttribute("data-manuscript-id", "manuscript-123");
+        expect(modal).toHaveAttribute("data-user-display-name", "Jane Author");
       });
     });
 
-    it("navigates to Stripe checkout when Continue to Payment is clicked", async () => {
-      const checkoutUrl = "https://checkout.stripe.com/pay/cs_test_continue";
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: checkoutUrl,
-            poolWarning: true,
-          }),
-      });
-
+    it("does not open ServiceRequestModal for ISBN service", async () => {
       render(<ServiceCard service={mockISBNService} />);
 
       const button = screen.getByRole("button", { name: /buy isbn/i });
       fireEvent.click(button);
 
-      // Wait for modal
-      await waitFor(() => {
-        expect(screen.getByText(/ISBN Pool Notice/i)).toBeInTheDocument();
-      });
-
-      // Verify navigateTo was NOT called yet (waiting for user confirmation)
-      expect(mockNavigateTo).not.toHaveBeenCalled();
-
-      // Click Continue to Payment
-      const continueButton = screen.getByRole("button", { name: /continue to payment/i });
-      fireEvent.click(continueButton);
-
-      // Verify navigateTo was called with the checkout URL
-      expect(mockNavigateTo).toHaveBeenCalledWith(checkoutUrl);
-    });
-
-    it("navigates directly to Stripe checkout when no pool warning", async () => {
-      const checkoutUrl = "https://checkout.stripe.com/pay/cs_test_direct";
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: checkoutUrl,
-            poolWarning: false,
-          }),
-      });
-
-      render(<ServiceCard service={mockISBNService} />);
-
-      const button = screen.getByRole("button", { name: /buy isbn/i });
-      fireEvent.click(button);
-
-      // Verify navigateTo was called directly (no modal shown)
-      await waitFor(() => {
-        expect(mockNavigateTo).toHaveBeenCalledWith(checkoutUrl);
-      });
-    });
-
-    it("displays error when checkout API fails", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        json: () => Promise.resolve({ error: "Failed to create checkout session" }),
-      });
-
-      render(<ServiceCard service={mockISBNService} />);
-
-      const button = screen.getByRole("button", { name: /buy isbn/i });
-      fireEvent.click(button);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Failed to create checkout session/i)).toBeInTheDocument();
-      });
-    });
-
-    it("does not open modal for ISBN service (uses direct checkout)", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            url: "https://checkout.stripe.com/pay/cs_test",
-            poolWarning: false,
-          }),
-      });
-
-      render(<ServiceCard service={mockISBNService} />);
-
-      const button = screen.getByRole("button", { name: /buy isbn/i });
-      fireEvent.click(button);
-
-      // The service request modal should NOT be shown for ISBN
       await waitFor(() => {
         expect(screen.queryByTestId("service-request-modal")).not.toBeInTheDocument();
       });

@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/supabase-admin";
 import { isSuperAdmin } from "@/lib/super-admin";
-import { notifyServiceFulfilled } from "@/lib/email";
+import { notifyOrderStatusChange } from "@/lib/email";
 
 /**
  * POST /api/admin/fulfill-request
@@ -164,12 +164,17 @@ export async function POST(request: Request) {
     }
   }
 
-  // Send email notification to user (AC 5.4.2)
+  // Send email notification to user (AC 5.4.2, AC 8.13.4)
   if (user) {
-    await notifyServiceFulfilled(
+    const additionalInfo = serviceRequest.service_type === "isbn" && assignedIsbn
+      ? `Your assigned ISBN: ${assignedIsbn}`
+      : undefined;
+    await notifyOrderStatusChange(
       user.email,
+      requestId,
       serviceRequest.service_type,
-      assignedIsbn || undefined
+      "completed",
+      additionalInfo
     );
   }
 

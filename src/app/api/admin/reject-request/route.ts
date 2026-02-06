@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServiceSupabaseClient } from "@/lib/supabase-admin";
 import { isSuperAdmin } from "@/lib/super-admin";
 import { stripe } from "@/lib/stripe";
-import { notifyServiceCancelled } from "@/lib/email";
+import { notifyOrderStatusChange } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -158,13 +158,18 @@ export async function POST(request: Request) {
     }
   }
 
-  // Send email notification to user (AC 5.4.3)
+  // Send email notification to user (AC 5.4.3, AC 8.13.4)
   if (user) {
-    await notifyServiceCancelled(
+    const refundText = refundId
+      ? 'A refund has been initiated and should appear in your account within 5-10 business days.'
+      : '';
+    const additionalInfo = `Reason: ${reason}${refundText ? ` ${refundText}` : ''}`;
+    await notifyOrderStatusChange(
       user.email,
+      requestId,
       serviceRequest.service_type,
-      reason,
-      !!refundId
+      "cancelled",
+      additionalInfo
     );
   }
 

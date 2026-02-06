@@ -643,18 +643,31 @@ describe("Manuscript Version History", () => {
 
   describe("Error handling", () => {
     it("should handle non-existent manuscript gracefully", async () => {
-      // Force non-existent return
-      (supabase.from as jest.Mock).mockImplementation(() => ({
-         select: jest.fn().mockReturnThis(),
-         eq: jest.fn().mockReturnThis(),
-         is: jest.fn().mockReturnThis(),
-         order: jest.fn().mockReturnThis(),
-         limit: jest.fn().mockReturnThis(),
-         lt: jest.fn().mockReturnThis(),
-         gt: jest.fn().mockReturnThis(),
-         range: jest.fn().mockReturnThis(),
-         then: jest.fn().mockResolvedValue({ data: [], error: { message: "Not found", code: "PGRST116" } })
-      }));
+      // Force non-existent manuscript on the first lookup
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === "manuscripts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            is: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: null,
+              error: { message: "Not found", code: "PGRST116" },
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          order: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          lt: jest.fn().mockReturnThis(),
+          then: jest.fn().mockResolvedValue({
+            data: [],
+            error: { message: "Not found", code: "PGRST116" },
+          }),
+        };
+      });
       const fakeId = "00000000-0000-0000-0000-000000000000";
       const result = await getVersionHistory(supabase, fakeId);
       expect(result.error).not.toBeNull();

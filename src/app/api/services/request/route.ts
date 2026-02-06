@@ -7,6 +7,58 @@ import { cleanISBN, isValidISBN10, isValidISBN13 } from "@/lib/publication-valid
 
 export const dynamic = "force-dynamic";
 
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+
+    // Authenticate user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const userIdParam = searchParams.get("user_id");
+
+    // Only allow "me" or the authenticated user's id
+    if (userIdParam && userIdParam !== "me" && userIdParam !== user.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("service_requests")
+      .select("*, manuscripts(id, title)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching service requests:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch service requests" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ data });
+  } catch (err) {
+    console.error("Service request fetch error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
 // Map frontend service IDs (with hyphens) to DB enum values (with underscores)
 const SERVICE_ID_TO_DB_ENUM: Record<string, string> = {
   "cover-design": "cover_design",
