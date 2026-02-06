@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures/auth.fixture";
+import { test, expect } from './fixtures/auth.fixture';
 
 /**
  * Story 8.13: My Orders / Service tracking
