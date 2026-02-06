@@ -389,7 +389,7 @@ export async function sendOrderStatusEmail(
 
   const subject = `Update on your ${serviceName} Request`;
 
-  const textBody = `Your ${serviceName} request status has been updated.\n\nCurrent Status: ${statusInfo.label}${safeAdditionalInfo ? `\n\nNote: ${safeAdditionalInfo}` : ""}\n\nView your order: ${orderUrl}`;
+  const textBody = `Your ${serviceName} request status has been updated.\n\nCurrent Status: ${statusInfo.label}${additionalInfo ? `\n\nNote: ${additionalInfo}` : ""}\n\nView your order: ${orderUrl}`;
 
   const htmlBody = `
         <p>Your <strong>${safeServiceName}</strong> request status has been updated.</p>
