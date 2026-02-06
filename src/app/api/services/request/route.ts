@@ -83,6 +83,38 @@ const SERVICE_DEFAULT_AMOUNTS: Record<string, number> = {
   "printing": 0,          // Quote-based
 };
 
+const MARKETING_BUDGET_RANGE_PATTERN = /^(under_\d+|\d+_\d+|\d+_plus)$/;
+
+function validateMarketingMetadata(metadata?: {
+  target_audience?: string;
+  budget_range?: string;
+  goals?: string;
+} | null): string | null {
+  if (!metadata) {
+    return "Marketing request requires target audience, budget range, and goals";
+  }
+
+  const { target_audience, budget_range, goals } = metadata;
+
+  if (!target_audience || target_audience.trim().length === 0) {
+    return "Marketing request requires a target audience";
+  }
+
+  if (!budget_range || budget_range.trim().length === 0) {
+    return "Marketing request requires a budget range";
+  }
+
+  if (!MARKETING_BUDGET_RANGE_PATTERN.test(budget_range)) {
+    return "Marketing request has an invalid budget range";
+  }
+
+  if (!goals || goals.trim().length === 0) {
+    return "Marketing request requires marketing goals";
+  }
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -220,6 +252,20 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+      }
+    }
+
+    if (serviceId === "marketing") {
+      const marketingError = validateMarketingMetadata(clientMetadata as {
+        target_audience?: string;
+        budget_range?: string;
+        goals?: string;
+      } | null);
+      if (marketingError) {
+        return NextResponse.json(
+          { error: marketingError },
+          { status: 400 }
+        );
       }
     }
 

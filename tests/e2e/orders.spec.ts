@@ -1,25 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "./fixtures/auth.fixture";
 
 /**
  * Story 8.13: My Orders / Service tracking
  * E2E Tests for AC 8.13.1, AC 8.13.3
  */
 test.describe('My Orders Page', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    const email = process.env.TEST_EMAIL || 'test@example.com';
-    const password = process.env.TEST_PASSWORD || 'password123';
-
-    await page.goto('/login');
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.click('button[type="submit"]');
-
-    // Wait for successful login and redirection to dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
-  });
-
-  test('AC 8.13.1: User can navigate to /dashboard/orders and see list', async ({ page }) => {
+  test('AC 8.13.1: User can navigate to /dashboard/orders and see list', async ({ authenticatedPage: page }) => {
     // Navigate to orders page
     await page.goto('/dashboard/orders');
 
@@ -40,7 +26,7 @@ test.describe('My Orders Page', () => {
     expect(hasOrders || isEmpty).toBeTruthy();
   });
 
-  test('AC 8.13.2: Empty state shows marketplace link', async ({ page }) => {
+  test('AC 8.13.2: Empty state shows marketplace link', async ({ authenticatedPage: page }) => {
     await page.goto('/dashboard/orders');
 
     // If empty state is shown, it should have marketplace link
@@ -54,7 +40,7 @@ test.describe('My Orders Page', () => {
     }
   });
 
-  test('AC 8.13.1: Orders list displays required columns', async ({ page }) => {
+  test('AC 8.13.1: Orders list displays required columns', async ({ authenticatedPage: page }) => {
     await page.goto('/dashboard/orders');
 
     // If there are orders, verify the display
@@ -75,7 +61,7 @@ test.describe('My Orders Page', () => {
     }
   });
 
-  test('AC 8.13.3: User can navigate to order detail view', async ({ page }) => {
+  test('AC 8.13.3: User can navigate to order detail view', async ({ authenticatedPage: page }) => {
     await page.goto('/dashboard/orders');
 
     // If there are orders, click on one to navigate to detail
@@ -98,7 +84,7 @@ test.describe('My Orders Page', () => {
     }
   });
 
-  test('AC 8.13.3: Pending orders show cancel button', async ({ page }) => {
+  test('AC 8.13.3: Pending orders show cancel button', async ({ authenticatedPage: page }) => {
     await page.goto('/dashboard/orders');
 
     // Navigate to a pending order if available
@@ -117,7 +103,7 @@ test.describe('My Orders Page', () => {
     }
   });
 
-  test('AC 8.13.3: Completed orders do not show cancel button', async ({ page }) => {
+  test('AC 8.13.3: Completed orders do not show cancel button', async ({ authenticatedPage: page }) => {
     await page.goto('/dashboard/orders');
 
     // Look for completed orders

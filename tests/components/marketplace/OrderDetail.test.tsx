@@ -6,10 +6,12 @@ import "@testing-library/jest-dom";
 import OrderDetail from "@/components/marketplace/OrderDetail";
 import type { ServiceRequest } from "@/lib/marketplace-utils";
 
+const mockRefresh = jest.fn();
+
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
-    refresh: jest.fn(),
+    refresh: mockRefresh,
   }),
 }));
 
@@ -44,6 +46,7 @@ function createMockOrder(overrides: Partial<ServiceRequest>): ServiceRequest {
 describe("OrderDetail", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRefresh.mockClear();
   });
 
   // AC 5.3.2: Fulfilled ISBN request shows assigned ISBN with copy button
