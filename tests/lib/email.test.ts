@@ -179,6 +179,29 @@ describe("notifyOrderStatusChange (AC 8.13.4)", () => {
         }));
     });
 
+    it("escapes HTML entities in HTML body but not in text body", async () => {
+        const additionalInfo = "Note: Use format <ISBN> & verify it's correct";
+        const result = await notifyOrderStatusChange(
+            "user@example.com",
+            "order-special",
+            "isbn",
+            "completed",
+            additionalInfo
+        );
+
+        expect(result.success).toBe(true);
+        
+        // HTML body should have escaped entities
+        expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
+            html: expect.stringContaining("&lt;ISBN&gt; &amp; verify it&#039;s correct"),
+        }));
+        
+        // Text body should NOT have escaped entities (raw text)
+        expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
+            text: expect.stringContaining("Note: Use format <ISBN> & verify it's correct"),
+        }));
+    });
+
     it("handles all status types correctly", async () => {
         const statuses = ["pending", "paid", "in_progress", "completed", "cancelled", "failed"];
 
