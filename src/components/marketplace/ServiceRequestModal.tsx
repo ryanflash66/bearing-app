@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { isValidISBN10, isValidISBN13, cleanISBN } from "@/lib/publication-validation";
 import TiptapEditor from "../editor/TiptapEditor";
 import Link from "next/link";
+
+interface Manuscript {
+  id: string;
+  title: string;
+  metadata?: {
+    [key: string]: unknown;
+  };
+}
 
 // Service types that require specific form configurations
 export type ServiceType =
@@ -58,14 +66,14 @@ const EDUCATION_LEVELS = [
   { value: "general", label: "General Audience" },
 ];
 
-// Service-specific descriptions/prompts for the generic details field
+// Service-specific descriptions/prompts for additional details field
 const SERVICE_PROMPTS: Record<string, string> = {
   "author-website":
-    "Tell us about your vision for your author website. Include any preferences for design style, must-have pages, and any existing branding elements.",
+    "Any additional details about your vision, existing branding, or special requirements?",
   marketing:
-    "Describe your book and target audience. Include your marketing goals, budget range, and any platforms you'd like to focus on.",
+    "Any additional context about your book, audience, or marketing goals?",
   "social-media":
-    "Tell us about your book's genre, target audience, and any specific platforms you'd like content for. Include your publication timeline if known.",
+    "Any additional context about your book's themes, publication timeline, or specific content needs?",
   "cover-design":
     "Describe your book's genre, mood, and any visual preferences. Include any reference images or covers you admire, and key elements that should be featured.",
   editing:
@@ -73,6 +81,102 @@ const SERVICE_PROMPTS: Record<string, string> = {
   printing:
     "Describe your printing needs: quantity, trim size, paper preferences, and any special requirements. Include your target timeline.",
 };
+
+// Service-specific field options
+const DESIGN_STYLES = [
+  { value: "", label: "Select a style" },
+  { value: "modern", label: "Modern & Minimalist" },
+  { value: "classic", label: "Classic & Elegant" },
+  { value: "bold", label: "Bold & Colorful" },
+  { value: "cozy", label: "Warm & Cozy" },
+  { value: "professional", label: "Clean & Professional" },
+  { value: "whimsical", label: "Playful & Whimsical" },
+];
+
+const WEBSITE_PAGES = [
+  { value: "home", label: "Home" },
+  { value: "about", label: "About the Author" },
+  { value: "books", label: "Books/Works" },
+  { value: "blog", label: "Blog" },
+  { value: "contact", label: "Contact" },
+  { value: "newsletter", label: "Newsletter Signup" },
+  { value: "events", label: "Events/Appearances" },
+  { value: "media", label: "Media Kit" },
+];
+
+const BUDGET_RANGES = [
+  { value: "", label: "Select budget range" },
+  { value: "starter", label: "Starter ($500-1,000)" },
+  { value: "standard", label: "Standard ($1,000-2,500)" },
+  { value: "premium", label: "Premium ($2,500-5,000)" },
+  { value: "custom", label: "Custom (let's discuss)" },
+];
+
+const MARKETING_GOALS = [
+  { value: "launch", label: "Book Launch Campaign" },
+  { value: "ongoing", label: "Ongoing Promotion" },
+  { value: "email", label: "Email List Growth" },
+  { value: "reviews", label: "Review Generation" },
+  { value: "visibility", label: "Increased Visibility" },
+  { value: "sales", label: "Sales Boost" },
+];
+
+const MARKETING_PLATFORMS = [
+  { value: "amazon", label: "Amazon Ads" },
+  { value: "facebook", label: "Facebook/Meta" },
+  { value: "instagram", label: "Instagram" },
+  { value: "tiktok", label: "TikTok/BookTok" },
+  { value: "goodreads", label: "Goodreads" },
+  { value: "bookbub", label: "BookBub" },
+  { value: "email", label: "Email Marketing" },
+];
+
+const SOCIAL_PLATFORMS = [
+  { value: "instagram", label: "Instagram" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "twitter", label: "Twitter/X" },
+  { value: "facebook", label: "Facebook" },
+  { value: "pinterest", label: "Pinterest" },
+  { value: "threads", label: "Threads" },
+];
+
+const CONTENT_TYPES = [
+  { value: "graphics", label: "Static Graphics" },
+  { value: "stories", label: "Story Templates" },
+  { value: "reels", label: "Video/Reels" },
+  { value: "captions", label: "Caption Templates" },
+  { value: "hashtags", label: "Hashtag Sets" },
+  { value: "schedule", label: "Content Calendar" },
+];
+
+// Services that have specific form fields (not just generic textarea)
+const SERVICES_WITH_SPECIFIC_FIELDS = ["author-website", "marketing", "social-media"];
+
+// Service-specific form data interfaces
+interface AuthorWebsiteData {
+  designStyle: string;
+  pages: string[];
+  budgetRange: string;
+  additionalDetails: string;
+}
+
+interface MarketingData {
+  bookGenre: string;
+  targetAudience: string;
+  goals: string[];
+  budgetRange: string;
+  platforms: string[];
+  additionalDetails: string;
+}
+
+interface SocialMediaData {
+  bookGenre: string;
+  targetAudience: string;
+  platforms: string[];
+  contentTypes: string[];
+  timeline: string;
+  additionalDetails: string;
+}
 
 export default function ServiceRequestModal({
   isOpen,
@@ -86,8 +190,16 @@ export default function ServiceRequestModal({
 }: ServiceRequestModalProps) {
   const router = useRouter();
   const isPublishing = serviceId === "publishing-help";
-  const hasManuscript = Boolean(manuscriptId);
-  const showManuscriptWarning = isPublishing && !hasManuscript;
+  const isManuscriptProvided = Boolean(manuscriptId);
+  const showManuscriptWarning = isPublishing && !isManuscriptProvided;
+  // For non-publishing services in marketplace, we need to show manuscript dropdown
+  const needsManuscriptSelection = !isPublishing && !isManuscriptProvided;
+
+  // Manuscript state (for marketplace context where no manuscriptId provided)
+  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+  const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
+  const [manuscriptsError, setManuscriptsError] = useState<string | null>(null);
+  const [selectedManuscriptId, setSelectedManuscriptId] = useState<string>("");
 
   // Publishing-specific state
   const [publishingData, setPublishingData] = useState<PublishingRequestMetadata>(
@@ -96,13 +208,71 @@ export default function ServiceRequestModal({
   const [bisacSearch, setBisacSearch] = useState("");
   const [isbnError, setIsbnError] = useState<string | null>(null);
 
-  // Generic service state
+  // Generic service state (for services without specific fields)
   const [details, setDetails] = useState("");
+
+  // Service-specific state
+  const [authorWebsiteData, setAuthorWebsiteData] = useState<AuthorWebsiteData>({
+    designStyle: "",
+    pages: [],
+    budgetRange: "",
+    additionalDetails: "",
+  });
+  const [marketingData, setMarketingData] = useState<MarketingData>({
+    bookGenre: "",
+    targetAudience: "",
+    goals: [],
+    budgetRange: "",
+    platforms: [],
+    additionalDetails: "",
+  });
+  const [socialMediaData, setSocialMediaData] = useState<SocialMediaData>({
+    bookGenre: "",
+    targetAudience: "",
+    platforms: [],
+    contentTypes: [],
+    timeline: "",
+    additionalDetails: "",
+  });
+
+  // Check if service has specific fields
+  const hasSpecificFields = SERVICES_WITH_SPECIFIC_FIELDS.includes(serviceId);
 
   // Common state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateRequestId, setDuplicateRequestId] = useState<string | null>(null);
+
+  // Effective manuscript ID: provided prop or selected from dropdown
+  const effectiveManuscriptId = manuscriptId || selectedManuscriptId;
+  const hasManuscript = Boolean(effectiveManuscriptId);
+
+  // Fetch manuscripts for dropdown (marketplace context)
+  const fetchManuscripts = useCallback(async () => {
+    setIsLoadingManuscripts(true);
+    setManuscriptsError(null);
+
+    try {
+      const response = await fetch("/api/manuscripts");
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setManuscriptsError("Please sign in to continue");
+        } else {
+          setManuscriptsError(data.error || "Failed to load manuscripts");
+        }
+        return;
+      }
+
+      setManuscripts(data.manuscripts || []);
+    } catch (err) {
+      console.error("Error fetching manuscripts:", err);
+      setManuscriptsError("Failed to load manuscripts");
+    } finally {
+      setIsLoadingManuscripts(false);
+    }
+  }, []);
 
   // Reset form state when modal opens
   useEffect(() => {
@@ -111,14 +281,44 @@ export default function ServiceRequestModal({
         setPublishingData(initialMetadata || {});
       } else {
         setDetails("");
+        // Reset service-specific states
+        setAuthorWebsiteData({
+          designStyle: "",
+          pages: [],
+          budgetRange: "",
+          additionalDetails: "",
+        });
+        setMarketingData({
+          bookGenre: "",
+          targetAudience: "",
+          goals: [],
+          budgetRange: "",
+          platforms: [],
+          additionalDetails: "",
+        });
+        setSocialMediaData({
+          bookGenre: "",
+          targetAudience: "",
+          platforms: [],
+          contentTypes: [],
+          timeline: "",
+          additionalDetails: "",
+        });
       }
       setError(null);
       setDuplicateRequestId(null);
       setIsbnError(null);
       setIsSubmitting(false);
       setBisacSearch("");
+      setSelectedManuscriptId("");
+      setManuscriptsError(null);
+
+      // Fetch manuscripts if we need the dropdown
+      if (needsManuscriptSelection) {
+        fetchManuscripts();
+      }
     }
-  }, [isOpen, initialMetadata, isPublishing]);
+  }, [isOpen, initialMetadata, isPublishing, needsManuscriptSelection, fetchManuscripts]);
 
   // Filter BISAC codes based on search
   const filteredBisac = useMemo(() => {
@@ -215,10 +415,10 @@ export default function ServiceRequestModal({
     return true;
   }, [publishingData, isPublishing]);
 
-  // Generic form is always valid (details is optional)
+  // Generic form requires manuscript selection when in marketplace context
   const isFormValid = isPublishing
     ? isPublishingFormValid && hasManuscript
-    : true;
+    : hasManuscript; // Manuscript required for all services
 
   // Handle form submission
   const handleSubmit = async () => {
@@ -248,17 +448,47 @@ export default function ServiceRequestModal({
         await onMetadataSave(metadataToSave);
       }
 
-      // Build metadata for the request
-      const metadata = isPublishing
-        ? {
-            isbn: publishingData.isbn ? cleanISBN(publishingData.isbn) : undefined,
-            bisac_codes: publishingData.bisac_codes,
-            keywords: publishingData.keywords,
-            education_level: publishingData.education_level,
-          }
-        : {
-            details: details.trim() || undefined,
-          };
+      // Build metadata for the request based on service type
+      let metadata: Record<string, unknown>;
+
+      if (isPublishing) {
+        metadata = {
+          isbn: publishingData.isbn ? cleanISBN(publishingData.isbn) : undefined,
+          bisac_codes: publishingData.bisac_codes,
+          keywords: publishingData.keywords,
+          education_level: publishingData.education_level,
+        };
+      } else if (serviceId === "author-website") {
+        metadata = {
+          design_style: authorWebsiteData.designStyle || undefined,
+          pages: authorWebsiteData.pages.length > 0 ? authorWebsiteData.pages : undefined,
+          budget_range: authorWebsiteData.budgetRange || undefined,
+          details: authorWebsiteData.additionalDetails.trim() || undefined,
+        };
+      } else if (serviceId === "marketing") {
+        metadata = {
+          book_genre: marketingData.bookGenre.trim() || undefined,
+          target_audience: marketingData.targetAudience.trim() || undefined,
+          goals: marketingData.goals.length > 0 ? marketingData.goals : undefined,
+          budget_range: marketingData.budgetRange || undefined,
+          platforms: marketingData.platforms.length > 0 ? marketingData.platforms : undefined,
+          details: marketingData.additionalDetails.trim() || undefined,
+        };
+      } else if (serviceId === "social-media") {
+        metadata = {
+          book_genre: socialMediaData.bookGenre.trim() || undefined,
+          target_audience: socialMediaData.targetAudience.trim() || undefined,
+          platforms: socialMediaData.platforms.length > 0 ? socialMediaData.platforms : undefined,
+          content_types: socialMediaData.contentTypes.length > 0 ? socialMediaData.contentTypes : undefined,
+          timeline: socialMediaData.timeline.trim() || undefined,
+          details: socialMediaData.additionalDetails.trim() || undefined,
+        };
+      } else {
+        // Generic services (cover-design, editing, printing)
+        metadata = {
+          details: details.trim() || undefined,
+        };
+      }
 
       // Create the service request
       const response = await fetch("/api/services/request", {
@@ -266,7 +496,7 @@ export default function ServiceRequestModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId,
-          manuscriptId: manuscriptId || undefined,
+          manuscriptId: effectiveManuscriptId || undefined,
           metadata,
         }),
       });
@@ -461,6 +691,87 @@ export default function ServiceRequestModal({
             </div>
           )}
 
+          {/* Manuscripts loading error */}
+          {manuscriptsError && needsManuscriptSelection && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-red-800 font-medium">
+                    Failed to load manuscripts
+                  </p>
+                  <p className="mt-1 text-xs text-red-700">
+                    {manuscriptsError}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state for no manuscripts */}
+          {needsManuscriptSelection && !isLoadingManuscripts && manuscripts.length === 0 && !manuscriptsError && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-amber-800 font-medium">
+                    No manuscripts found
+                  </p>
+                  <p className="mt-1 text-xs text-amber-700">
+                    You need at least one manuscript to request this service.
+                  </p>
+                  <Link
+                    href="/dashboard/manuscripts/new"
+                    className="mt-2 inline-flex items-center gap-1 text-sm text-amber-800 underline hover:text-amber-900"
+                  >
+                    Create a manuscript
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Form fields */}
           <div className="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
             <input type="hidden" name="service_type" value={serviceId} readOnly />
@@ -470,6 +781,58 @@ export default function ServiceRequestModal({
               </p>
               <p className="text-sm font-medium text-slate-900">{serviceTitle}</p>
             </div>
+
+            {/* Manuscript selection (marketplace context) */}
+            {needsManuscriptSelection && (
+              <div>
+                <label
+                  htmlFor="manuscript"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Manuscript <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="manuscript"
+                  value={selectedManuscriptId}
+                  onChange={(e) => {
+                    setSelectedManuscriptId(e.target.value);
+                    setError(null);
+                    setDuplicateRequestId(null);
+                  }}
+                  disabled={isLoadingManuscripts}
+                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-slate-100"
+                >
+                  <option value="">
+                    {isLoadingManuscripts
+                      ? "Loading manuscripts..."
+                      : "Select a manuscript"}
+                  </option>
+                  {manuscripts.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.title}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500">
+                  Select the manuscript this service request applies to.
+                </p>
+              </div>
+            )}
+
+            {/* Manuscript display (manuscript context - read only) */}
+            {isManuscriptProvided && !isPublishing && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700">
+                  Manuscript
+                </label>
+                <div className="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-medium text-slate-900">
+                    Selected manuscript
+                  </p>
+                </div>
+              </div>
+            )}
+
             {isPublishing ? (
               // Publishing-specific form
               <>
@@ -652,8 +1015,305 @@ export default function ServiceRequestModal({
                   </select>
                 </div>
               </>
+            ) : serviceId === "author-website" ? (
+              // Author Website form
+              <>
+                <div>
+                  <label htmlFor="designStyle" className="block text-sm font-medium text-slate-700">
+                    Design Style
+                  </label>
+                  <select
+                    id="designStyle"
+                    value={authorWebsiteData.designStyle}
+                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, designStyle: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    {DESIGN_STYLES.map((style) => (
+                      <option key={style.value} value={style.value}>{style.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Pages Needed
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {WEBSITE_PAGES.map((page) => (
+                      <label key={page.value} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={authorWebsiteData.pages.includes(page.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAuthorWebsiteData({ ...authorWebsiteData, pages: [...authorWebsiteData.pages, page.value] });
+                            } else {
+                              setAuthorWebsiteData({ ...authorWebsiteData, pages: authorWebsiteData.pages.filter(p => p !== page.value) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-700">{page.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="budgetRange" className="block text-sm font-medium text-slate-700">
+                    Budget Range
+                  </label>
+                  <select
+                    id="budgetRange"
+                    value={authorWebsiteData.budgetRange}
+                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, budgetRange: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    {BUDGET_RANGES.map((range) => (
+                      <option key={range.value} value={range.value}>{range.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="additionalDetails" className="block text-sm font-medium text-slate-700">
+                    Additional Details <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
+                  <textarea
+                    id="additionalDetails"
+                    rows={4}
+                    value={authorWebsiteData.additionalDetails}
+                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, additionalDetails: e.target.value })}
+                    placeholder="Any existing branding, domain name, or special requirements..."
+                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </>
+            ) : serviceId === "marketing" ? (
+              // Marketing Package form
+              <>
+                <div>
+                  <label htmlFor="bookGenre" className="block text-sm font-medium text-slate-700">
+                    Book Genre
+                  </label>
+                  <input
+                    id="bookGenre"
+                    type="text"
+                    value={marketingData.bookGenre}
+                    onChange={(e) => setMarketingData({ ...marketingData, bookGenre: e.target.value })}
+                    placeholder="e.g., Romance, Thriller, Self-Help..."
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="targetAudience" className="block text-sm font-medium text-slate-700">
+                    Target Audience
+                  </label>
+                  <textarea
+                    id="targetAudience"
+                    rows={2}
+                    value={marketingData.targetAudience}
+                    onChange={(e) => setMarketingData({ ...marketingData, targetAudience: e.target.value })}
+                    placeholder="Describe your ideal readers (age, interests, reading habits)..."
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Marketing Goals
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {MARKETING_GOALS.map((goal) => (
+                      <label key={goal.value} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={marketingData.goals.includes(goal.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setMarketingData({ ...marketingData, goals: [...marketingData.goals, goal.value] });
+                            } else {
+                              setMarketingData({ ...marketingData, goals: marketingData.goals.filter(g => g !== goal.value) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-700">{goal.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Preferred Platforms
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {MARKETING_PLATFORMS.map((platform) => (
+                      <label key={platform.value} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={marketingData.platforms.includes(platform.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setMarketingData({ ...marketingData, platforms: [...marketingData.platforms, platform.value] });
+                            } else {
+                              setMarketingData({ ...marketingData, platforms: marketingData.platforms.filter(p => p !== platform.value) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-700">{platform.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="marketingBudget" className="block text-sm font-medium text-slate-700">
+                    Budget Range
+                  </label>
+                  <select
+                    id="marketingBudget"
+                    value={marketingData.budgetRange}
+                    onChange={(e) => setMarketingData({ ...marketingData, budgetRange: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  >
+                    {BUDGET_RANGES.map((range) => (
+                      <option key={range.value} value={range.value}>{range.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="marketingDetails" className="block text-sm font-medium text-slate-700">
+                    Additional Details <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
+                  <textarea
+                    id="marketingDetails"
+                    rows={3}
+                    value={marketingData.additionalDetails}
+                    onChange={(e) => setMarketingData({ ...marketingData, additionalDetails: e.target.value })}
+                    placeholder="Any specific campaigns, timing, or requirements..."
+                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </>
+            ) : serviceId === "social-media" ? (
+              // Social Media Launch Kit form
+              <>
+                <div>
+                  <label htmlFor="socialGenre" className="block text-sm font-medium text-slate-700">
+                    Book Genre
+                  </label>
+                  <input
+                    id="socialGenre"
+                    type="text"
+                    value={socialMediaData.bookGenre}
+                    onChange={(e) => setSocialMediaData({ ...socialMediaData, bookGenre: e.target.value })}
+                    placeholder="e.g., Fantasy, Memoir, Business..."
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="socialAudience" className="block text-sm font-medium text-slate-700">
+                    Target Audience
+                  </label>
+                  <textarea
+                    id="socialAudience"
+                    rows={2}
+                    value={socialMediaData.targetAudience}
+                    onChange={(e) => setSocialMediaData({ ...socialMediaData, targetAudience: e.target.value })}
+                    placeholder="Describe your ideal readers..."
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Social Platforms
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {SOCIAL_PLATFORMS.map((platform) => (
+                      <label key={platform.value} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={socialMediaData.platforms.includes(platform.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSocialMediaData({ ...socialMediaData, platforms: [...socialMediaData.platforms, platform.value] });
+                            } else {
+                              setSocialMediaData({ ...socialMediaData, platforms: socialMediaData.platforms.filter(p => p !== platform.value) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-700">{platform.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Content Types Needed
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {CONTENT_TYPES.map((type) => (
+                      <label key={type.value} className="inline-flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={socialMediaData.contentTypes.includes(type.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSocialMediaData({ ...socialMediaData, contentTypes: [...socialMediaData.contentTypes, type.value] });
+                            } else {
+                              setSocialMediaData({ ...socialMediaData, contentTypes: socialMediaData.contentTypes.filter(t => t !== type.value) });
+                            }
+                          }}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-700">{type.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="timeline" className="block text-sm font-medium text-slate-700">
+                    Publication Timeline
+                  </label>
+                  <input
+                    id="timeline"
+                    type="text"
+                    value={socialMediaData.timeline}
+                    onChange={(e) => setSocialMediaData({ ...socialMediaData, timeline: e.target.value })}
+                    placeholder="e.g., Launching March 2026, Already published..."
+                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="socialDetails" className="block text-sm font-medium text-slate-700">
+                    Additional Details <span className="text-slate-400">(optional)</span>
+                  </label>
+                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
+                  <textarea
+                    id="socialDetails"
+                    rows={3}
+                    value={socialMediaData.additionalDetails}
+                    onChange={(e) => setSocialMediaData({ ...socialMediaData, additionalDetails: e.target.value })}
+                    placeholder="Any specific themes, hashtags, or requirements..."
+                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </>
             ) : (
-              // Generic service form
+              // Generic service form (cover-design, editing, printing)
               <div>
                 <label
                   htmlFor="details"

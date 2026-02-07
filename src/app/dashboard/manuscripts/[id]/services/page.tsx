@@ -4,6 +4,7 @@ import { getOrCreateProfile } from "@/lib/profile";
 import { getManuscript } from "@/lib/manuscripts";
 import ServiceGrid from "@/components/marketplace/ServiceGrid";
 import { MARKETPLACE_SERVICES } from "@/lib/marketplace-data";
+import { ACTIVE_STATUSES } from "@/lib/service-requests";
 import Link from "next/link";
 
 interface ServicesPageProps {
@@ -38,6 +39,23 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
     return redirect("/dashboard/manuscripts?error=deleted");
   }
 
+  // Fetch active service requests for this manuscript
+  const { data: activeRequests } = await supabase
+    .from("service_requests")
+    .select("id, service_type, status")
+    .eq("manuscript_id", id)
+    .in("status", ACTIVE_STATUSES);
+
+  // Create a map of service_type -> request id for quick lookup
+  const activeRequestsByType: Record<string, string> = {};
+  if (activeRequests) {
+    for (const req of activeRequests) {
+      if (req.service_type) {
+        activeRequestsByType[req.service_type] = req.id;
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-stone-50">
        {/* Simple Navigation */}
@@ -67,7 +85,12 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
             </p>
         </div>
 
-        <ServiceGrid services={MARKETPLACE_SERVICES} manuscriptId={id} userDisplayName={profile?.display_name || undefined} />
+        <ServiceGrid
+          services={MARKETPLACE_SERVICES}
+          manuscriptId={id}
+          userDisplayName={profile?.display_name || undefined}
+          activeRequestsByType={activeRequestsByType}
+        />
       </main>
     </div>
   );

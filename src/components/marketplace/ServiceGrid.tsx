@@ -5,9 +5,11 @@ interface ServiceGridProps {
   services: ServiceItem[];
   manuscriptId?: string;
   userDisplayName?: string;
+  // Map of service_type -> request_id for active requests (manuscript context only)
+  activeRequestsByType?: Record<string, string>;
 }
 
-export default function ServiceGrid({ services, manuscriptId, userDisplayName }: ServiceGridProps) {
+export default function ServiceGrid({ services, manuscriptId, userDisplayName, activeRequestsByType }: ServiceGridProps) {
   if (!services || services.length === 0) {
     return (
       <div className="text-center py-12">
@@ -23,7 +25,13 @@ export default function ServiceGrid({ services, manuscriptId, userDisplayName }:
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {services.map((service) => (
-        <ServiceCard key={service.id} service={service} manuscriptId={manuscriptId} userDisplayName={userDisplayName} />
+        <ServiceCard
+          key={service.id}
+          service={service}
+          manuscriptId={manuscriptId}
+          userDisplayName={userDisplayName}
+          activeRequestId={activeRequestsByType?.[service.id]}
+        />
       ))}
     </div>
   );
