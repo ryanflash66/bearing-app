@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { navigateTo } from "@/lib/navigation";
