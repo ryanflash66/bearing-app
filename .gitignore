@@ -24,3 +24,11 @@ coverage/
 # BMAD Framework
 _bmad/
 _bmad-output/
+
+# AI/Agent tooling
+.codex/
+.opencode/
+.github/agents/
+
+# QA artifacts
+*.pdf
