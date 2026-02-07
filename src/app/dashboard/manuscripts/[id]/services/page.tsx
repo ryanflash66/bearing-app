@@ -47,11 +47,14 @@ export default async function ServicesPage({ params }: ServicesPageProps) {
     .in("status", ACTIVE_STATUSES);
 
   // Create a map of service_type -> request id for quick lookup
+  // Note: DB stores service_type with underscores, but service.id uses hyphens
   const activeRequestsByType: Record<string, string> = {};
   if (activeRequests) {
     for (const req of activeRequests) {
       if (req.service_type) {
-        activeRequestsByType[req.service_type] = req.id;
+        // Convert underscores to hyphens to match service.id format
+        const normalizedKey = req.service_type.replace(/_/g, "-");
+        activeRequestsByType[normalizedKey] = req.id;
       }
     }
   }

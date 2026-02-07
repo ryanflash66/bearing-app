@@ -149,9 +149,6 @@ const CONTENT_TYPES = [
   { value: "schedule", label: "Content Calendar" },
 ];
 
-// Services that have specific form fields (not just generic textarea)
-const SERVICES_WITH_SPECIFIC_FIELDS = ["author-website", "marketing", "social-media"];
-
 // Service-specific form data interfaces
 interface AuthorWebsiteData {
   designStyle: string;
@@ -200,6 +197,8 @@ export default function ServiceRequestModal({
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(null);
   const [selectedManuscriptId, setSelectedManuscriptId] = useState<string>("");
+  // For manuscript context - store the manuscript title for display
+  const [providedManuscriptTitle, setProvidedManuscriptTitle] = useState<string | null>(null);
 
   // Publishing-specific state
   const [publishingData, setPublishingData] = useState<PublishingRequestMetadata>(
@@ -271,6 +270,23 @@ export default function ServiceRequestModal({
     }
   }, []);
 
+  // Fetch single manuscript title (manuscript context)
+  const fetchManuscriptTitle = useCallback(async (id: string) => {
+    try {
+      const response = await fetch("/api/manuscripts");
+      const data = await response.json();
+
+      if (response.ok && data.manuscripts) {
+        const manuscript = data.manuscripts.find((m: Manuscript) => m.id === id);
+        if (manuscript) {
+          setProvidedManuscriptTitle(manuscript.title);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching manuscript title:", err);
+    }
+  }, []);
+
   // Reset form state when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -309,13 +325,18 @@ export default function ServiceRequestModal({
       setBisacSearch("");
       setSelectedManuscriptId("");
       setManuscriptsError(null);
+      setProvidedManuscriptTitle(null);
 
       // Fetch manuscripts if we need the dropdown
       if (needsManuscriptSelection) {
         fetchManuscripts();
       }
+      // Fetch manuscript title for display in manuscript context
+      if (isManuscriptProvided && manuscriptId && !isPublishing) {
+        fetchManuscriptTitle(manuscriptId);
+      }
     }
-  }, [isOpen, initialMetadata, isPublishing, needsManuscriptSelection, fetchManuscripts]);
+  }, [isOpen, initialMetadata, isPublishing, needsManuscriptSelection, fetchManuscripts, isManuscriptProvided, manuscriptId, fetchManuscriptTitle]);
 
   // Filter BISAC codes based on search
   const filteredBisac = useMemo(() => {
@@ -412,10 +433,39 @@ export default function ServiceRequestModal({
     return true;
   }, [publishingData, isPublishing]);
 
-  // Generic form requires manuscript selection when in marketplace context
-  const isFormValid = isPublishing
-    ? isPublishingFormValid && hasManuscript
-    : hasManuscript; // Manuscript required for all services
+  // Service-specific form validation
+  const isAuthorWebsiteValid = useMemo(() => {
+    if (serviceId !== "author-website") return true;
+    // Require at least a design style selection
+    return authorWebsiteData.designStyle !== "";
+  }, [serviceId, authorWebsiteData.designStyle]);
+
+  const isMarketingValid = useMemo(() => {
+    if (serviceId !== "marketing") return true;
+    // Require at least one marketing goal
+    return marketingData.goals.length > 0;
+  }, [serviceId, marketingData.goals]);
+
+  const isSocialMediaValid = useMemo(() => {
+    if (serviceId !== "social-media") return true;
+    // Require at least one platform
+    return socialMediaData.platforms.length > 0;
+  }, [serviceId, socialMediaData.platforms]);
+
+  // Combined form validation
+  const isFormValid = useMemo(() => {
+    // Manuscript is required for all services
+    if (!hasManuscript) return false;
+
+    // Service-specific validation
+    if (isPublishing) return isPublishingFormValid;
+    if (serviceId === "author-website") return isAuthorWebsiteValid;
+    if (serviceId === "marketing") return isMarketingValid;
+    if (serviceId === "social-media") return isSocialMediaValid;
+
+    // Generic services (cover-design, editing, printing) - just need manuscript
+    return true;
+  }, [hasManuscript, isPublishing, isPublishingFormValid, serviceId, isAuthorWebsiteValid, isMarketingValid, isSocialMediaValid]);
 
   // Handle form submission
   const handleSubmit = async () => {
@@ -824,7 +874,7 @@ export default function ServiceRequestModal({
                 </label>
                 <div className="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
                   <p className="text-sm font-medium text-slate-900">
-                    Selected manuscript
+                    {providedManuscriptTitle || "Loading..."}
                   </p>
                 </div>
               </div>

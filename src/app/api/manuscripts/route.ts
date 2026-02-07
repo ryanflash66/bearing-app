@@ -3,6 +3,9 @@ import { createClient } from "@/utils/supabase/server";
 import { getOrCreateProfile } from "@/lib/profile";
 import { getManuscripts } from "@/lib/manuscripts";
 
+// Force dynamic to ensure fresh data on each request
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/manuscripts
  * Returns all manuscripts for the authenticated user's account.
