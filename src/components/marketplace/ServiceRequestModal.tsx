@@ -235,9 +235,6 @@ export default function ServiceRequestModal({
     additionalDetails: "",
   });
 
-  // Check if service has specific fields
-  const hasSpecificFields = SERVICES_WITH_SPECIFIC_FIELDS.includes(serviceId);
-
   // Common state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
