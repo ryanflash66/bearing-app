@@ -213,4 +213,123 @@ describe("IsbnRegistrationModal", () => {
     const link = screen.getByRole("link", { name: /View existing order/i });
     expect(link).toHaveAttribute("href", "/dashboard/orders/existing-123");
   });
+
+  it("falls back to API display name in marketplace context when no prop provided", async () => {
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          manuscripts: [
+            { id: "ms-1", title: "My Book", metadata: {} },
+          ],
+          userDisplayName: "API Display Name",
+        }),
+    });
+    (global.fetch as jest.Mock) = mockFetch;
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    // Wait for manuscripts to load
+    await waitFor(() => {
+      expect(screen.getByText("My Book")).toBeInTheDocument();
+    });
+
+    // Select the manuscript
+    await userEvent.selectOptions(screen.getByLabelText(/Manuscript/i), "ms-1");
+
+    // Author name should be prefilled from API display name
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("API Display Name")).toBeInTheDocument();
+    });
+  });
+
+  it("does not show 'No manuscripts found' while loading", async () => {
+    // Use a fetch that never resolves to keep loading state active
+    const neverResolve = new Promise(() => {});
+    const mockFetch = jest.fn().mockReturnValue(neverResolve);
+    (global.fetch as jest.Mock) = mockFetch;
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    // The "No manuscripts found" warning should NOT appear during loading
+    expect(screen.queryByText(/No manuscripts found/i)).not.toBeInTheDocument();
+  });
+
+  it("shows 'No manuscripts found' after loading completes with empty results", async () => {
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          manuscripts: [],
+          userDisplayName: null,
+        }),
+    });
+    (global.fetch as jest.Mock) = mockFetch;
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/No manuscripts found/i)).toBeInTheDocument();
+    });
+  });
+
+  it("prefills author from metadata even when no display name available", async () => {
+    mockSingleManuscript({
+      id: manuscriptId,
+      title: "Titled Book",
+      metadata: {
+        author_name: "Metadata Author",
+      },
+    });
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        manuscriptId={manuscriptId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Metadata Author")).toBeInTheDocument();
+    });
+  });
+
+  it("leaves author empty when no metadata and no display name", async () => {
+    mockSingleManuscript({
+      id: manuscriptId,
+      title: "No Author Book",
+      metadata: {},
+    });
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        manuscriptId={manuscriptId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("No Author Book")).toBeInTheDocument();
+    });
+
+    const authorInput = screen.getByLabelText(/Author Name/i) as HTMLInputElement;
+    expect(authorInput.value).toBe("");
+  });
 });

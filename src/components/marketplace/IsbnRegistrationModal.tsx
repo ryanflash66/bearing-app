@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { navigateTo } from "@/lib/navigation";
@@ -40,6 +40,7 @@ export default function IsbnRegistrationModal({
   // Manuscript state
   const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
+  const [manuscriptsLoaded, setManuscriptsLoaded] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(
     null,
   );
@@ -74,13 +75,19 @@ export default function IsbnRegistrationModal({
   // Effective display name: prop takes priority, then API response
   const effectiveDisplayName = userDisplayName || apiUserDisplayName;
 
+  // Ref to always have the latest display name without stale closures
+  const effectiveDisplayNameRef = useRef(effectiveDisplayName);
+  useEffect(() => {
+    effectiveDisplayNameRef.current = effectiveDisplayName;
+  }, [effectiveDisplayName]);
+
   // Prefill form from manuscript metadata
   const prefillFromManuscript = useCallback(
-    (manuscript: Manuscript, displayNameFallback?: string) => {
+    (manuscript: Manuscript) => {
       const metadata = manuscript.metadata;
 
       // Prefill author name: manuscript metadata > user display name > empty
-      const authorName = metadata?.author_name?.trim() || displayNameFallback || effectiveDisplayName || "";
+      const authorName = metadata?.author_name?.trim() || effectiveDisplayNameRef.current || "";
 
       // Prefill BISAC code: first code from manuscript metadata or empty
       const bisacCode = metadata?.bisac_codes?.[0] || "";
@@ -91,7 +98,7 @@ export default function IsbnRegistrationModal({
         bisacCode,
       }));
     },
-    [effectiveDisplayName],
+    [],
   );
 
   // Fetch manuscripts when modal opens (marketplace context only)
@@ -104,6 +111,7 @@ export default function IsbnRegistrationModal({
     setBisacSearch("");
     setShowPoolWarning(false);
     setPendingCheckoutUrl(null);
+    setManuscriptsLoaded(false);
 
     if (isManuscriptProvided && initialManuscriptId) {
       // If manuscript ID provided, fetch just that manuscript for metadata prefill
@@ -126,6 +134,23 @@ export default function IsbnRegistrationModal({
       }
     }
   }, [formData.manuscriptId, manuscripts, prefillFromManuscript]);
+
+  // Re-prefill author name when display name becomes available (async API response)
+  // Only fills if author name is still empty (user hasn't typed anything)
+  useEffect(() => {
+    if (effectiveDisplayName && formData.manuscriptId && !formData.authorName) {
+      const selectedManuscript = manuscripts.find(
+        (m) => m.id === formData.manuscriptId,
+      );
+      // Only apply fallback if manuscript has no author_name in metadata
+      if (selectedManuscript && !selectedManuscript.metadata?.author_name?.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          authorName: effectiveDisplayName,
+        }));
+      }
+    }
+  }, [effectiveDisplayName, formData.manuscriptId, formData.authorName, manuscripts]);
 
   async function fetchManuscripts() {
     setIsLoadingManuscripts(true);
@@ -155,6 +180,7 @@ export default function IsbnRegistrationModal({
       setManuscriptsError("Failed to load manuscripts");
     } finally {
       setIsLoadingManuscripts(false);
+      setManuscriptsLoaded(true);
     }
   }
 
@@ -185,6 +211,7 @@ export default function IsbnRegistrationModal({
       setManuscriptsError("Failed to load manuscript");
     } finally {
       setIsLoadingManuscripts(false);
+      setManuscriptsLoaded(true);
     }
   }
 
@@ -292,7 +319,7 @@ export default function IsbnRegistrationModal({
   const selectedManuscript = manuscripts.find(
     (m) => m.id === formData.manuscriptId,
   );
-  const hasNoManuscripts = !isLoadingManuscripts && manuscripts.length === 0;
+  const hasNoManuscripts = manuscriptsLoaded && !isLoadingManuscripts && manuscripts.length === 0;
 
   return (
     <>
