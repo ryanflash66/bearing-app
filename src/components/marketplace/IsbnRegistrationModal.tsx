@@ -65,16 +65,22 @@ export default function IsbnRegistrationModal({
     null,
   );
 
+  // Track user display name from API (for prefill fallback)
+  const [apiUserDisplayName, setApiUserDisplayName] = useState<string | undefined>(undefined);
+
   const isManuscriptProvided = Boolean(initialManuscriptId);
   const supabase = createClient();
 
+  // Effective display name: prop takes priority, then API response
+  const effectiveDisplayName = userDisplayName || apiUserDisplayName;
+
   // Prefill form from manuscript metadata
   const prefillFromManuscript = useCallback(
-    (manuscript: Manuscript) => {
+    (manuscript: Manuscript, displayNameFallback?: string) => {
       const metadata = manuscript.metadata;
 
       // Prefill author name: manuscript metadata > user display name > empty
-      const authorName = metadata?.author_name?.trim() || userDisplayName || "";
+      const authorName = metadata?.author_name?.trim() || displayNameFallback || effectiveDisplayName || "";
 
       // Prefill BISAC code: first code from manuscript metadata or empty
       const bisacCode = metadata?.bisac_codes?.[0] || "";
@@ -85,7 +91,7 @@ export default function IsbnRegistrationModal({
         bisacCode,
       }));
     },
-    [userDisplayName],
+    [effectiveDisplayName],
   );
 
   // Fetch manuscripts when modal opens (marketplace context only)
@@ -126,53 +132,24 @@ export default function IsbnRegistrationModal({
     setManuscriptsError(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        setManuscriptsError("Please sign in to continue");
+      // Use API endpoint to fetch manuscripts (handles profile creation server-side)
+      const response = await fetch("/api/manuscripts");
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setManuscriptsError("Please sign in to continue");
+        } else {
+          setManuscriptsError(data.error || "Failed to load manuscripts");
+        }
         return;
       }
 
-      // Get user's account
-      const { data: profile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", user.id)
-        .single();
-
-      if (!profile) {
-        setManuscriptsError("Could not find your account");
-        return;
+      setManuscripts(data.manuscripts || []);
+      // Store user display name from API for prefill fallback
+      if (data.userDisplayName) {
+        setApiUserDisplayName(data.userDisplayName);
       }
-
-      // Get account membership
-      const { data: membership } = await supabase
-        .from("account_members")
-        .select("account_id")
-        .eq("user_id", profile.id)
-        .single();
-
-      if (!membership) {
-        setManuscriptsError("Could not find your account");
-        return;
-      }
-
-      // Get manuscripts for the account
-      const { data, error } = await supabase
-        .from("manuscripts")
-        .select("id, title, metadata")
-        .eq("account_id", membership.account_id)
-        .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching manuscripts:", error);
-        setManuscriptsError("Failed to load manuscripts");
-        return;
-      }
-
-      setManuscripts(data || []);
     } catch (err) {
       console.error("Error fetching manuscripts:", err);
       setManuscriptsError("Failed to load manuscripts");

@@ -388,16 +388,17 @@ export default function FullscreenControls({
         {/* Exit fullscreen button */}
         <button
           onClick={onExit}
-          className={`rounded-full p-1.5 transition-colors ${
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
             isDarkMode
               ? "hover:bg-red-900/50 hover:text-red-400"
               : "hover:bg-red-50 hover:text-red-600"
           }`}
           title="Exit Fullscreen (Esc)"
           aria-label="Exit Fullscreen"
+          data-testid="fullscreen-exit-button"
         >
           <svg
-            className="h-5 w-5"
+            className="h-4 w-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -409,6 +410,7 @@ export default function FullscreenControls({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
+          Exit
         </button>
 
         {/* Keyboard shortcut hint */}
