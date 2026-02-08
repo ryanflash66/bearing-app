@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
-import { isSuperAdmin } from "@/lib/super-admin";
+import { isSuperAdmin, SUPER_ADMIN_EMAIL } from "@/lib/super-admin";
 import { getGlobalUsers } from "@/lib/super-admin-users";
 import GlobalUsersTable from "@/components/admin/super/GlobalUsersTable";
 
@@ -70,6 +70,7 @@ export default async function GlobalUsersPage({
           totalPages={totalPages}
           currentSearch={search}
           currentUserId={user.id}
+          superAdminEmail={SUPER_ADMIN_EMAIL}
         />
       </div>
     </DashboardLayout>

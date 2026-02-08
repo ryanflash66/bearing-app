@@ -82,9 +82,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   // Role-based permission check per AC 4.2.3 and 4.2.4
-  // - super_admin / support_agent: Can update to any status
+  // - super_admin / admin / support_agent: Can update to any status
   // - user (ticket owner): Can only mark as 'resolved' (self-close)
-  const isSupport = publicUser.role === "super_admin" || publicUser.role === "support_agent";
+  const isSupport = publicUser.role === "super_admin" || publicUser.role === "admin" || publicUser.role === "support_agent";
   
   if (!isSupport && status !== "resolved") {
     // Non-support users can only self-resolve

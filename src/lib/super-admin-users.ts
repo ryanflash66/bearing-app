@@ -1,7 +1,8 @@
 "use server";
 
 import { SupabaseClient } from "@supabase/supabase-js";
-import { isSuperAdmin } from "./super-admin";
+import { isSuperAdmin, SUPER_ADMIN_EMAIL } from "./super-admin";
+import type { AssignableRole } from "./super-admin";
 import { revalidatePath } from "next/cache";
 import { createAuditLog } from "./auditLog";
 import { getFirstUserAccount } from "./account";
@@ -10,7 +11,7 @@ export interface GlobalUser {
   id: string;
   email: string;
   display_name: string | null;
-  role: "user" | "super_admin" | "support_agent";
+  role: "user" | "super_admin" | "support_agent" | "admin";
   created_at: string;
   last_sign_in_at?: string;
 }
@@ -67,7 +68,7 @@ export async function getGlobalUsers(
 export async function updateGlobalUserRole(
   supabase: SupabaseClient,
   targetUserId: string,
-  newRole: "user" | "super_admin" | "support_agent",
+  newRole: AssignableRole,
   actorUserId: string
 ) {
   // Verify super admin
@@ -75,9 +76,41 @@ export async function updateGlobalUserRole(
     return { success: false, error: "Unauthorized" };
   }
 
+  // SECURITY: super_admin is never assignable via this function.
+  // The type system enforces AssignableRole, but belt-and-suspenders:
+  if ((newRole as string) === "super_admin") {
+    return {
+      success: false,
+      error: "Cannot assign super_admin role. It is a singleton designation.",
+    };
+  }
+
   // SECURITY: Prevent self-demotion
   if (targetUserId === actorUserId) {
     return { success: false, error: "You cannot change your own role." };
+  }
+
+  // SECURITY: Prevent changing the designated super admin's role.
+  // Look up the target user's email to check if they are the designated super admin.
+  const { data: targetUser } = await supabase
+    .from("users")
+    .select("email, role")
+    .eq("id", targetUserId)
+    .single();
+
+  if (!targetUser) {
+    return { success: false, error: "Target user not found." };
+  }
+
+  if (
+    targetUser.email === SUPER_ADMIN_EMAIL ||
+    targetUser.role === "super_admin"
+  ) {
+    return {
+      success: false,
+      error:
+        "Cannot change the designated super admin's role. This account is permanently locked to super_admin.",
+    };
   }
 
   // Perform update on public profile

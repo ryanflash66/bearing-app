@@ -22,7 +22,8 @@ export default async function SupportPage() {
 
   const isSuperAdmin = profile?.role === "super_admin";
   const isSupportAgent = profile?.role === "support_agent";
-  const isAgent = isSuperAdmin || isSupportAgent;
+  const isGlobalAdmin = profile?.role === "admin";
+  const isAgent = isSuperAdmin || isSupportAgent || isGlobalAdmin;
 
   // Fetch tickets
   const { data: rawTickets } = await supabase

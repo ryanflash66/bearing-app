@@ -172,8 +172,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Admins and Support Agents skip subscription check
-    // NOTE: Current roles are 'user', 'support_agent', 'super_admin' per app_role enum
-    const isSpecialRole = ["super_admin", "support_agent"].includes(profile.role);
+    const isSpecialRole = ["super_admin", "admin", "support_agent"].includes(profile.role);
     
     // TODO: Implement proper subscription tier check when subscription system is added
     // For now, all authenticated users can request services (they're quote-based anyway)

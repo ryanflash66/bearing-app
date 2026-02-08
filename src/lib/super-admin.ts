@@ -2,6 +2,30 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * The single designated super_admin email.
+ * Resolved from SUPER_ADMIN_EMAIL env var with a hardcoded fallback for dev/test.
+ * In production the env var MUST be set — the module will throw at import time
+ * if it is missing, preventing silent misconfiguration.
+ * No other account may hold the super_admin role.
+ */
+export const SUPER_ADMIN_EMAIL: string = (() => {
+  const env = process.env.SUPER_ADMIN_EMAIL;
+  if (env) return env;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SUPER_ADMIN_EMAIL environment variable is required in production"
+    );
+  }
+  return "dark7eaper@bearing.app";
+})();
+
+/**
+ * Roles that can be assigned via the Super Admin UI.
+ * super_admin is NEVER assignable — it is a singleton tied to SUPER_ADMIN_EMAIL.
+ */
+export type AssignableRole = "user" | "support_agent" | "admin";
+
 export interface GlobalMetrics {
   totalTokenBurn: number;
   activeUserCount: number;

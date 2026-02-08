@@ -165,7 +165,7 @@ acceptance criteria, and testing strategy."
 ### Access Control
 - [x] JWT authentication required
 - [x] MFA optional via TOTP
-- [x] RBAC (author, admin, support)
+- [x] RBAC (user, support_agent, admin, super_admin — singleton-enforced)
 - [x] RLS policies on all account-scoped tables
 - [x] API guards + DB-level defense in depth
 
