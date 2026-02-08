@@ -1,20 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { navigateTo } from "@/lib/navigation";
 import Link from "next/link";
-
-interface Manuscript {
-  id: string;
-  title: string;
-  metadata?: {
-    author_name?: string;
-    bisac_codes?: string[];
-    [key: string]: unknown;
-  };
-}
+import type { ManuscriptSummary } from "@/types/manuscript";
+import { fetchManuscriptsSummary } from "@/types/manuscript";
 
 interface IsbnRegistrationModalProps {
   isOpen: boolean;
@@ -38,8 +30,9 @@ export default function IsbnRegistrationModal({
   userDisplayName,
 }: IsbnRegistrationModalProps) {
   // Manuscript state
-  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+  const [manuscripts, setManuscripts] = useState<ManuscriptSummary[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
+  const [manuscriptsLoaded, setManuscriptsLoaded] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(
     null,
   );
@@ -74,13 +67,19 @@ export default function IsbnRegistrationModal({
   // Effective display name: prop takes priority, then API response
   const effectiveDisplayName = userDisplayName || apiUserDisplayName;
 
+  // Ref to always have the latest display name without stale closures
+  const effectiveDisplayNameRef = useRef(effectiveDisplayName);
+  useEffect(() => {
+    effectiveDisplayNameRef.current = effectiveDisplayName;
+  }, [effectiveDisplayName]);
+
   // Prefill form from manuscript metadata
   const prefillFromManuscript = useCallback(
-    (manuscript: Manuscript, displayNameFallback?: string) => {
+    (manuscript: ManuscriptSummary) => {
       const metadata = manuscript.metadata;
 
       // Prefill author name: manuscript metadata > user display name > empty
-      const authorName = metadata?.author_name?.trim() || displayNameFallback || effectiveDisplayName || "";
+      const authorName = metadata?.author_name?.trim() || effectiveDisplayNameRef.current || "";
 
       // Prefill BISAC code: first code from manuscript metadata or empty
       const bisacCode = metadata?.bisac_codes?.[0] || "";
@@ -91,7 +90,7 @@ export default function IsbnRegistrationModal({
         bisacCode,
       }));
     },
-    [effectiveDisplayName],
+    [],
   );
 
   // Fetch manuscripts when modal opens (marketplace context only)
@@ -104,6 +103,7 @@ export default function IsbnRegistrationModal({
     setBisacSearch("");
     setShowPoolWarning(false);
     setPendingCheckoutUrl(null);
+    setManuscriptsLoaded(false);
 
     if (isManuscriptProvided && initialManuscriptId) {
       // If manuscript ID provided, fetch just that manuscript for metadata prefill
@@ -127,34 +127,44 @@ export default function IsbnRegistrationModal({
     }
   }, [formData.manuscriptId, manuscripts, prefillFromManuscript]);
 
+  // Re-prefill author name when display name becomes available (async API response)
+  // Only fills if author name is still empty (user hasn't typed anything)
+  useEffect(() => {
+    if (effectiveDisplayName && formData.manuscriptId && !formData.authorName) {
+      const selectedManuscript = manuscripts.find(
+        (m) => m.id === formData.manuscriptId,
+      );
+      // Only apply fallback if manuscript has no author_name in metadata
+      if (selectedManuscript && !selectedManuscript.metadata?.author_name?.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          authorName: effectiveDisplayName,
+        }));
+      }
+    }
+  }, [effectiveDisplayName, formData.manuscriptId, formData.authorName, manuscripts]);
+
   async function fetchManuscripts() {
     setIsLoadingManuscripts(true);
     setManuscriptsError(null);
 
     try {
-      // Use API endpoint to fetch manuscripts (handles profile creation server-side)
-      const response = await fetch("/api/manuscripts");
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setManuscriptsError("Please sign in to continue");
-        } else {
-          setManuscriptsError(data.error || "Failed to load manuscripts");
-        }
-        return;
-      }
-
-      setManuscripts(data.manuscripts || []);
+      const data = await fetchManuscriptsSummary();
+      setManuscripts(data.manuscripts);
       // Store user display name from API for prefill fallback
       if (data.userDisplayName) {
         setApiUserDisplayName(data.userDisplayName);
       }
     } catch (err) {
       console.error("Error fetching manuscripts:", err);
-      setManuscriptsError("Failed to load manuscripts");
+      if (err instanceof Error && err.message === "Please sign in to continue") {
+        setManuscriptsError("Please sign in to continue");
+      } else {
+        setManuscriptsError("Failed to load manuscripts");
+      }
     } finally {
       setIsLoadingManuscripts(false);
+      setManuscriptsLoaded(true);
     }
   }
 
@@ -185,6 +195,7 @@ export default function IsbnRegistrationModal({
       setManuscriptsError("Failed to load manuscript");
     } finally {
       setIsLoadingManuscripts(false);
+      setManuscriptsLoaded(true);
     }
   }
 
@@ -292,7 +303,7 @@ export default function IsbnRegistrationModal({
   const selectedManuscript = manuscripts.find(
     (m) => m.id === formData.manuscriptId,
   );
-  const hasNoManuscripts = !isLoadingManuscripts && manuscripts.length === 0;
+  const hasNoManuscripts = manuscriptsLoaded && !isLoadingManuscripts && manuscripts.length === 0;
 
   return (
     <>

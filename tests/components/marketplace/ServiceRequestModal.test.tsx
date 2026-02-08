@@ -114,7 +114,7 @@ describe("ServiceRequestModal", () => {
         />
       );
 
-      expect(screen.getByText(/Tell us about your vision for your author website/i)).toBeInTheDocument();
+      expect(screen.getByText(/Any additional details about your vision, existing branding, or special requirements/i)).toBeInTheDocument();
     });
 
     it("renders details textarea for generic services", () => {
@@ -122,8 +122,8 @@ describe("ServiceRequestModal", () => {
         <ServiceRequestModal
           isOpen={true}
           onClose={mockOnClose}
-          serviceId="marketing"
-          serviceTitle="Marketing Package"
+          serviceId="cover-design"
+          serviceTitle="Cover Design"
         />
       );
 
@@ -164,6 +164,12 @@ describe("ServiceRequestModal", () => {
     });
 
     it("submits form with details", async () => {
+      // Mock fetchManuscriptsSummary (triggered by fetchManuscriptTitle on mount)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ manuscripts: [{ id: "manu-123", title: "Test Manuscript" }] }),
+      });
+      // Mock the form submission
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ success: true, requestId: "req-123" }),
@@ -173,14 +179,15 @@ describe("ServiceRequestModal", () => {
         <ServiceRequestModal
           isOpen={true}
           onClose={mockOnClose}
-          serviceId="author-website"
-          serviceTitle="Author Website"
+          serviceId="cover-design"
+          serviceTitle="Cover Design"
+          manuscriptId="manu-123"
           onSuccess={mockOnSuccess}
         />
       );
 
       const textarea = screen.getByPlaceholderText("Describe your requirements...");
-      await userEvent.type(textarea, "I want a modern author website");
+      await userEvent.type(textarea, "I want a modern cover design");
 
       const submitButton = screen.getByRole("button", { name: /Submit Request/i });
       fireEvent.click(submitButton);
@@ -300,6 +307,12 @@ describe("ServiceRequestModal", () => {
 
   describe("error handling", () => {
     it("displays error message on API failure", async () => {
+      // Mock fetchManuscriptsSummary (triggered by fetchManuscriptTitle on mount)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ manuscripts: [{ id: "manu-123", title: "Test Manuscript" }] }),
+      });
+      // Mock the form submission with 500 error
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -310,8 +323,9 @@ describe("ServiceRequestModal", () => {
         <ServiceRequestModal
           isOpen={true}
           onClose={mockOnClose}
-          serviceId="author-website"
-          serviceTitle="Author Website"
+          serviceId="cover-design"
+          serviceTitle="Cover Design"
+          manuscriptId="manu-123"
         />
       );
 
@@ -324,6 +338,12 @@ describe("ServiceRequestModal", () => {
     });
 
     it("handles duplicate request error (409)", async () => {
+      // Mock fetchManuscriptsSummary (triggered by fetchManuscriptTitle on mount)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ manuscripts: [{ id: "manu-123", title: "Test Manuscript" }] }),
+      });
+      // Mock the form submission with 409 duplicate error
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 409,
@@ -339,8 +359,8 @@ describe("ServiceRequestModal", () => {
         <ServiceRequestModal
           isOpen={true}
           onClose={mockOnClose}
-          serviceId="author-website"
-          serviceTitle="Author Website"
+          serviceId="cover-design"
+          serviceTitle="Cover Design"
           manuscriptId="manu-123"
         />
       );
