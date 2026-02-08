@@ -42,25 +42,25 @@ describe("IsbnRegistrationModal", () => {
     data: { id: string; title: string; metadata?: object },
     userProfile?: { display_name?: string | null; pen_name?: string | null }
   ) {
-    // Track call count to differentiate manuscript vs user profile queries
-    let callCount = 0;
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockImplementation(() => {
-        callCount++;
-        // First call is for manuscript, second is for user profile
-        if (callCount === 1) {
-          return Promise.resolve({ data, error: null });
-        } else {
-          return Promise.resolve({
-            data: userProfile ?? { display_name: null, pen_name: null },
-            error: null,
-          });
-        }
-      }),
-    };
-    mockSupabase.from.mockReturnValue(mockQuery);
+    // Branch on table name for more robust mocking
+    mockSupabase.from.mockImplementation((tableName: string) => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockImplementation(() => {
+          if (tableName === "manuscripts") {
+            return Promise.resolve({ data, error: null });
+          } else if (tableName === "users") {
+            return Promise.resolve({
+              data: userProfile ?? { display_name: null, pen_name: null },
+              error: null,
+            });
+          }
+          return Promise.resolve({ data: null, error: null });
+        }),
+      };
+      return mockQuery;
+    });
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: mockUserId } },
       error: null,
@@ -424,6 +424,25 @@ describe("IsbnRegistrationModal", () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("Author Pen Name")).toBeInTheDocument();
+    });
+  });
+
+  it("prefers display_name over pen_name when both are present", async () => {
+    mockSingleManuscript(
+      { id: manuscriptId, title: "Display Name Book", metadata: {} },
+      { display_name: "Display Name", pen_name: "Pen Name" }
+    );
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        manuscriptId={manuscriptId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Display Name")).toBeInTheDocument();
     });
   });
 });
