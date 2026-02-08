@@ -34,9 +34,9 @@ export function getStripe(): Stripe {
       secretKey = secretKey.substring(0, 8).toLowerCase() + secretKey.substring(8);
     }
     
-    // API version should be updated when Stripe releases new versions
-    // Check https://stripe.com/docs/upgrades for latest versions
-    // Current: 2026-01-28.clover (as of Feb 2026)
+    // API version must match the installed stripe SDK (see node_modules/stripe/types/apiVersion.d.ts)
+    // Update by running: npm install stripe@latest
+    // Current: 2026-01-28.clover (stripe@20.3.1)
     _stripe = new Stripe(secretKey, {
       apiVersion: "2026-01-28.clover",
       typescript: true,
