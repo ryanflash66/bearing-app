@@ -32,18 +32,39 @@ jest.mock("next/link", () => {
 describe("IsbnRegistrationModal", () => {
   const mockOnClose = jest.fn();
   const manuscriptId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+  const mockUserId = "user-123";
   const mockSupabase = {
     auth: { getUser: jest.fn() },
     from: jest.fn(),
   };
 
-  function mockSingleManuscript(data: { id: string; title: string; metadata?: object }) {
-    const mockQuery = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data, error: null }),
-    };
-    mockSupabase.from.mockReturnValue(mockQuery);
+  function mockSingleManuscript(
+    data: { id: string; title: string; metadata?: object },
+    userProfile?: { display_name?: string | null; pen_name?: string | null }
+  ) {
+    // Branch on table name for more robust mocking
+    mockSupabase.from.mockImplementation((tableName: string) => {
+      const mockQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockImplementation(() => {
+          if (tableName === "manuscripts") {
+            return Promise.resolve({ data, error: null });
+          } else if (tableName === "users") {
+            return Promise.resolve({
+              data: userProfile ?? { display_name: null, pen_name: null },
+              error: null,
+            });
+          }
+          return Promise.resolve({ data: null, error: null });
+        }),
+      };
+      return mockQuery;
+    });
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: mockUserId } },
+      error: null,
+    });
   }
 
   beforeEach(() => {
@@ -366,11 +387,10 @@ describe("IsbnRegistrationModal", () => {
   });
 
   it("leaves author empty when no metadata and no display name", async () => {
-    mockSingleManuscript({
-      id: manuscriptId,
-      title: "No Author Book",
-      metadata: {},
-    });
+    mockSingleManuscript(
+      { id: manuscriptId, title: "No Author Book", metadata: {} },
+      { display_name: null, pen_name: null }
+    );
 
     render(
       <IsbnRegistrationModal
@@ -386,5 +406,43 @@ describe("IsbnRegistrationModal", () => {
 
     const authorInput = screen.getByLabelText(/Author Name/i) as HTMLInputElement;
     expect(authorInput.value).toBe("");
+  });
+
+  it("falls back to pen_name when display_name is null", async () => {
+    mockSingleManuscript(
+      { id: manuscriptId, title: "Pen Name Book", metadata: {} },
+      { display_name: null, pen_name: "Author Pen Name" }
+    );
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        manuscriptId={manuscriptId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Author Pen Name")).toBeInTheDocument();
+    });
+  });
+
+  it("prefers display_name over pen_name when both are present", async () => {
+    mockSingleManuscript(
+      { id: manuscriptId, title: "Display Name Book", metadata: {} },
+      { display_name: "Display Name", pen_name: "Pen Name" }
+    );
+
+    render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        manuscriptId={manuscriptId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Display Name")).toBeInTheDocument();
+    });
   });
 });
