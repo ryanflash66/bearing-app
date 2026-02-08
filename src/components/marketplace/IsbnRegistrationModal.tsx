@@ -97,13 +97,14 @@ export default function IsbnRegistrationModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Reset state when opening
+    // Reset state when opening - set loading state synchronously to prevent flash
     setError(null);
     setDuplicateRequestId(null);
     setBisacSearch("");
     setShowPoolWarning(false);
     setPendingCheckoutUrl(null);
     setManuscriptsLoaded(false);
+    setIsLoadingManuscripts(true);
 
     if (isManuscriptProvided && initialManuscriptId) {
       // If manuscript ID provided, fetch just that manuscript for metadata prefill
@@ -173,22 +174,57 @@ export default function IsbnRegistrationModal({
     setManuscriptsError(null);
 
     try {
-      const { data, error } = await supabase
-        .from("manuscripts")
-        .select("id, title, metadata")
-        .eq("id", manuscriptId)
-        .single();
+      // Fetch manuscript and user profile in parallel for author name fallback
+      const [manuscriptResult, userResult] = await Promise.all([
+        supabase
+          .from("manuscripts")
+          .select("id, title, metadata")
+          .eq("id", manuscriptId)
+          .single(),
+        // Fetch current user's profile for display_name/pen_name fallback
+        supabase.auth.getUser().then(async ({ data: { user } }) => {
+          if (!user) return null;
+          const { data: profile } = await supabase
+            .from("users")
+            .select("display_name, pen_name")
+            .eq("auth_id", user.id)
+            .single();
+          return profile;
+        }),
+      ]);
 
-      if (error) {
-        console.error("Error fetching manuscript:", error);
+      if (manuscriptResult.error) {
+        console.error("Error fetching manuscript:", manuscriptResult.error);
         setManuscriptsError("Failed to load manuscript");
         return;
       }
 
-      if (data) {
-        setManuscripts([data]);
-        setFormData((prev) => ({ ...prev, manuscriptId: data.id }));
-        prefillFromManuscript(data);
+      // Compute display name from profile (if not provided via prop)
+      const fetchedDisplayName = userResult
+        ? userResult.display_name || userResult.pen_name || undefined
+        : undefined;
+
+      // Set API display name for future re-prefill effects
+      if (fetchedDisplayName) {
+        setApiUserDisplayName(fetchedDisplayName);
+      }
+
+      if (manuscriptResult.data) {
+        const manuscript = manuscriptResult.data;
+        setManuscripts([manuscript]);
+        setFormData((prev) => ({ ...prev, manuscriptId: manuscript.id }));
+
+        // Prefill with immediate access to display name (not waiting for state)
+        const metadata = manuscript.metadata;
+        const resolvedDisplayName = effectiveDisplayNameRef.current || fetchedDisplayName;
+        const authorName = metadata?.author_name?.trim() || resolvedDisplayName || "";
+        const bisacCode = metadata?.bisac_codes?.[0] || "";
+
+        setFormData((prev) => ({
+          ...prev,
+          authorName,
+          bisacCode,
+        }));
       }
     } catch (err) {
       console.error("Error fetching manuscript:", err);

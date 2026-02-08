@@ -77,7 +77,7 @@ export async function GET() {
 
     const responseBody: ManuscriptsApiResponse = {
       manuscripts: manuscriptList,
-      userDisplayName: profile.display_name || undefined,
+      userDisplayName: profile.display_name || profile.pen_name || undefined,
     };
 
     return NextResponse.json(responseBody);
