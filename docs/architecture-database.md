@@ -22,16 +22,22 @@ PostgreSQL with Supabase RLS is the source of truth for all manuscript content, 
 
 #### Users Table
 ```sql
+create type app_role as enum ('user', 'support_agent', 'admin', 'super_admin');
+
 create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   auth_id uuid not null unique,
   email text not null unique,
   display_name text,
   pen_name text,
-  role text not null default 'author' check (role in ('author','admin','support')),
+  role app_role not null default 'user',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Singleton constraint: only one super_admin allowed
+create unique index idx_singleton_super_admin
+  on users ((true)) where role = 'super_admin';
 ```
 
 #### Accounts Table
@@ -46,7 +52,7 @@ create table if not exists accounts (
 create table if not exists account_members (
   account_id uuid not null references accounts(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
-  account_role text not null default 'author' check (account_role in ('author','admin','support')),
+  account_role text not null default 'viewer' check (account_role in ('owner','admin','editor','viewer')),
   created_at timestamptz not null default now(),
   primary key (account_id, user_id)
 );

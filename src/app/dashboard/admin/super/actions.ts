@@ -2,8 +2,9 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { updateGlobalUserRole } from "@/lib/super-admin-users";
+import type { AssignableRole } from "@/lib/super-admin";
 
-export async function updateUserRoleAction(targetId: string, newRole: "user" | "super_admin" | "support_agent") {
+export async function updateUserRoleAction(targetId: string, newRole: AssignableRole) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     

@@ -207,10 +207,31 @@ create table if not exists audit_logs (
 
 ## Role-Based Access Control (RBAC)
 
-### Roles
-- **author:** Can create/edit manuscripts, suggest, consistency check
-- **admin:** Can view all users, override usage limits, manage support tickets
-- **support:** Can view and reply to support tickets
+### Global Platform Roles (`users.role` — `public.app_role` enum)
+
+| Role           | Count   | Purpose |
+|----------------|---------|---------|
+| **super_admin** | Exactly 1 | Single designated account (`dark7eaper@bearing.app`). Not assignable via UI or RPC; enforced by unique partial index `idx_singleton_super_admin`. Full system override (bypasses RLS via service-role client). |
+| **admin**      | 0+      | Platform-level admins assignable by super admin. Access to admin dashboard, moderation, support queue, and service request oversight. |
+| **support_agent** | 0+   | Support staff assignable by super admin. Can manage support tickets and view service statuses. |
+| **user**       | 0+      | Default role for all author accounts. Standard manuscript and AI feature access. |
+
+**Key constraints:**
+- `super_admin` is locked to `SUPER_ADMIN_EMAIL` env var (fallback: `dark7eaper@bearing.app`).
+- The `assign_user_role` RPC blocks `super_admin` assignment at the DB level.
+- `updateGlobalUserRole` (backend) rejects `super_admin` assignment and prevents demotion of the designated account.
+- The Super Admin UI only exposes `user`, `support_agent`, and `admin` as assignable roles.
+- Config: `SUPER_ADMIN_EMAIL` in `.env` / `.env.example`.
+
+### Account-Level Roles (`account_members.account_role`)
+
+| Role       | Purpose |
+|------------|---------|
+| **author** | Default. Can create/edit manuscripts, use AI features within account scope. |
+| **admin**  | Account administrator. Can manage members, view usage, access account admin dashboard. |
+| **support**| Account-level support (future use). |
+
+**Note:** Global roles and account roles are independent. A user with global role `admin` does not automatically have account-level `admin` access — those are managed separately via `account_members`.
 
 ### API Guards (NestJS Example)
 ```typescript

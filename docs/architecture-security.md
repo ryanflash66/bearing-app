@@ -59,50 +59,48 @@ export class EncryptionService {
 
 ## Identity & Access Management (IAM)
 
-### User Roles
+### Global Roles (users.role)
 ```sql
--- Roles: author, admin, support (stored in users.role)
-create type user_role as enum ('author', 'admin', 'support');
+-- Global platform roles (stored in users.role as app_role enum)
+create type app_role as enum ('user', 'support_agent', 'admin', 'super_admin');
 ```
 
-| Role | Permissions |
-|------|-------------|
-| **author** | Create/edit own manuscripts, suggest, consistency check, support messaging |
-| **admin** | View all manuscripts, override usage limits, disable users, manage support tickets |
-| **support** | View all support tickets, reply to messages, escalate to admin |
+| Role | Cardinality | Permissions |
+|------|-------------|-------------|
+| **super_admin** | Exactly 1 (singleton, DB-enforced via unique partial index) | Full platform control, service-role Supabase client, global user management, maintenance bypass. Designated account only (`SUPER_ADMIN_EMAIL`). Cannot be assigned via UI. |
+| **admin** | 0+ (assignable) | Admin dashboard access, support queue access, override usage limits, manage support tickets. Does NOT get service-role client. |
+| **support_agent** | 0+ (assignable) | View/reply to support tickets, support queue access. |
+| **user** | 0+ (default) | Create/edit own manuscripts, AI features, support messaging. |
 
-### API Guards (NestJS)
+**Key constraints:**
+- `super_admin` is locked to a single designated account via `idx_singleton_super_admin` unique partial index and `assign_user_role` RPC guard.
+- Only `user`, `support_agent`, and `admin` are assignable via the UI (`AssignableRole` type in `src/lib/super-admin.ts`).
+- Global roles are independent of account-level roles (`account_members.account_role`).
+
+### Account-Level Roles (account_members.account_role)
+| Role | Scope | Permissions |
+|------|-------|-------------|
+| **owner** | Per-account | Full account control, billing, member management. |
+| **admin** | Per-account | Edit manuscripts, manage account settings. |
+| **editor** | Per-account | Edit manuscripts only. |
+| **viewer** | Per-account | Read-only access to account content. |
+
+### API Guards (Next.js App Router)
 ```typescript
-// guard/roles.guard.ts
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+// Role checks happen inline in API route handlers:
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
 
-@Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+// Fetch profile with role
+const { data: profile } = await supabase
+  .from("users")
+  .select("id, role")
+  .eq("auth_id", user.id)
+  .single();
 
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) return true; // No role required
-
-    const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user.role);
-  }
-}
-
-// Decorators
-import { SetMetadata } from '@nestjs/common';
-export const Roles = (...roles: string[]) => SetMetadata('roles', roles);
-
-// Usage
-@Controller('/api/admin')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles('admin')
-export class AdminController {
-  @Get('/users')
-  listUsers() {
-    // Only admins
-  }
+// Guard: admin-only route
+if (!["super_admin", "admin"].includes(profile.role)) {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 ```
 

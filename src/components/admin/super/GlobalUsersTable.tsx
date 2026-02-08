@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { GlobalUser } from "@/lib/super-admin-users";
 import { updateUserRoleAction } from "@/app/dashboard/admin/super/actions";
+import type { AssignableRole } from "@/lib/super-admin";
 
 interface GlobalUsersTableProps {
   users: GlobalUser[];
@@ -12,13 +13,18 @@ interface GlobalUsersTableProps {
   totalPages: number;
   currentSearch: string;
   currentUserId?: string;
+  superAdminEmail: string;
 }
 
-const ROLES = [
+/**
+ * Assignable roles only — super_admin is never assignable.
+ * It is a singleton locked to the designated account.
+ */
+const ASSIGNABLE_ROLES: { value: AssignableRole; label: string }[] = [
   { value: "user", label: "User" },
   { value: "support_agent", label: "Support Agent" },
-  { value: "super_admin", label: "Super Admin" },
-] as const;
+  { value: "admin", label: "Admin" },
+];
 
 export default function GlobalUsersTable({
   users,
@@ -27,12 +33,13 @@ export default function GlobalUsersTable({
   totalPages,
   currentSearch,
   currentUserId,
+  superAdminEmail,
 }: GlobalUsersTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(currentSearch);
 
-  const handleRoleChange = (userId: string, newRole: "user" | "support_agent" | "super_admin") => {
+  const handleRoleChange = (userId: string, newRole: AssignableRole) => {
     if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
 
     startTransition(async () => {
@@ -112,19 +119,32 @@ export default function GlobalUsersTable({
                     className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
                       user.role === "super_admin"
                         ? "bg-purple-100 text-purple-800"
+                        : user.role === "admin"
+                        ? "bg-amber-100 text-amber-800"
                         : user.role === "support_agent"
                         ? "bg-blue-100 text-blue-800"
                         : "bg-green-100 text-green-800"
                     }`}
                   >
-                    {user.role}
+                    {user.role === "super_admin"
+                      ? "Super Admin"
+                      : user.role === "admin"
+                      ? "Admin"
+                      : user.role === "support_agent"
+                      ? "Support Agent"
+                      : "User"}
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
                   {new Date(user.created_at).toLocaleDateString()}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                  {user.id === currentUserId ? (
+                  {user.role === "super_admin" ||
+                  user.email === superAdminEmail ? (
+                    <span className="inline-flex rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                      Designated Super Admin
+                    </span>
+                  ) : user.id === currentUserId ? (
                       <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
                         Cannot modify self
                       </span>
@@ -132,12 +152,12 @@ export default function GlobalUsersTable({
                     <select
                         value={user.role}
                         onChange={(e) =>
-                        handleRoleChange(user.id, e.target.value as any)
+                        handleRoleChange(user.id, e.target.value as AssignableRole)
                         }
                         disabled={isPending}
                         className="rounded-md border-slate-300 py-1 pl-2 pr-8 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
-                        {ROLES.map((role) => (
+                        {ASSIGNABLE_ROLES.map((role) => (
                         <option key={role.value} value={role.value}>
                             {role.label}
                         </option>

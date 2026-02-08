@@ -2,6 +2,20 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * The single designated super_admin email.
+ * Resolved from SUPER_ADMIN_EMAIL env var with a hardcoded fallback.
+ * No other account may hold the super_admin role.
+ */
+export const SUPER_ADMIN_EMAIL =
+  process.env.SUPER_ADMIN_EMAIL || "dark7eaper@bearing.app";
+
+/**
+ * Roles that can be assigned via the Super Admin UI.
+ * super_admin is NEVER assignable — it is a singleton tied to SUPER_ADMIN_EMAIL.
+ */
+export type AssignableRole = "user" | "support_agent" | "admin";
+
 export interface GlobalMetrics {
   totalTokenBurn: number;
   activeUserCount: number;

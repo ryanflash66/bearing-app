@@ -117,7 +117,7 @@ export default function DashboardLayout({ children, user, usageStatus, initialMa
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName = user.displayName || user.email.split("@")[0];
-  const isAdmin = user.role === "super_admin";
+  const isAdmin = user.role === "super_admin" || user.role === "admin";
   
   // State for maintenance mode - initialize with prop if available
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message?: string } | null>(
@@ -194,10 +194,12 @@ export default function DashboardLayout({ children, user, usageStatus, initialMa
               if (item.name === "Dashboard") {
                 if (user.role === "super_admin") {
                   finalHref = "/dashboard/admin/super";
+                } else if (user.role === "admin") {
+                  finalHref = "/dashboard/admin";
                 }
               }
               
-              if (item.name === "Support" && user.role === "support_agent") {
+              if (item.name === "Support" && (user.role === "support_agent" || user.role === "admin" || user.role === "super_admin")) {
                 finalName = "Support Queue";
               }
 
