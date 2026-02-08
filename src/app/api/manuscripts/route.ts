@@ -67,7 +67,8 @@ export async function GET() {
     }
 
     // Return manuscripts with minimal data needed for dropdowns
-    const manuscriptList = manuscripts.map((m) => ({
+    const safeManuscripts = manuscripts ?? [];
+    const manuscriptList = safeManuscripts.map((m) => ({
       id: m.id,
       title: m.title,
       metadata: m.metadata || {},

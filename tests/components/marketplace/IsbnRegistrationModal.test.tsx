@@ -310,6 +310,61 @@ describe("IsbnRegistrationModal", () => {
     });
   });
 
+  it("does not overwrite user-typed author name when API display name resolves later", async () => {
+    // Create a deferred promise so we control when fetch resolves
+    let resolveFetch!: (value: Response) => void;
+    const deferredFetch = new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    });
+    (global.fetch as jest.Mock) = jest.fn().mockReturnValue(deferredFetch);
+
+    const { rerender } = render(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    // Resolve the fetch with manuscripts but NO display name yet
+    resolveFetch({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          manuscripts: [
+            { id: "ms-1", title: "My Book", metadata: {} },
+          ],
+          userDisplayName: null,
+        }),
+    } as Response);
+
+    // Wait for manuscripts to load
+    await waitFor(() => {
+      expect(screen.getByText("My Book")).toBeInTheDocument();
+    });
+
+    // Select the manuscript
+    await userEvent.selectOptions(screen.getByLabelText(/Manuscript/i), "ms-1");
+
+    // Type a custom author name (author should be empty since no display name and no metadata)
+    const authorInput = screen.getByLabelText(/Author Name/i) as HTMLInputElement;
+    await userEvent.type(authorInput, "My Custom Author");
+    expect(authorInput.value).toBe("My Custom Author");
+
+    // Now simulate the parent providing a display name prop (e.g., async profile load)
+    rerender(
+      <IsbnRegistrationModal
+        isOpen={true}
+        onClose={mockOnClose}
+        userDisplayName="Late Display Name"
+      />
+    );
+
+    // The user-typed value should be preserved, not overwritten by the late display name
+    await waitFor(() => {
+      expect(authorInput.value).toBe("My Custom Author");
+    });
+  });
+
   it("leaves author empty when no metadata and no display name", async () => {
     mockSingleManuscript({
       id: manuscriptId,
