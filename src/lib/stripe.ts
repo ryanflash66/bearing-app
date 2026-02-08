@@ -36,9 +36,9 @@ export function getStripe(): Stripe {
     
     // API version should be updated when Stripe releases new versions
     // Check https://stripe.com/docs/upgrades for latest versions
-    // Current: 2025-12-15.clover (as of Jan 2026)
+    // Current: 2026-01-28.clover (as of Feb 2026)
     _stripe = new Stripe(secretKey, {
-      apiVersion: "2025-12-15.clover",
+      apiVersion: "2026-01-28.clover",
       typescript: true,
     });
   }
