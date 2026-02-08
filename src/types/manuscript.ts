@@ -28,11 +28,19 @@ export interface ManuscriptsApiResponse {
  */
 export async function fetchManuscriptsSummary(): Promise<ManuscriptsApiResponse> {
   const response = await fetch("/api/manuscripts");
-  const data: ManuscriptsApiResponse = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "Failed to load manuscripts");
+    let message = "Failed to load manuscripts";
+    try {
+      const data = await response.json();
+      if (data.error) message = data.error;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new Error(message);
   }
+
+  const data: ManuscriptsApiResponse = await response.json();
 
   return {
     manuscripts: data.manuscripts ?? [],

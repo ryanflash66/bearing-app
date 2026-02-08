@@ -12,7 +12,7 @@
 |-----------|----------|--------|-------|
 | 8.11.1 | ❌ Fail | ✅ Pass | ISBN modal loads manuscripts; form usable. Brief "No manuscripts found" flash before load (minor). |
 | 8.11.2 | ❌ Fail | ✅ Pass | Manuscript dropdown in Marketplace ISBN modal lists all manuscripts. |
-| 8.11.3 | ⚠️ Partial | ⚠️ Partial | **Still open.** BISAC category prefills; **author name still never prefills**; display-name fallback missing. |
+| 8.11.3 | ⚠️ Partial | ✅ Pass | Fixed in PR #77. BISAC category prefills; author name prefills from metadata with display-name fallback. |
 | 8.12.1 | ❌ Fail | ✅ Pass | Marketplace service modals include manuscript dropdown; manuscript-scoped shows read-only field. |
 | 8.12.2 | ❌ Fail | ✅ Pass | Service-specific fields implemented (Author Website, Marketing Package, Social Media Launch Kit). |
 | 8.12.5 | ❌ Fail | ✅ Pass | Duplicate prevention: View Order shown instead of Request Service when request exists. |
@@ -24,15 +24,15 @@
 
 ---
 
-## Open items for DEV
+## Resolved items
 
-### ISS-5: ISBN modal author/category prefill (still open)  
+### ISS-5: ISBN modal author/category prefill (fixed in PR #77)
 **Test case:** 8.11.3  
 **Severity:** Medium
 
 | Action | Notes |
 |--------|-------|
-| **5.1** Prefill **author name** when opening ISBN modal from a manuscript with metadata; use **fallback to user display name** when metadata is missing. | QA: "still does **not** pre-populate the author name field; other manuscripts pre-fill nothing. The fallback to the user's display name is still missing." |
+| **5.1** Prefill **author name** when opening ISBN modal from a manuscript with metadata; use **fallback to user display name** when metadata is missing. | Fixed: author name prefills from manuscript metadata or user display name. |
 | **5.2** Ensure BISAC category prefill is consistent (already works for some manuscripts). | Some manuscripts prefilled, others did not; standardize. |
 
 **Definition of done:** Author name prefills from manuscript metadata or user display name; category prefills from BISAC when present.

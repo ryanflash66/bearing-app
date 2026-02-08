@@ -107,6 +107,7 @@ export default function ServiceRequestModal({
   // Manuscript state (for marketplace context where no manuscriptId provided)
   const [manuscripts, setManuscripts] = useState<ManuscriptSummary[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
+  const [manuscriptsLoaded, setManuscriptsLoaded] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(null);
   const [selectedManuscriptId, setSelectedManuscriptId] = useState<string>("");
   // For manuscript context - store the manuscript title for display
@@ -170,6 +171,7 @@ export default function ServiceRequestModal({
       );
     } finally {
       setIsLoadingManuscripts(false);
+      setManuscriptsLoaded(true);
     }
   }, []);
 
@@ -224,6 +226,7 @@ export default function ServiceRequestModal({
       setBisacSearch("");
       setSelectedManuscriptId("");
       setManuscriptsError(null);
+      setManuscriptsLoaded(false);
       setProvidedManuscriptTitle(null);
 
       // Fetch manuscripts if we need the dropdown
@@ -669,7 +672,7 @@ export default function ServiceRequestModal({
           )}
 
           {/* Empty state for no manuscripts */}
-          {needsManuscriptSelection && !isLoadingManuscripts && manuscripts.length === 0 && !manuscriptsError && (
+          {needsManuscriptSelection && manuscriptsLoaded && !isLoadingManuscripts && manuscripts.length === 0 && !manuscriptsError && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
