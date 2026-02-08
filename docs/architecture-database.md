@@ -52,7 +52,7 @@ create table if not exists accounts (
 create table if not exists account_members (
   account_id uuid not null references accounts(id) on delete cascade,
   user_id uuid not null references users(id) on delete cascade,
-  account_role text not null default 'viewer' check (account_role in ('owner','admin','editor','viewer')),
+  account_role text not null default 'author' check (account_role in ('author','admin','support')),
   created_at timestamptz not null default now(),
   primary key (account_id, user_id)
 );
