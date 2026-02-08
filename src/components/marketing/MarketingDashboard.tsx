@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import type { Manuscript } from "@/lib/manuscripts";
 
 interface Signup {
   id: string;
@@ -11,22 +12,14 @@ interface Signup {
   source: string | null;
 }
 
-interface Manuscript {
-  id: string;
-  title: string;
-  slug: string | null;
-  is_public: boolean;
-  subtitle: string | null;
-  synopsis: string | null;
-  theme_config?: {
-    theme?: string | null;
-    accent_color?: string | null;
-  } | null;
-  owner_user_id: string;
-}
+/** Subset of Manuscript fields needed by the marketing dashboard. */
+type MarketingManuscript = Pick<
+  Manuscript,
+  "id" | "title" | "slug" | "is_public" | "subtitle" | "synopsis" | "theme_config" | "owner_user_id"
+>;
 
 interface MarketingDashboardProps {
-  manuscript: Manuscript;
+  manuscript: MarketingManuscript;
   signups: Signup[];
   userHandle: string;
 }

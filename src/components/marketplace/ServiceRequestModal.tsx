@@ -6,14 +6,19 @@ import { BISAC_CODES } from "@/lib/bisac-codes";
 import { isValidISBN10, isValidISBN13, cleanISBN } from "@/lib/publication-validation";
 import TiptapEditor from "../editor/TiptapEditor";
 import Link from "next/link";
-
-interface Manuscript {
-  id: string;
-  title: string;
-  metadata?: {
-    [key: string]: unknown;
-  };
-}
+import type { ManuscriptSummary } from "@/types/manuscript";
+import { fetchManuscriptsSummary } from "@/types/manuscript";
+import {
+  AuthorWebsiteForm,
+  MarketingForm,
+  SocialMediaForm,
+  GenericServiceForm,
+} from "./service-forms";
+import type {
+  AuthorWebsiteData,
+  MarketingData,
+  SocialMediaData,
+} from "./service-forms";
 
 // Service types that require specific form configurations
 export type ServiceType =
@@ -82,99 +87,6 @@ const SERVICE_PROMPTS: Record<string, string> = {
     "Describe your printing needs: quantity, trim size, paper preferences, and any special requirements. Include your target timeline.",
 };
 
-// Service-specific field options
-const DESIGN_STYLES = [
-  { value: "", label: "Select a style" },
-  { value: "modern", label: "Modern & Minimalist" },
-  { value: "classic", label: "Classic & Elegant" },
-  { value: "bold", label: "Bold & Colorful" },
-  { value: "cozy", label: "Warm & Cozy" },
-  { value: "professional", label: "Clean & Professional" },
-  { value: "whimsical", label: "Playful & Whimsical" },
-];
-
-const WEBSITE_PAGES = [
-  { value: "home", label: "Home" },
-  { value: "about", label: "About the Author" },
-  { value: "books", label: "Books/Works" },
-  { value: "blog", label: "Blog" },
-  { value: "contact", label: "Contact" },
-  { value: "newsletter", label: "Newsletter Signup" },
-  { value: "events", label: "Events/Appearances" },
-  { value: "media", label: "Media Kit" },
-];
-
-const BUDGET_RANGES = [
-  { value: "", label: "Select budget range" },
-  { value: "starter", label: "Starter ($500-1,000)" },
-  { value: "standard", label: "Standard ($1,000-2,500)" },
-  { value: "premium", label: "Premium ($2,500-5,000)" },
-  { value: "custom", label: "Custom (let's discuss)" },
-];
-
-const MARKETING_GOALS = [
-  { value: "launch", label: "Book Launch Campaign" },
-  { value: "ongoing", label: "Ongoing Promotion" },
-  { value: "email", label: "Email List Growth" },
-  { value: "reviews", label: "Review Generation" },
-  { value: "visibility", label: "Increased Visibility" },
-  { value: "sales", label: "Sales Boost" },
-];
-
-const MARKETING_PLATFORMS = [
-  { value: "amazon", label: "Amazon Ads" },
-  { value: "facebook", label: "Facebook/Meta" },
-  { value: "instagram", label: "Instagram" },
-  { value: "tiktok", label: "TikTok/BookTok" },
-  { value: "goodreads", label: "Goodreads" },
-  { value: "bookbub", label: "BookBub" },
-  { value: "email", label: "Email Marketing" },
-];
-
-const SOCIAL_PLATFORMS = [
-  { value: "instagram", label: "Instagram" },
-  { value: "tiktok", label: "TikTok" },
-  { value: "twitter", label: "Twitter/X" },
-  { value: "facebook", label: "Facebook" },
-  { value: "pinterest", label: "Pinterest" },
-  { value: "threads", label: "Threads" },
-];
-
-const CONTENT_TYPES = [
-  { value: "graphics", label: "Static Graphics" },
-  { value: "stories", label: "Story Templates" },
-  { value: "reels", label: "Video/Reels" },
-  { value: "captions", label: "Caption Templates" },
-  { value: "hashtags", label: "Hashtag Sets" },
-  { value: "schedule", label: "Content Calendar" },
-];
-
-// Service-specific form data interfaces
-interface AuthorWebsiteData {
-  designStyle: string;
-  pages: string[];
-  budgetRange: string;
-  additionalDetails: string;
-}
-
-interface MarketingData {
-  bookGenre: string;
-  targetAudience: string;
-  goals: string[];
-  budgetRange: string;
-  platforms: string[];
-  additionalDetails: string;
-}
-
-interface SocialMediaData {
-  bookGenre: string;
-  targetAudience: string;
-  platforms: string[];
-  contentTypes: string[];
-  timeline: string;
-  additionalDetails: string;
-}
-
 export default function ServiceRequestModal({
   isOpen,
   onClose,
@@ -193,7 +105,7 @@ export default function ServiceRequestModal({
   const needsManuscriptSelection = !isPublishing && !isManuscriptProvided;
 
   // Manuscript state (for marketplace context where no manuscriptId provided)
-  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+  const [manuscripts, setManuscripts] = useState<ManuscriptSummary[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(null);
   const [selectedManuscriptId, setSelectedManuscriptId] = useState<string>("");
@@ -249,38 +161,25 @@ export default function ServiceRequestModal({
     setManuscriptsError(null);
 
     try {
-      const response = await fetch("/api/manuscripts");
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setManuscriptsError("Please sign in to continue");
-        } else {
-          setManuscriptsError(data.error || "Failed to load manuscripts");
-        }
-        return;
-      }
-
-      setManuscripts(data.manuscripts || []);
+      const data = await fetchManuscriptsSummary();
+      setManuscripts(data.manuscripts);
     } catch (err) {
       console.error("Error fetching manuscripts:", err);
-      setManuscriptsError("Failed to load manuscripts");
+      setManuscriptsError(
+        err instanceof Error ? err.message : "Failed to load manuscripts",
+      );
     } finally {
       setIsLoadingManuscripts(false);
     }
   }, []);
 
-  // Fetch single manuscript title (manuscript context)
+  // Fetch single manuscript title by reusing the manuscripts endpoint
   const fetchManuscriptTitle = useCallback(async (id: string) => {
     try {
-      const response = await fetch("/api/manuscripts");
-      const data = await response.json();
-
-      if (response.ok && data.manuscripts) {
-        const manuscript = data.manuscripts.find((m: Manuscript) => m.id === id);
-        if (manuscript) {
-          setProvidedManuscriptTitle(manuscript.title);
-        }
+      const data = await fetchManuscriptsSummary();
+      const manuscript = data.manuscripts.find((m) => m.id === id);
+      if (manuscript) {
+        setProvidedManuscriptTitle(manuscript.title);
       }
     } catch (err) {
       console.error("Error fetching manuscript title:", err);
@@ -1063,324 +962,32 @@ export default function ServiceRequestModal({
                 </div>
               </>
             ) : serviceId === "author-website" ? (
-              // Author Website form
-              <>
-                <div>
-                  <label htmlFor="designStyle" className="block text-sm font-medium text-slate-700">
-                    Design Style
-                  </label>
-                  <select
-                    id="designStyle"
-                    value={authorWebsiteData.designStyle}
-                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, designStyle: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    {DESIGN_STYLES.map((style) => (
-                      <option key={style.value} value={style.value}>{style.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Pages Needed
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {WEBSITE_PAGES.map((page) => (
-                      <label key={page.value} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={authorWebsiteData.pages.includes(page.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setAuthorWebsiteData({ ...authorWebsiteData, pages: [...authorWebsiteData.pages, page.value] });
-                            } else {
-                              setAuthorWebsiteData({ ...authorWebsiteData, pages: authorWebsiteData.pages.filter(p => p !== page.value) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700">{page.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="budgetRange" className="block text-sm font-medium text-slate-700">
-                    Budget Range
-                  </label>
-                  <select
-                    id="budgetRange"
-                    value={authorWebsiteData.budgetRange}
-                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, budgetRange: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    {BUDGET_RANGES.map((range) => (
-                      <option key={range.value} value={range.value}>{range.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="additionalDetails" className="block text-sm font-medium text-slate-700">
-                    Additional Details <span className="text-slate-400">(optional)</span>
-                  </label>
-                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
-                  <textarea
-                    id="additionalDetails"
-                    rows={4}
-                    value={authorWebsiteData.additionalDetails}
-                    onChange={(e) => setAuthorWebsiteData({ ...authorWebsiteData, additionalDetails: e.target.value })}
-                    placeholder="Any existing branding, domain name, or special requirements..."
-                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-              </>
+              <AuthorWebsiteForm
+                data={authorWebsiteData}
+                onChange={setAuthorWebsiteData}
+                prompt={prompt}
+              />
             ) : serviceId === "marketing" ? (
-              // Marketing Package form
-              <>
-                <div>
-                  <label htmlFor="bookGenre" className="block text-sm font-medium text-slate-700">
-                    Book Genre
-                  </label>
-                  <input
-                    id="bookGenre"
-                    type="text"
-                    value={marketingData.bookGenre}
-                    onChange={(e) => setMarketingData({ ...marketingData, bookGenre: e.target.value })}
-                    placeholder="e.g., Romance, Thriller, Self-Help..."
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="targetAudience" className="block text-sm font-medium text-slate-700">
-                    Target Audience
-                  </label>
-                  <textarea
-                    id="targetAudience"
-                    rows={2}
-                    value={marketingData.targetAudience}
-                    onChange={(e) => setMarketingData({ ...marketingData, targetAudience: e.target.value })}
-                    placeholder="Describe your ideal readers (age, interests, reading habits)..."
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Marketing Goals
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {MARKETING_GOALS.map((goal) => (
-                      <label key={goal.value} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={marketingData.goals.includes(goal.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setMarketingData({ ...marketingData, goals: [...marketingData.goals, goal.value] });
-                            } else {
-                              setMarketingData({ ...marketingData, goals: marketingData.goals.filter(g => g !== goal.value) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700">{goal.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Preferred Platforms
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {MARKETING_PLATFORMS.map((platform) => (
-                      <label key={platform.value} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={marketingData.platforms.includes(platform.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setMarketingData({ ...marketingData, platforms: [...marketingData.platforms, platform.value] });
-                            } else {
-                              setMarketingData({ ...marketingData, platforms: marketingData.platforms.filter(p => p !== platform.value) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700">{platform.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="marketingBudget" className="block text-sm font-medium text-slate-700">
-                    Budget Range
-                  </label>
-                  <select
-                    id="marketingBudget"
-                    value={marketingData.budgetRange}
-                    onChange={(e) => setMarketingData({ ...marketingData, budgetRange: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  >
-                    {BUDGET_RANGES.map((range) => (
-                      <option key={range.value} value={range.value}>{range.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="marketingDetails" className="block text-sm font-medium text-slate-700">
-                    Additional Details <span className="text-slate-400">(optional)</span>
-                  </label>
-                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
-                  <textarea
-                    id="marketingDetails"
-                    rows={3}
-                    value={marketingData.additionalDetails}
-                    onChange={(e) => setMarketingData({ ...marketingData, additionalDetails: e.target.value })}
-                    placeholder="Any specific campaigns, timing, or requirements..."
-                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-              </>
+              <MarketingForm
+                data={marketingData}
+                onChange={setMarketingData}
+                prompt={prompt}
+              />
             ) : serviceId === "social-media" ? (
-              // Social Media Launch Kit form
-              <>
-                <div>
-                  <label htmlFor="socialGenre" className="block text-sm font-medium text-slate-700">
-                    Book Genre
-                  </label>
-                  <input
-                    id="socialGenre"
-                    type="text"
-                    value={socialMediaData.bookGenre}
-                    onChange={(e) => setSocialMediaData({ ...socialMediaData, bookGenre: e.target.value })}
-                    placeholder="e.g., Fantasy, Memoir, Business..."
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="socialAudience" className="block text-sm font-medium text-slate-700">
-                    Target Audience
-                  </label>
-                  <textarea
-                    id="socialAudience"
-                    rows={2}
-                    value={socialMediaData.targetAudience}
-                    onChange={(e) => setSocialMediaData({ ...socialMediaData, targetAudience: e.target.value })}
-                    placeholder="Describe your ideal readers..."
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Social Platforms
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {SOCIAL_PLATFORMS.map((platform) => (
-                      <label key={platform.value} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={socialMediaData.platforms.includes(platform.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSocialMediaData({ ...socialMediaData, platforms: [...socialMediaData.platforms, platform.value] });
-                            } else {
-                              setSocialMediaData({ ...socialMediaData, platforms: socialMediaData.platforms.filter(p => p !== platform.value) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700">{platform.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Content Types Needed
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {CONTENT_TYPES.map((type) => (
-                      <label key={type.value} className="inline-flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={socialMediaData.contentTypes.includes(type.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSocialMediaData({ ...socialMediaData, contentTypes: [...socialMediaData.contentTypes, type.value] });
-                            } else {
-                              setSocialMediaData({ ...socialMediaData, contentTypes: socialMediaData.contentTypes.filter(t => t !== type.value) });
-                            }
-                          }}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-700">{type.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="timeline" className="block text-sm font-medium text-slate-700">
-                    Publication Timeline
-                  </label>
-                  <input
-                    id="timeline"
-                    type="text"
-                    value={socialMediaData.timeline}
-                    onChange={(e) => setSocialMediaData({ ...socialMediaData, timeline: e.target.value })}
-                    placeholder="e.g., Launching March 2026, Already published..."
-                    className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="socialDetails" className="block text-sm font-medium text-slate-700">
-                    Additional Details <span className="text-slate-400">(optional)</span>
-                  </label>
-                  <p className="mt-1 text-sm text-slate-500 mb-2">{prompt}</p>
-                  <textarea
-                    id="socialDetails"
-                    rows={3}
-                    value={socialMediaData.additionalDetails}
-                    onChange={(e) => setSocialMediaData({ ...socialMediaData, additionalDetails: e.target.value })}
-                    placeholder="Any specific themes, hashtags, or requirements..."
-                    className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  />
-                </div>
-              </>
+              <SocialMediaForm
+                data={socialMediaData}
+                onChange={setSocialMediaData}
+                prompt={prompt}
+              />
             ) : (
-              // Generic service form (cover-design, editing, printing)
-              <div>
-                <label
-                  htmlFor="details"
-                  className="block text-sm font-medium text-slate-700"
-                >
-                  Request Details
-                </label>
-                <p className="mt-1 text-sm text-slate-500 mb-3">{prompt}</p>
-                <textarea
-                  id="details"
-                  rows={6}
-                  value={details}
-                  onChange={(e) => {
-                    setDetails(e.target.value);
-                    setError(null);
-                  }}
-                  placeholder="Describe your requirements..."
-                  className="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
-              </div>
+              <GenericServiceForm
+                details={details}
+                onChange={(val) => {
+                  setDetails(val);
+                  setError(null);
+                }}
+                prompt={prompt}
+              />
             )}
           </div>
         </div>

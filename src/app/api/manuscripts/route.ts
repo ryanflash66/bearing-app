@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { getOrCreateProfile } from "@/lib/profile";
 import { getManuscripts } from "@/lib/manuscripts";
+import type { ManuscriptsApiResponse, ManuscriptSummary } from "@/types/manuscript";
 
 // Force dynamic to ensure fresh data on each request
 export const dynamic = "force-dynamic";
@@ -68,16 +69,18 @@ export async function GET() {
 
     // Return manuscripts with minimal data needed for dropdowns
     const safeManuscripts = manuscripts ?? [];
-    const manuscriptList = safeManuscripts.map((m) => ({
+    const manuscriptList: ManuscriptSummary[] = safeManuscripts.map((m) => ({
       id: m.id,
       title: m.title,
       metadata: m.metadata || {},
     }));
 
-    return NextResponse.json({
+    const responseBody: ManuscriptsApiResponse = {
       manuscripts: manuscriptList,
       userDisplayName: profile.display_name || undefined,
-    });
+    };
+
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("[GET /api/manuscripts] Unexpected error:", err);
     return NextResponse.json(

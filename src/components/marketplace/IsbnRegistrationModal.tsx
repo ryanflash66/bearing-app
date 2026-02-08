@@ -5,16 +5,8 @@ import { createClient } from "@/utils/supabase/client";
 import { BISAC_CODES } from "@/lib/bisac-codes";
 import { navigateTo } from "@/lib/navigation";
 import Link from "next/link";
-
-interface Manuscript {
-  id: string;
-  title: string;
-  metadata?: {
-    author_name?: string;
-    bisac_codes?: string[];
-    [key: string]: unknown;
-  };
-}
+import type { ManuscriptSummary } from "@/types/manuscript";
+import { fetchManuscriptsSummary } from "@/types/manuscript";
 
 interface IsbnRegistrationModalProps {
   isOpen: boolean;
@@ -38,7 +30,7 @@ export default function IsbnRegistrationModal({
   userDisplayName,
 }: IsbnRegistrationModalProps) {
   // Manuscript state
-  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
+  const [manuscripts, setManuscripts] = useState<ManuscriptSummary[]>([]);
   const [isLoadingManuscripts, setIsLoadingManuscripts] = useState(false);
   const [manuscriptsLoaded, setManuscriptsLoaded] = useState(false);
   const [manuscriptsError, setManuscriptsError] = useState<string | null>(
@@ -83,7 +75,7 @@ export default function IsbnRegistrationModal({
 
   // Prefill form from manuscript metadata
   const prefillFromManuscript = useCallback(
-    (manuscript: Manuscript) => {
+    (manuscript: ManuscriptSummary) => {
       const metadata = manuscript.metadata;
 
       // Prefill author name: manuscript metadata > user display name > empty
@@ -157,27 +149,19 @@ export default function IsbnRegistrationModal({
     setManuscriptsError(null);
 
     try {
-      // Use API endpoint to fetch manuscripts (handles profile creation server-side)
-      const response = await fetch("/api/manuscripts");
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setManuscriptsError("Please sign in to continue");
-        } else {
-          setManuscriptsError(data.error || "Failed to load manuscripts");
-        }
-        return;
-      }
-
-      setManuscripts(data.manuscripts || []);
+      const data = await fetchManuscriptsSummary();
+      setManuscripts(data.manuscripts);
       // Store user display name from API for prefill fallback
       if (data.userDisplayName) {
         setApiUserDisplayName(data.userDisplayName);
       }
     } catch (err) {
       console.error("Error fetching manuscripts:", err);
-      setManuscriptsError("Failed to load manuscripts");
+      if (err instanceof Error && err.message === "Please sign in to continue") {
+        setManuscriptsError("Please sign in to continue");
+      } else {
+        setManuscriptsError("Failed to load manuscripts");
+      }
     } finally {
       setIsLoadingManuscripts(false);
       setManuscriptsLoaded(true);
