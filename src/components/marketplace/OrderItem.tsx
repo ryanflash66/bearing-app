@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import type { ServiceRequest } from "@/lib/marketplace-utils";
 import {
-  ServiceRequest,
   formatCents,
   getServiceLabel,
   getStatusConfig,
@@ -28,8 +28,9 @@ export default function OrderItem({ order }: OrderItemProps) {
   // This prevents the row-level navigation from firing when the user clicks
   // the manuscript link, which is more reliable than stopPropagation alone
   // since React synthetic events can race with Link navigation (AC 8.13.5).
+  // Uses Element (not HTMLElement) so SVG children inside the link are detected.
   const isInsideLink = (target: EventTarget): boolean => {
-    if (!(target instanceof HTMLElement)) return false;
+    if (!(target instanceof Element)) return false;
     return target.closest("a") !== null;
   };
 
@@ -39,9 +40,8 @@ export default function OrderItem({ order }: OrderItemProps) {
   };
 
   const handleRowKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
+    if (event.key === "Enter") {
       if (isInsideLink(event.target)) return;
-      event.preventDefault();
       router.push(orderUrl);
     }
   };
