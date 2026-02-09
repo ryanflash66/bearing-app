@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import type { ServiceRequest } from "@/lib/marketplace-utils";
 import {
-  ServiceRequest,
   formatCents,
   getServiceLabel,
   getStatusConfig,
@@ -24,18 +24,35 @@ export default function OrderItem({ order }: OrderItemProps) {
   const statusConfig = getStatusConfig(order.status);
   const orderUrl = `/dashboard/orders/${order.id}`;
 
+  // Check if the event target is inside an anchor element (manuscript link).
+  // This prevents the row-level navigation from firing when the user clicks
+  // the manuscript link, which is more reliable than stopPropagation alone
+  // since React synthetic events can race with Link navigation (AC 8.13.5).
+  // Uses Element (not HTMLElement) so SVG children inside the link are detected.
+  const isInsideLink = (target: EventTarget): boolean => {
+    if (!(target instanceof Element)) return false;
+    return target.closest("a") !== null;
+  };
+
+  const handleRowClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isInsideLink(event.target)) return;
+    router.push(orderUrl);
+  };
+
+  const handleRowKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter") {
+      if (isInsideLink(event.target)) return;
+      router.push(orderUrl);
+    }
+  };
+
   return (
     <li>
       <div
         role="link"
         tabIndex={0}
-        onClick={() => router.push(orderUrl)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            router.push(orderUrl);
-          }
-        }}
+        onClick={handleRowClick}
+        onKeyDown={handleRowKeyDown}
         className="block cursor-pointer hover:bg-slate-50 transition-colors"
         aria-label={`View order ${getServiceLabel(order.service_type)}`}
       >
@@ -62,14 +79,15 @@ export default function OrderItem({ order }: OrderItemProps) {
               <p className="text-sm text-slate-500">
                 {format(new Date(order.created_at), "MMM d, yyyy")}
               </p>
-              {/* AC 8.13.5: Manuscript link if linked */}
+              {/* AC 8.13.5: Manuscript link to editor */}
               {order.manuscripts && (
                 <Link
                   href={`/dashboard/manuscripts/${order.manuscripts.id}`}
                   onClick={(event) => event.stopPropagation()}
-                  className="inline-flex items-center text-sm text-slate-600 hover:text-indigo-600 transition-colors"
+                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors"
+                  title={`Open manuscript: ${order.manuscripts.title}`}
                 >
-                  <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                   <span className="truncate max-w-[200px]">{order.manuscripts.title}</span>
