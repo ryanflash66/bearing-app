@@ -186,10 +186,10 @@ export default function IsbnRegistrationModal({
           if (!user) return null;
           const { data: profile } = await supabase
             .from("users")
-            .select("display_name, pen_name")
+            .select("display_name, pen_name, email")
             .eq("auth_id", user.id)
             .single();
-          return profile;
+          return { ...profile, authEmail: user.email };
         }),
       ]);
 
@@ -201,7 +201,7 @@ export default function IsbnRegistrationModal({
 
       // Compute display name from profile (if not provided via prop)
       const fetchedDisplayName = userResult
-        ? userResult.display_name || userResult.pen_name || undefined
+        ? userResult.display_name || userResult.pen_name || userResult.email || userResult.authEmail || undefined
         : undefined;
 
       // Set API display name for future re-prefill effects
