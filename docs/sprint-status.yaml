@@ -59,6 +59,7 @@ development_status:
   7-4-coming-soon-pages: done
 
   # Epic 8: Client Feedback & Bearing TODO (bearing-todo.md)
+  # QA rework 2026-02-06: 8.11, 8.12 — see docs/qa-action-items-8.11-8.12.md
   epic-8: in-progress
   8-1-export-download-fix: done
   8-2-autosave-retry-recovery: done
@@ -70,15 +71,15 @@ development_status:
   8-8-image-upload-ai-manuscript: backlog
   8-9-zen-fullscreen-view: in-progress
   8-10-marketplace-redesign-subscription: done
-  8-11-isbn-registration-flow: done
-  8-12-service-submission-forms: backlog
+  8-11-isbn-registration-flow: in-progress
+  8-12-service-submission-forms: in-progress
   8-13-my-orders-service-tracking: done
   8-14-admin-user-manuscript-viewing: backlog
   8-15-admin-orders-service-requests: backlog
   8-16-admin-blog-view: backlog
   8-17-admin-notifications-bell: backlog
   8-18-admin-user-crud: backlog
-  8-19-clarify-ai-tokens-display: backlog
+  8-19-clarify-ai-tokens-display: ready-for-dev
   8-20-sync-manuscript-service: done
   8-21-login-ui-improvements: backlog
   8-22-marketplace-subscription-messaging: backlog

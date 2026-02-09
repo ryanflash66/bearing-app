@@ -68,7 +68,7 @@ export default async function MarketplacePage() {
         {isDesignerOrAdmin ? (
           <DesignerBoard />
         ) : (
-          <ServiceGrid services={MARKETPLACE_SERVICES} userDisplayName={profile?.display_name || profile?.pen_name || undefined} />
+          <ServiceGrid services={MARKETPLACE_SERVICES} userDisplayName={profile?.display_name || profile?.pen_name || user.email || undefined} />
         )}
       </div>
     </DashboardLayout>
