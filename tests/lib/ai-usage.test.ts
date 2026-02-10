@@ -1,4 +1,12 @@
-import { checkUsageLimit, logUsageEvent, getMonthlyUsageStats, MONTHLY_TOKEN_CAP } from "@/lib/ai-usage";
+import {
+  checkUsageLimit,
+  logUsageEvent,
+  getMonthlyUsageStats,
+  getFeatureBreakdown,
+  formatTokenCompact,
+  FEATURE_LABELS,
+  MONTHLY_TOKEN_CAP
+} from "@/lib/ai-usage";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 // Mock Supabase Client
@@ -199,6 +207,129 @@ describe("AI Usage Metering", () => {
       const stats = await getMonthlyUsageStats(mockSupabase, accountId);
       expect(stats.tokensUsed).toBe(350);
       expect(stats.checkCount).toBe(2);
+    });
+  });
+
+  describe("getFeatureBreakdown", () => {
+    it("returns per-feature totals with tokens and count", async () => {
+      const mockSelectUsage = jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [
+            { tokens_actual: 100, feature: 'consistency_check' },
+            { tokens_actual: 200, feature: 'suggestion' },
+            { tokens_actual: 50, feature: 'consistency_check' },
+            { tokens_actual: 75, feature: 'suggestion' },
+          ],
+          error: null,
+        }),
+      });
+
+      (mockSupabase.from as jest.Mock).mockImplementation((table) => {
+        if (table === "billing_cycles") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: { id: cycleId, end_date: new Date(Date.now() + 100000).toISOString() },
+                    error: null
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "ai_usage_events") {
+          return { select: mockSelectUsage };
+        }
+        return {};
+      });
+
+      const breakdown = await getFeatureBreakdown(mockSupabase, accountId);
+
+      expect(breakdown).toEqual([
+        { feature: 'consistency_check', label: 'Consistency Checks', tokens: 150, count: 2 },
+        { feature: 'suggestion', label: 'AI Suggestions', tokens: 275, count: 2 },
+      ]);
+    });
+
+    it("returns empty array when no usage events", async () => {
+      const mockSelectUsage = jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      });
+
+      (mockSupabase.from as jest.Mock).mockImplementation((table) => {
+        if (table === "billing_cycles") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  single: jest.fn().mockResolvedValue({
+                    data: { id: cycleId, end_date: new Date(Date.now() + 100000).toISOString() },
+                    error: null
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "ai_usage_events") {
+          return { select: mockSelectUsage };
+        }
+        return {};
+      });
+
+      const breakdown = await getFeatureBreakdown(mockSupabase, accountId);
+      expect(breakdown).toEqual([]);
+    });
+  });
+
+  describe("formatTokenCompact", () => {
+    it("formats thousands with k suffix", () => {
+      expect(formatTokenCompact(1000)).toBe("1k");
+      expect(formatTokenCompact(5000)).toBe("5k");
+      expect(formatTokenCompact(10000)).toBe("10k");
+    });
+
+    it("formats millions with k suffix maintaining precision", () => {
+      expect(formatTokenCompact(1000000)).toBe("1,000k");
+      expect(formatTokenCompact(1500000)).toBe("1,500k");
+    });
+
+    it("rounds to nearest thousand", () => {
+      expect(formatTokenCompact(1234)).toBe("1k");
+      expect(formatTokenCompact(5678)).toBe("6k");
+    });
+
+    it("handles zero", () => {
+      expect(formatTokenCompact(0)).toBe("0k");
+    });
+
+    it("handles small numbers with '< 1k' display", () => {
+      expect(formatTokenCompact(500)).toBe("< 1k");
+      expect(formatTokenCompact(100)).toBe("< 1k");
+      expect(formatTokenCompact(1)).toBe("< 1k");
+    });
+  });
+
+  describe("FEATURE_LABELS", () => {
+    it("has labels for consistency_check", () => {
+      expect(FEATURE_LABELS.consistency_check).toBe("Consistency Checks");
+    });
+
+    it("has labels for suggestion", () => {
+      expect(FEATURE_LABELS.suggestion).toBe("AI Suggestions");
+    });
+
+    it("is an object with string keys and values", () => {
+      expect(typeof FEATURE_LABELS).toBe("object");
+      Object.entries(FEATURE_LABELS).forEach(([key, value]) => {
+        expect(typeof key).toBe("string");
+        expect(typeof value).toBe("string");
+      });
     });
   });
 });

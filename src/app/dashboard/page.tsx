@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 import { getOrCreateProfile } from "@/lib/profile";
 import { getFirstUserAccount } from "@/lib/account";
 import { getManuscripts } from "@/lib/manuscripts";
-import { getMonthlyUsageStats, MONTHLY_TOKEN_CAP } from "@/lib/ai-usage";
+import { getMonthlyUsageStats, getFeatureBreakdown, formatTokenCompact, MONTHLY_TOKEN_CAP } from "@/lib/ai-usage";
+import type { FeatureBreakdown } from "@/lib/ai-usage";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ErrorBanner from "@/components/ui/ErrorBanner";
 import Link from "next/link";
+import { AiTokenHelp } from "@/components/dashboard/AiTokenHelp";
+import { AiTokensDetailsSheet } from "@/components/dashboard/AiTokensDetailsSheet";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -40,23 +43,26 @@ export default async function DashboardPage() {
   let manuscriptCount = 0;
   let totalWordCount = 0;
   let aiUsage = { tokensUsed: 0, checkCount: 0 };
+  let aiBreakdown: FeatureBreakdown[] = [];
   let maintenanceStatus = null; // AC 4.5.3 (Server-side optimization)
 
   const { account } = await getFirstUserAccount(supabase, user.id);
-  
+
   if (account) {
     // Shared import for maintenance logic
     const { getMaintenanceStatus } = await import("@/lib/super-admin");
 
-    const [manuscriptsResult, usageResult, maintenanceResult] = await Promise.all([
+    const [manuscriptsResult, usageResult, breakdownResult, maintenanceResult] = await Promise.all([
       getManuscripts(supabase, account.id),
       getMonthlyUsageStats(supabase, account.id),
+      getFeatureBreakdown(supabase, account.id),
       getMaintenanceStatus(supabase)
     ]);
-    
+
     manuscriptCount = manuscriptsResult.manuscripts.length;
     totalWordCount = manuscriptsResult.manuscripts.reduce((sum, m) => sum + (m.word_count || 0), 0);
     aiUsage = usageResult;
+    aiBreakdown = breakdownResult;
     maintenanceStatus = maintenanceResult;
   } else {
     // Fallback if no account (edge case), still check maintenance
@@ -213,16 +219,30 @@ export default async function DashboardPage() {
                   />
                 </svg>
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">AI Tokens</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-slate-500">AI Tokens</p>
+                  <AiTokenHelp />
+                </div>
                 <p className="text-2xl font-bold text-slate-900">
-                  {Math.round(aiUsage.tokensUsed / 1000).toLocaleString()}k <span className="text-base font-normal text-slate-400">/ {(MONTHLY_TOKEN_CAP / 1000).toLocaleString()}k</span>
+                  {formatTokenCompact(aiUsage.tokensUsed)} <span className="text-base font-normal text-slate-400">/ {formatTokenCompact(MONTHLY_TOKEN_CAP)}</span>
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-slate-500">
-              {aiUsage.checkCount} checks performed this month.
-            </p>
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-slate-500">
+                {aiUsage.checkCount} checks performed this month.
+              </p>
+              <AiTokensDetailsSheet
+                breakdown={aiBreakdown}
+                tokensUsed={aiUsage.tokensUsed}
+                trigger={
+                  <button className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline">
+                    View details
+                  </button>
+                }
+              />
+            </div>
           </div>
         </div>
 

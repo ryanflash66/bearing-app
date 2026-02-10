@@ -3,6 +3,12 @@ import { SupabaseClient } from "@supabase/supabase-js";
 // Constants
 export const MONTHLY_TOKEN_CAP = 10_000_000;
 
+// Feature label mappings for human-friendly display
+export const FEATURE_LABELS: Record<string, string> = {
+  consistency_check: "Consistency Checks",
+  suggestion: "AI Suggestions",
+} as const;
+
 export interface BillingCycle {
   id: string;
   account_id: string;
@@ -206,7 +212,7 @@ export async function getMonthlyUsageStats(
       (sum, event) => sum + (event.tokens_actual || 0),
       0
     );
-    
+
     // Count exact feature matches for "Check Count" (assuming consistency checks)
     // But maybe we want total AI interactions? Story says "monthly token usage and check counts"
     const checkCount = (data || []).filter(e => e.feature === 'consistency_check').length;
@@ -216,4 +222,81 @@ export async function getMonthlyUsageStats(
     console.error("Error in getMonthlyUsageStats:", err);
     return { tokensUsed: 0, checkCount: 0 };
   }
+}
+
+export interface FeatureBreakdown {
+  feature: string;
+  label: string;
+  tokens: number;
+  count: number;
+}
+
+/**
+ * Get per-feature usage breakdown for the current billing cycle.
+ * Returns aggregated token counts and action counts per feature.
+ */
+export async function getFeatureBreakdown(
+  supabase: SupabaseClient,
+  accountId: string
+): Promise<FeatureBreakdown[]> {
+  try {
+    const cycle = await getOrCreateOpenBillingCycle(supabase, accountId);
+
+    const { data, error } = await supabase
+      .from("ai_usage_events")
+      .select("tokens_actual, feature")
+      .eq("cycle_id", cycle.id);
+
+    if (error) {
+      console.error("Error fetching feature breakdown:", error);
+      return [];
+    }
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // Aggregate by feature
+    const featureMap = new Map<string, { tokens: number; count: number }>();
+
+    data.forEach((event) => {
+      const feature = event.feature || "unknown";
+      const existing = featureMap.get(feature) || { tokens: 0, count: 0 };
+      featureMap.set(feature, {
+        tokens: existing.tokens + (event.tokens_actual || 0),
+        count: existing.count + 1,
+      });
+    });
+
+    // Convert to array with labels
+    const breakdown: FeatureBreakdown[] = [];
+    featureMap.forEach((value, key) => {
+      breakdown.push({
+        feature: key,
+        label: FEATURE_LABELS[key] || key,
+        tokens: value.tokens,
+        count: value.count,
+      });
+    });
+
+    return breakdown;
+  } catch (err) {
+    console.error("Error in getFeatureBreakdown:", err);
+    return [];
+  }
+}
+
+/**
+ * Format token count with 'k' suffix for compact display.
+ * Shows "< 1k" for small positive values (under 1000) to avoid confusing "0k".
+ * @example formatTokenCompact(0) => "0k"
+ * @example formatTokenCompact(500) => "< 1k"
+ * @example formatTokenCompact(5234) => "5k"
+ * @example formatTokenCompact(1500000) => "1,500k"
+ */
+export function formatTokenCompact(tokens: number): string {
+  if (tokens === 0) return "0k";
+  if (tokens < 1000) return "< 1k";
+  const thousands = Math.round(tokens / 1000);
+  return `${thousands.toLocaleString()}k`;
 }
