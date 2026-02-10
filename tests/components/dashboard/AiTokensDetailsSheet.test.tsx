@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AiTokensDetailsSheet } from "@/components/dashboard/AiTokensDetailsSheet";
-import { FeatureBreakdown } from "@/lib/ai-usage";
+import type { FeatureBreakdown } from "@/lib/ai-usage";
 
 describe("AiTokensDetailsSheet", () => {
   const mockBreakdown: FeatureBreakdown[] = [

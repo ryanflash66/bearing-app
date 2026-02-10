@@ -5,7 +5,7 @@ Scope: Story 8.19 - Clarify AI tokens display
 Audience: Manual QA Team
 
 **Setup**
-- [ ] Use an Author account with an active account and billing cycle
+- [ ] Use an Author account with an active billing cycle
 - [ ] Ensure test account has some AI usage events (consistency checks and/or suggestions) OR test with zero usage for empty state
 - [ ] Use a Super Admin account (`users.role = 'super_admin'`) for admin testing
 - [ ] Clear browser cache and test in both light and dark modes
@@ -26,10 +26,10 @@ User Dashboard - Help Affordance Display:
 - [ ] Use a screen reader (NVDA/JAWS/VoiceOver) and confirm the affordance is announced correctly
 
 User Dashboard - Help Content Display:
-- [ ] Hover over the help affordance (desktop) or tap it (mobile)
+- [ ] Click the help affordance (desktop) or tap it (mobile)
 - [ ] Verify a popover/tooltip appears with explanation content
 - [ ] Confirm the explanation includes: "Tokens are units of AI model usage"
-- [ ] Confirm the explanation mentions: "Gemini consistency checks" and "Llama suggestions"
+- [ ] Confirm the explanation mentions: "Gemini consistency checks" and "Llama AI suggestions"
 - [ ] Confirm the explanation mentions: "Tokens reset each billing cycle"
 - [ ] Confirm the explanation mentions: "displayed value is tokens used / monthly cap"
 - [ ] Click outside the popover and confirm it dismisses properly

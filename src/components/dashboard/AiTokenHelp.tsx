@@ -18,6 +18,7 @@ export function AiTokenHelp() {
     <Popover>
       <PopoverTrigger asChild>
         <button
+          type="button"
           className="inline-flex items-center justify-center rounded-full p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
           aria-label="What are AI tokens?"
         >

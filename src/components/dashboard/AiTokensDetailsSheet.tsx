@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { FeatureBreakdown } from "@/lib/ai-usage";
+import type { FeatureBreakdown } from "@/lib/ai-usage";
 import { MONTHLY_TOKEN_CAP } from "@/lib/ai-usage";
 
 interface AiTokensDetailsSheetProps {
@@ -45,13 +45,13 @@ export function AiTokensDetailsSheet({
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Tokens Used</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {tokensUsed.toLocaleString()}
+                  {tokensUsed.toLocaleString("en-US")}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-500">Monthly Cap</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {MONTHLY_TOKEN_CAP.toLocaleString()}
+                  {MONTHLY_TOKEN_CAP.toLocaleString("en-US")}
                 </p>
               </div>
             </div>
@@ -65,7 +65,7 @@ export function AiTokensDetailsSheet({
                 />
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {((tokensUsed / MONTHLY_TOKEN_CAP) * 100).toFixed(1)}% of monthly cap
+                {Math.min((tokensUsed / MONTHLY_TOKEN_CAP) * 100, 100).toFixed(1)}% of monthly cap
               </p>
             </div>
           </div>
@@ -80,7 +80,7 @@ export function AiTokensDetailsSheet({
                 <p className="text-sm text-slate-500">No AI usage yet this cycle.</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3" data-testid="feature-breakdown">
                 {breakdown.map((item) => (
                   <div
                     key={item.feature}
@@ -95,7 +95,7 @@ export function AiTokensDetailsSheet({
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-slate-900">
-                          {item.tokens.toLocaleString()}
+                          {item.tokens.toLocaleString("en-US")}
                         </p>
                         <p className="text-xs text-slate-500">tokens</p>
                       </div>

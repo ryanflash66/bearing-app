@@ -4,10 +4,12 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export const MONTHLY_TOKEN_CAP = 10_000_000;
 
 // Feature label mappings for human-friendly display
-export const FEATURE_LABELS: Record<string, string> = {
+export const FEATURE_LABELS = {
   consistency_check: "Consistency Checks",
   suggestion: "AI Suggestions",
 } as const;
+
+export type FeatureKey = keyof typeof FEATURE_LABELS;
 
 export interface BillingCycle {
   id: string;
@@ -273,7 +275,7 @@ export async function getFeatureBreakdown(
     featureMap.forEach((value, key) => {
       breakdown.push({
         feature: key,
-        label: FEATURE_LABELS[key] || key,
+        label: (FEATURE_LABELS as Record<string, string>)[key] || key,
         tokens: value.tokens,
         count: value.count,
       });
@@ -298,5 +300,5 @@ export function formatTokenCompact(tokens: number): string {
   if (tokens === 0) return "0k";
   if (tokens < 1000) return "< 1k";
   const thousands = Math.round(tokens / 1000);
-  return `${thousands.toLocaleString()}k`;
+  return `${thousands.toLocaleString("en-US")}k`;
 }

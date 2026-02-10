@@ -52,11 +52,20 @@ export default async function DashboardPage() {
     // Shared import for maintenance logic
     const { getMaintenanceStatus } = await import("@/lib/super-admin");
 
-    const [manuscriptsResult, usageResult, breakdownResult, maintenanceResult] = await Promise.all([
-      getManuscripts(supabase, account.id),
-      getMonthlyUsageStats(supabase, account.id),
-      getFeatureBreakdown(supabase, account.id),
-      getMaintenanceStatus(supabase)
+    // Start independent fetches in parallel
+    const manuscriptsPromise = getManuscripts(supabase, account.id);
+    const maintenancePromise = getMaintenanceStatus(supabase);
+
+    // Run billing-cycle-dependent calls sequentially to avoid race condition:
+    // Both getMonthlyUsageStats and getFeatureBreakdown internally call
+    // getOrCreateOpenBillingCycle, which on a first-run account could race
+    // to create duplicate open cycles when run in Promise.all.
+    const usageResult = await getMonthlyUsageStats(supabase, account.id);
+    const breakdownResult = await getFeatureBreakdown(supabase, account.id);
+
+    const [manuscriptsResult, maintenanceResult] = await Promise.all([
+      manuscriptsPromise,
+      maintenancePromise,
     ]);
 
     manuscriptCount = manuscriptsResult.manuscripts.length;

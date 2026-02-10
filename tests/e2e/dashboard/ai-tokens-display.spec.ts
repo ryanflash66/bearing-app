@@ -78,7 +78,7 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
     // The breakdown should show feature names (if there's usage data)
     // Note: Actual data depends on test database state
     // At minimum, check for the structure
-    const breakdownSection = authenticatedPage.locator('[data-testid="feature-breakdown"], .space-y-4').first();
+    const breakdownSection = authenticatedPage.locator('[data-testid="feature-breakdown"]');
     await expect(breakdownSection).toBeVisible();
   });
 
@@ -114,6 +114,7 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
     await expect(authenticatedPage.getByText('AI Token Usage Details')).toBeVisible();
 
     // Check that the monthly cap is displayed with locale formatting
+    // The component uses toLocaleString("en-US"), so this is deterministic
     // The cap is 10,000,000 from MONTHLY_TOKEN_CAP
     const monthlyCap = authenticatedPage.getByText('10,000,000');
     await expect(monthlyCap).toBeVisible();
@@ -155,7 +156,7 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
   /**
    * AC 8.19.5: Admin usage table clarity (Super Admin)
    */
-  test('should display AI token help in Super Admin user usage table', async ({ page }) => {
+  test('should display AI token help in Super Admin user usage table', async ({ authenticatedPage }) => {
     // This test requires a Super Admin user
     // You may need to adjust the fixture or create a separate one for admin users
 
@@ -163,10 +164,10 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
     // In a real scenario, you'd have an admin fixture
     test.skip(!process.env.TEST_ADMIN_USER, 'Requires Super Admin account');
 
-    await page.goto('/dashboard/admin/users');
+    await authenticatedPage.goto('/dashboard/admin/users');
 
     // Find the Tokens (Cycle) column header
-    const tokensHeader = page.getByText('Tokens (Cycle)');
+    const tokensHeader = authenticatedPage.getByText('Tokens (Cycle)');
     await expect(tokensHeader).toBeVisible();
 
     // Find the help affordance in the header
@@ -175,7 +176,7 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
 
     // Click and verify same explanation copy
     await helpButton.click();
-    await expect(page.getByText(/tokens are units of ai model usage/i)).toBeVisible();
+    await expect(authenticatedPage.getByText(/tokens are units of ai model usage/i)).toBeVisible();
   });
 
   /**
