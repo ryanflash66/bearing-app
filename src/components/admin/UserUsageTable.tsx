@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { UserUsageStat } from "@/lib/usage-admin";
 import { toggleAiStatus, saveNote, toggleMemberStatusAction } from "@/app/dashboard/admin/actions";
+import { AiTokenHelp } from "@/components/dashboard/AiTokenHelp";
 
 interface UserUsageTableProps {
   stats: UserUsageStat[];
@@ -72,7 +73,12 @@ export default function UserUsageTable({ stats, accountId }: UserUsageTableProps
               <tr>
                 <th className="px-6 py-3">User</th>
               <th className="px-6 py-3">Role</th>
-              <th className="px-6 py-3 text-right">Tokens (Cycle)</th>
+              <th className="px-6 py-3 text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <span>Tokens (Cycle)</span>
+                  <AiTokenHelp />
+                </div>
+              </th>
               <th className="px-6 py-3 text-right">Checks (Cycle)</th>
               <th className="px-6 py-3">AI Status</th>
               <th className="px-6 py-3">Note</th>
@@ -175,7 +181,7 @@ export default function UserUsageTable({ stats, accountId }: UserUsageTableProps
               ))}
               {filteredStats.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>

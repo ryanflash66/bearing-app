@@ -32,3 +32,6 @@ _bmad-output/
 
 # QA artifacts
 *.pdf
+
+# Windows reserved device names (created accidentally)
+nul
