@@ -9,6 +9,8 @@ import ConflictResolutionModal from "./ConflictResolutionModal";
 import VersionHistory from "./VersionHistory";
 import AISuggestion from "./AISuggestion";
 import ConsistencyReportViewer from "./ConsistencyReportViewer";
+import ConsistencyReportSidebar, { ExtendedConsistencyIssue } from "./ConsistencyReportSidebar";
+import { navigateToText, replaceExactCaseInsensitiveText } from "@/lib/textNavigation";
 import Binder from "./Binder";
 import { ConsistencyIssue, ConsistencyReport } from "@/lib/gemini";
 import { useGhostText } from "@/lib/useGhostText";
@@ -346,6 +348,16 @@ export default function ManuscriptEditor({
     report?: ConsistencyReport;
   }>({ status: "idle" });
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
+
+  // AC 8.7.1: New sidebar state (feature flag controlled)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const useNewSidebar = process.env.NEXT_PUBLIC_CONSISTENCY_SIDEBAR === 'true';
+
+  // AC 8.7.5: Cancellation with AbortController
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const pollAbortControllerRef = useRef<AbortController | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activePollJobIdRef = useRef<string | null>(null);
 
   const [betaComments, setBetaComments] = useState<BetaComment[]>([]);
   const [betaCommentsLoading, setBetaCommentsLoading] = useState(false);
@@ -1144,10 +1156,84 @@ export default function ManuscriptEditor({
     setSuggestionError(null);
   }, []);
 
+  // AC 8.7.5: Handle cancellation
+  const handleCancelCheck = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (pollAbortControllerRef.current) {
+      pollAbortControllerRef.current.abort();
+      pollAbortControllerRef.current = null;
+    }
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
+    }
+    activePollJobIdRef.current = null;
+    setIsCheckingConsistency(false);
+    setConsistencyCheckStatus({ status: "idle" });
+    // Keep sidebar open in idle state so the user can immediately start another check.
+  }, []);
+
+  // AC 8.7.3: Navigate to issue in editor with fuzzy matching fallback
+  const handleNavigateToIssue = useCallback(
+    async (issue: ExtendedConsistencyIssue) => {
+      if (!editor || !issue.originalText) {
+        return { found: false, warning: "Text may have changed. Navigate manually." };
+      }
+
+      return navigateToText(editor, issue.originalText);
+    },
+    [editor],
+  );
+
+  // AC 8.7.4: Apply fix to editor
+  const handleApplyFix = useCallback(
+    async (issue: ExtendedConsistencyIssue) => {
+      if (!editor || !issue.suggestion || !issue.originalText) return;
+
+      const replaced = replaceExactCaseInsensitiveText(
+        editor,
+        issue.originalText,
+        issue.suggestion,
+      );
+
+      if (!replaced.replaced) {
+        throw new Error("Cannot apply fix—text has changed.");
+      }
+    },
+    [editor],
+  );
+
+  const saveConsistencyEditNow = useCallback(async () => {
+    if (!editor) return false;
+
+    const currentJson = editor.getJSON();
+    const currentText = editor.getText();
+
+    // AC 8.7.4: Applying a fix must trigger queueSave() from useAutosave.
+    queueSave(currentJson, currentText, title, metadata);
+
+    return saveNow();
+  }, [editor, metadata, queueSave, saveNow, title]);
+
   // Handle consistency check trigger
   const handleCheckConsistency = useCallback(async () => {
+    // AC 8.7.5: Cancel any existing check before starting new one
+    handleCancelCheck();
+
+    // Create new AbortController
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsCheckingConsistency(true);
     setConsistencyCheckStatus({ status: "queued" });
+
+    // Open sidebar when starting check
+    if (useNewSidebar) {
+      setSidebarOpen(true);
+    }
 
     try {
       const response = await fetch(
@@ -1157,6 +1243,7 @@ export default function ManuscriptEditor({
           headers: {
             "Content-Type": "application/json",
           },
+          signal: controller.signal, // AC 8.7.5: Pass abort signal
         },
       );
 
@@ -1181,6 +1268,12 @@ export default function ManuscriptEditor({
         pollConsistencyCheckStatus(data.jobId);
       }
     } catch (error) {
+      // AC 8.7.5: Don't show error if request was aborted by user
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Consistency check cancelled by user');
+        return;
+      }
+
       console.error("Error starting consistency check:", error);
       setConsistencyCheckStatus({
         status: "failed",
@@ -1191,17 +1284,34 @@ export default function ManuscriptEditor({
       });
     } finally {
       setIsCheckingConsistency(false);
+      abortControllerRef.current = null;
     }
-  }, [manuscriptId]);
+  }, [handleCancelCheck, manuscriptId, useNewSidebar]);
 
   // Poll consistency check status
   const pollConsistencyCheckStatus = useCallback(
     async (jobId: string) => {
+      // Stop any previous poll
+      if (pollAbortControllerRef.current) {
+        pollAbortControllerRef.current.abort();
+      }
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current);
+        pollTimeoutRef.current = null;
+      }
+
+      activePollJobIdRef.current = jobId;
+      const controller = new AbortController();
+      pollAbortControllerRef.current = controller;
+
       const pollInterval = 2000; // Poll every 2 seconds
       const maxPolls = 30; // Max 60 seconds
       let pollCount = 0;
 
       const poll = async () => {
+        if (controller.signal.aborted) return;
+        if (activePollJobIdRef.current !== jobId) return;
+
         if (pollCount >= maxPolls) {
           setConsistencyCheckStatus({
             status: "failed",
@@ -1213,6 +1323,7 @@ export default function ManuscriptEditor({
         try {
           const response = await fetch(
             `/api/manuscripts/${manuscriptId}/consistency-check?jobId=${jobId}`,
+            { signal: controller.signal },
           );
 
           if (!response.ok) {
@@ -1223,6 +1334,9 @@ export default function ManuscriptEditor({
           const job = data.job;
 
           if (job) {
+            if (controller.signal.aborted) return;
+            if (activePollJobIdRef.current !== jobId) return;
+
             setConsistencyCheckStatus({
               status: job.status,
               jobId: job.id,
@@ -1233,7 +1347,7 @@ export default function ManuscriptEditor({
             // Continue polling if still in progress
             if (job.status === "queued" || job.status === "running") {
               pollCount++;
-              setTimeout(poll, pollInterval);
+              pollTimeoutRef.current = setTimeout(poll, pollInterval);
             }
           } else {
             // Job not found, might have been deleted
@@ -1243,6 +1357,9 @@ export default function ManuscriptEditor({
             });
           }
         } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            return;
+          }
           console.error("Error polling consistency check status:", error);
           setConsistencyCheckStatus({
             status: "failed",
@@ -1544,8 +1661,14 @@ export default function ManuscriptEditor({
           {consistencyCheckStatus.status === "completed" && (
             <button
               onClick={() => {
-                setSelectedChapterForReport(null);
-                setShowReportViewer(true);
+                if (useNewSidebar) {
+                  // AC 8.7.1: Open new sidebar
+                  setSidebarOpen(true);
+                } else {
+                  // Use old modal viewer
+                  setSelectedChapterForReport(null);
+                  setShowReportViewer(true);
+                }
               }}
               className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-2"
             >
@@ -1824,6 +1947,7 @@ export default function ManuscriptEditor({
               editable={!isLocked} // AC 8.20.3: Set editable to false when locked
               className={`text-lg leading-relaxed ${isLocked ? "opacity-70" : ""} ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}
               placeholder="Start writing..."
+              manuscriptId={manuscriptId}
             />
 
             {/* Ghost Text Overlay - Needs new logic for Tiptap coordinates if we want to overlay absolute */}
@@ -1882,6 +2006,25 @@ export default function ManuscriptEditor({
         initialMetadata={metadata}
         onMetadataSave={handlePublishingMetadataSave}
       />
+
+      {/* AC 8.7.1: New Consistency Report Sidebar (feature flag controlled) */}
+      {useNewSidebar && (
+        <ConsistencyReportSidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          report={consistencyCheckStatus.report || null}
+          isRunning={
+            isCheckingConsistency ||
+            consistencyCheckStatus.status === "queued" ||
+            consistencyCheckStatus.status === "running"
+          }
+          onNavigateToIssue={handleNavigateToIssue}
+          onApplyFix={handleApplyFix}
+          onSaveNow={saveConsistencyEditNow}
+          onCancel={handleCancelCheck}
+          editor={editor}
+        />
+      )}
 
       {/* Command Palette (Cmd+K) */}
       <CommandPalette

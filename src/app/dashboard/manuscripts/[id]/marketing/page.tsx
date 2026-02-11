@@ -32,8 +32,8 @@ export default async function MarketingPage({ params }: MarketingPageProps) {
     return redirect("/dashboard/manuscripts?error=not_found");
   }
 
-  // Verify ownership
-  if (manuscript.owner_user_id !== user.id) {
+  // Verify ownership (owner_user_id is the users table PK, not the auth UUID)
+  if (manuscript.owner_user_id !== profile?.id) {
      return redirect("/dashboard/manuscripts?error=unauthorized");
   }
 

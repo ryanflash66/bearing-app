@@ -8,9 +8,25 @@ const mockUpdate = jest.fn(() => ({
   eq: mockEq,
 }));
 const mockSupabase = {
-  from: jest.fn(() => ({
-    update: mockUpdate,
-  })),
+  from: jest.fn((table: string) => {
+    if (table === "cover_jobs") {
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            in: jest.fn().mockReturnValue({
+              order: jest.fn().mockReturnValue({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      };
+    }
+
+    return {
+      update: mockUpdate,
+    };
+  }),
 };
 
 jest.mock("@/utils/supabase/client", () => ({
@@ -32,7 +48,9 @@ describe("MarketingDashboard", () => {
     subtitle: "A subtitle",
     synopsis: "A synopsis",
     cover_image_url: null,
+    metadata: {},
     owner_user_id: "user-123",
+    theme_config: null,
   };
 
   const mockSignups = [
@@ -88,8 +106,21 @@ describe("MarketingDashboard", () => {
   });
 
   it("saves changes correctly", async () => {
-    mockSupabase.from.mockReturnValue({
-      update: mockUpdate,
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "cover_jobs") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      return { update: mockUpdate };
     });
 
     render(
@@ -119,11 +150,41 @@ describe("MarketingDashboard", () => {
     }));
   });
 
+  it("switches to Cover Lab tab", () => {
+    render(
+      <MarketingDashboard
+        manuscript={mockManuscript as any}
+        signups={mockSignups}
+        userHandle="authorhandle"
+      />
+    );
+
+    const coverLabTab = screen.getByRole("button", { name: "Cover Lab" });
+    fireEvent.click(coverLabTab);
+
+    expect(screen.getByText("Generate AI cover concepts from your manuscript metadata and visual description.")).toBeInTheDocument();
+  });
+
   it("handles save errors", async () => {
-    mockSupabase.from.mockReturnValue({
-      update: jest.fn(() => ({
-        eq: jest.fn().mockResolvedValue({ error: { message: "Update failed" } }),
-      })),
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "cover_jobs") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              in: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        update: jest.fn(() => ({
+          eq: jest.fn().mockResolvedValue({ error: { message: "Update failed" } }),
+        })),
+      };
     });
 
     render(

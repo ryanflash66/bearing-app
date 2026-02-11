@@ -10,7 +10,7 @@ export const AI_MODELS = {
   gemini: {
     pro: "google/gemini-pro-1.5",
     // Using stable Flash 1.5. Previous code used "google/gemini-3-flash-preview"
-    flash: "google/gemini-flash-1.5",
+    flash: "google/gemini-3-flash-preview",
     flash_8b: "google/gemini-flash-1.5-8b",
   },
 

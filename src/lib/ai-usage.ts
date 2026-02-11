@@ -7,6 +7,7 @@ export const MONTHLY_TOKEN_CAP = 10_000_000;
 export const FEATURE_LABELS = {
   consistency_check: "Consistency Checks",
   suggestion: "AI Suggestions",
+  cover_generation: "Cover Generation",
 } as const;
 
 export type FeatureKey = keyof typeof FEATURE_LABELS;
