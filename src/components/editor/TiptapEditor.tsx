@@ -16,7 +16,7 @@ interface TiptapEditorProps {
   onEditorReady?: (editor: Editor) => void;
   placeholder?: string;
   className?: string;
-  manuscriptId: string;
+  manuscriptId?: string;
 }
 
 export default function TiptapEditor({
@@ -121,7 +121,7 @@ export default function TiptapEditor({
 
   return (
     <>
-      {editable && (
+      {editable && manuscriptId && (
         <div className="flex items-center gap-2 mb-2 p-2 border-b border-slate-100 sticky top-0 bg-white z-10">
           <button
             onClick={() => setIsImageDialogOpen(true)}
@@ -136,13 +136,15 @@ export default function TiptapEditor({
 
       <EditorContent editor={editor} />
       
-      <ImageUploadDialog
-        open={isImageDialogOpen}
-        onOpenChange={setIsImageDialogOpen}
-        onInsert={handleImageInsert}
-        manuscriptId={manuscriptId}
-        editorContext={getEditorContext()}
-      />
+      {manuscriptId && (
+        <ImageUploadDialog
+          open={isImageDialogOpen}
+          onOpenChange={setIsImageDialogOpen}
+          onInsert={handleImageInsert}
+          manuscriptId={manuscriptId}
+          editorContext={getEditorContext()}
+        />
+      )}
     </>
   );
 }
