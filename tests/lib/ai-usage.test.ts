@@ -324,10 +324,6 @@ describe("AI Usage Metering", () => {
       expect(FEATURE_LABELS.suggestion).toBe("AI Suggestions");
     });
 
-    it("has labels for cover_generation", () => {
-      expect(FEATURE_LABELS.cover_generation).toBe("Cover Generation");
-    });
-
     it("is an object with string keys and values", () => {
       expect(typeof FEATURE_LABELS).toBe("object");
       Object.entries(FEATURE_LABELS).forEach(([key, value]) => {

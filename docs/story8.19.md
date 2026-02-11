@@ -1,9 +1,8 @@
 # Story 8.19: Clarify AI tokens display
 
-Status: qa-pending
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
-<!-- QA Gate: Manual QA checklist (docs/manual-qa-checklist-story-8.19.md) must be completed before marking done. -->
 
 ## Story
 

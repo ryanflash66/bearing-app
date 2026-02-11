@@ -246,7 +246,7 @@ export default async function DashboardPage() {
                 breakdown={aiBreakdown}
                 tokensUsed={aiUsage.tokensUsed}
                 trigger={
-                  <button type="button" className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline">
+                  <button className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline">
                     View details
                   </button>
                 }

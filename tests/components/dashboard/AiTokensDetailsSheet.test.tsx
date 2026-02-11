@@ -149,7 +149,7 @@ describe("AiTokensDetailsSheet", () => {
 
     await user.click(screen.getByText("View Details"));
 
-    // Check for percentage text (8000 / 10,000,000 = 0.08%, rounded to 0.1%)
+    // Check for percentage text (8000 / 10,000,000 = 0.08%)
     expect(screen.getByText(/0\.1% of monthly cap/i)).toBeInTheDocument();
   });
 });
