@@ -105,7 +105,7 @@ export async function POST(
   const { count: usageCount, error: usageCountError } = await supabase
     .from("ai_usage_events")
     .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
+    .eq("user_id", profile.id)
     .eq("feature", "cover_generation")
     .gte("created_at", oneDayAgo);
 
@@ -131,7 +131,7 @@ export async function POST(
   const { data: activeJobs, error: activeJobsError } = await supabase
     .from("cover_jobs")
     .select("id, status")
-    .eq("user_id", user.id)
+    .eq("user_id", profile.id)
     .eq("manuscript_id", manuscriptId)
     .in("status", [...ACTIVE_JOB_STATUSES]);
 
@@ -165,7 +165,7 @@ export async function POST(
   const { data: createdJob, error: createJobError } = await supabase
     .from("cover_jobs")
     .insert({
-      user_id: user.id,
+      user_id: profile.id,
       manuscript_id: manuscriptId,
       status: "queued",
       prompt: parsedBody.description,
@@ -297,7 +297,7 @@ export async function POST(
     await logUsageEvent(
       supabase,
       manuscript.account_id,
-      user.id,
+      profile.id,
       "cover_generation",
       "imagen-4.0",
       ESTIMATED_TOKENS_PER_JOB,
