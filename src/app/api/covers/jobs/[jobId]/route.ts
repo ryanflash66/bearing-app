@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { resolveCoverImageStoragePath, resolveCoverImageUrl } from "@/lib/covers/storage";
 
+export const dynamic = "force-dynamic";
+
 interface CoverJobImage {
   url?: string;
   storage_path?: string;

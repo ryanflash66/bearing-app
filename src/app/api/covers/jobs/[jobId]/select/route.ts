@@ -11,6 +11,8 @@ import {
   toContentTypeFromExtension,
 } from "@/lib/covers/storage";
 
+export const dynamic = "force-dynamic";
+
 interface SelectedCoverImage {
   url?: string;
   storage_path?: string;
@@ -174,8 +176,8 @@ export async function POST(
         genre: coverJob.genre,
         mood: coverJob.mood,
         style: coverJob.style,
-        safety_status: selectedImage.safety_status || null,
-        seed: selectedImage.seed || null,
+        safety_status: selectedImage.safety_status ?? null,
+        seed: selectedImage.seed ?? null,
       },
     })
     .select("id")

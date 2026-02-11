@@ -11,6 +11,8 @@ import {
   toContentTypeFromExtension,
 } from "@/lib/covers/storage";
 
+export const dynamic = "force-dynamic";
+
 interface GalleryCoverImage {
   url?: string;
   storage_path?: string;

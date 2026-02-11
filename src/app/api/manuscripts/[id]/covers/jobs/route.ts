@@ -8,6 +8,8 @@ import {
   generateVariationSeeds,
 } from "@/lib/covers/prompt";
 
+export const dynamic = "force-dynamic";
+
 const COVER_STYLES = ["Cinematic", "Illustrated", "Minimalist"] as const;
 const DAILY_LIMIT = 5;
 const ESTIMATED_TOKENS_PER_JOB = 200_000;
@@ -210,6 +212,7 @@ export async function POST(
   try {
     const modalResponse = await fetch(modalUrl, {
       method: "POST",
+      signal: AbortSignal.timeout(120_000),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${modalKey}`,
@@ -235,7 +238,7 @@ export async function POST(
 
     if (!modalResponse.ok) {
       if (modalResponse.status === 429) {
-        shouldLogUsage = true;
+        // 429 = queued for retry — no tokens consumed, don't log usage
         const retryAfterSeconds = parseRetryAfterSeconds(modalResponse);
         await supabase
           .from("cover_jobs")
@@ -259,6 +262,10 @@ export async function POST(
             error_message: `Modal request failed (${modalResponse.status}): ${errorText.slice(0, 300)}`,
           })
           .eq("id", createdJob.id);
+        return NextResponse.json(
+          { job_id: createdJob.id, status: "failed", error: "Cover generation failed." },
+          { status: 502 }
+        );
       }
     } else {
       shouldLogUsage = true;
@@ -280,6 +287,10 @@ export async function POST(
         error_message: "Failed to trigger cover generation worker.",
       })
       .eq("id", createdJob.id);
+    return NextResponse.json(
+      { job_id: createdJob.id, status: "failed", error: "Failed to trigger cover generation." },
+      { status: 502 }
+    );
   }
 
   if (shouldLogUsage) {

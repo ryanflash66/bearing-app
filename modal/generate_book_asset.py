@@ -460,6 +460,17 @@ def generate_book_asset(payload_dict: dict[str, Any]) -> dict[str, Any]:
                         "seed": seed,
                     },
                 )
+                break
+        else:
+            # while loop exhausted without break — all retries were 429s
+            _append_cover_image(
+                supabase_client,
+                payload.job_id,
+                {
+                    "error": "quota_exhausted",
+                    "seed": seed,
+                },
+            )
 
     if completed == 0:
         supabase_client.table("cover_jobs").update(
@@ -497,8 +508,11 @@ async def generate_cover(
     request: Request,
     token: HTTPAuthorizationCredentials = Depends(_bearer),
 ):
+    import asyncio
+    import hmac
+
     expected = os.environ.get("AUTH_TOKEN")
-    if not expected or token.credentials != expected:
+    if not expected or not hmac.compare_digest(token.credentials, expected):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid bearer token",
@@ -506,4 +520,5 @@ async def generate_cover(
         )
 
     payload = await request.json()
-    return generate_book_asset(payload)
+    # Run blocking I/O (requests, boto3, time.sleep) in a thread
+    return await asyncio.to_thread(generate_book_asset, payload)
