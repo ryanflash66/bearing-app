@@ -35,7 +35,7 @@ const getAttachment = async (attachmentId: string): Promise<CachedAttachment | n
     .single();
 
   if (error) return null;
-  return data as CachedAttachment;
+  return data as unknown as CachedAttachment;
 };
 
 // AC 8.8.6: Cached attachment lookup with dynamic tagging
