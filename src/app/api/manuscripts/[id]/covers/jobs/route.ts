@@ -42,7 +42,7 @@ const createCoverJobSchema = z.object({
   genre: z.string().trim().min(1, "Genre is required").max(80),
   mood: z.string().trim().min(1, "Mood is required").max(80),
   style: z.enum(COVER_STYLES, {
-    errorMap: () => ({ message: "Style must be Cinematic, Illustrated, or Minimalist" }),
+    message: "Style must be Cinematic, Illustrated, or Minimalist",
   }),
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000),
 });
