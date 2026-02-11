@@ -76,7 +76,14 @@ export async function POST(
     return NextResponse.json({ error: "Manuscript not found" }, { status: 404 });
   }
 
-  if (manuscript.owner_user_id !== user.id) {
+  // Resolve profile PK (owner_user_id is users.id, not auth UUID)
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!profile || manuscript.owner_user_id !== profile.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

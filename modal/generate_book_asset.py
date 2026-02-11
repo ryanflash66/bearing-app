@@ -20,10 +20,31 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import modal
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 import boto3
 import requests
 from PIL import Image
 from supabase import create_client
+
+# ---------------------------------------------------------------------------
+# Modal app definition
+# ---------------------------------------------------------------------------
+
+image = modal.Image.debian_slim(python_version="3.11").pip_install(
+    "fastapi[standard]",
+    "boto3",
+    "pillow",
+    "requests",
+    "supabase",
+    "google-auth",
+)
+
+app = modal.App("bearing-cover-generator", image=image)
+
+_bearer = HTTPBearer()
 
 
 MAX_RETRIES = 3
@@ -460,3 +481,29 @@ def generate_book_asset(payload_dict: dict[str, Any]) -> dict[str, Any]:
         }
     ).eq("id", payload.job_id).execute()
     return {"ok": True, "job_id": payload.job_id, "completed": completed, "blocked": blocked}
+
+
+# ---------------------------------------------------------------------------
+# Modal web endpoint — POST /generate_cover
+# Vercel calls this with Authorization: Bearer <MODAL_API_KEY>
+# ---------------------------------------------------------------------------
+
+@app.function(
+    secrets=[modal.Secret.from_name("bearing-cover-secrets")],
+    timeout=600,
+)
+@modal.fastapi_endpoint(method="POST")
+async def generate_cover(
+    request: Request,
+    token: HTTPAuthorizationCredentials = Depends(_bearer),
+):
+    expected = os.environ.get("AUTH_TOKEN")
+    if not expected or token.credentials != expected:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = await request.json()
+    return generate_book_asset(payload)
