@@ -33,6 +33,17 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Resolve profile PK (owner_user_id is users.id, not auth UUID)
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!profile) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let imageUrl = "";
   try {
     const body = await request.json();
@@ -49,7 +60,7 @@ export async function POST(
     .from("cover_jobs")
     .select("id, user_id, manuscript_id, prompt, wrapped_prompt, style, genre, mood, provider, model, images")
     .eq("id", jobId)
-    .eq("user_id", user.id)
+    .eq("user_id", profile.id)
     .single();
 
   if (coverJobError || !coverJob) {
@@ -78,14 +89,7 @@ export async function POST(
     return NextResponse.json({ error: "Manuscript not found" }, { status: 404 });
   }
 
-  // Resolve profile PK (owner_user_id is users.id, not auth UUID)
-  const { data: profile } = await supabase
-    .from("users")
-    .select("id")
-    .eq("auth_id", user.id)
-    .single();
-
-  if (!profile || manuscript.owner_user_id !== profile.id) {
+  if (manuscript.owner_user_id !== profile.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -117,7 +121,7 @@ export async function POST(
   const { data: galleryAsset, error: galleryInsertError } = await supabase
     .from("gallery_assets")
     .insert({
-      user_id: user.id,
+      user_id: profile.id,
       account_id: manuscript.account_id,
       manuscript_id: manuscript.id,
       job_id: coverJob.id,
@@ -133,8 +137,8 @@ export async function POST(
         style: coverJob.style,
         generation_date: new Date().toISOString(),
         source_image_url: sourceImageUrl,
-        safety_status: selectedImage.safety_status || null,
-        seed: selectedImage.seed || null,
+        safety_status: selectedImage.safety_status ?? null,
+        seed: selectedImage.seed ?? null,
       },
     })
     .select("id, url")

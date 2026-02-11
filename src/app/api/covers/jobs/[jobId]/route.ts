@@ -24,11 +24,21 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("id")
+    .eq("auth_id", user.id)
+    .single();
+
+  if (!profile) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: job, error: jobError } = await supabase
     .from("cover_jobs")
     .select("id, status, images, retry_after, error_message, selected_url")
     .eq("id", jobId)
-    .eq("user_id", user.id)
+    .eq("user_id", profile.id)
     .single();
 
   if (jobError || !job) {
