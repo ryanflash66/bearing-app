@@ -14,6 +14,16 @@ The Bearing integrates two AI models with strict cost controls:
 
 Both use request caching and input normalization to minimize tokens and maximize cache hit rates.
 
+### Story 5.9 Addendum: Vertex Imagen Quota (Cover Generation)
+
+- **Provider:** Vertex AI Imagen 4.0
+- **Where to verify limit:** Google Cloud Console -> Vertex AI -> Quotas -> Generative AI Image requests (QPM)
+- **Current project requirement:** keep `cover_jobs` queue depth and dispatch rate below configured Imagen QPM; do not burst direct parallel generation from the web tier.
+- **Server-side queueing:** cover jobs are inserted as `queued`, then transitioned to `running` by the worker. If projected concurrent load exceeds quota, dispatch must be throttled from queue rather than rejecting users immediately.
+- **429 strategy:** when Imagen returns quota exhaustion, set job back to `queued`, store `retry_after`, retry with bounded attempts (max 3), and surface "high demand" messaging to the client.
+- **R2 URL rendering:** cover job records should treat `storage_path` as canonical and derive browser URLs from `R2_PUBLIC_URL` (fallback: `https://<bucket>.r2.dev`) to avoid invalid bucket-host URLs.
+- **Usage metering note:** cover trigger logs estimate by default; if Modal response provides actual usage tokens, that value is recorded as `tokens_actual`.
+
 ---
 
 ## Llama Integration (Modal.com)

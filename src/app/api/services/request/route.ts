@@ -83,33 +83,109 @@ const SERVICE_DEFAULT_AMOUNTS: Record<string, number> = {
   "printing": 0,          // Quote-based
 };
 
-const MARKETING_BUDGET_RANGE_PATTERN = /^(under_\d+|\d+_\d+|\d+_plus)$/;
+const MARKETING_BUDGET_RANGE_PATTERN = /^(under_\d+|\d+_\d+|\d+_plus|starter|standard|premium|custom)$/;
+const AUTHOR_WEBSITE_ALLOWED_GENRES = new Set([
+  "romance",
+  "fantasy",
+  "thriller",
+  "mystery",
+  "science-fiction",
+  "science_fiction",
+  "sci-fi",
+  "scifi",
+  "nonfiction",
+  "memoir",
+  "self-help",
+  "business",
+  "children",
+  "young-adult",
+  "young_adult",
+  "historical",
+  "horror",
+  "poetry",
+  "literary",
+]);
+const SOCIAL_MEDIA_ALLOWED_PLATFORMS = new Set([
+  "instagram",
+  "tiktok",
+  "twitter",
+  "facebook",
+  "pinterest",
+  "threads",
+  "youtube",
+  "linkedin",
+]);
 
 function validateMarketingMetadata(metadata?: {
   target_audience?: string;
   budget_range?: string;
   goals?: string;
 } | null): string | null {
-  if (!metadata) {
-    return "Marketing request requires target audience, budget range, and goals";
+  if (!metadata || Object.keys(metadata).length === 0) {
+    return null;
   }
 
   const { target_audience, budget_range, goals } = metadata;
 
-  if (!target_audience || target_audience.trim().length === 0) {
+  if (typeof target_audience === "string" && target_audience.trim().length === 0) {
     return "Marketing request requires a target audience";
   }
 
-  if (!budget_range || budget_range.trim().length === 0) {
-    return "Marketing request requires a budget range";
-  }
-
-  if (!MARKETING_BUDGET_RANGE_PATTERN.test(budget_range)) {
+  if (budget_range && !MARKETING_BUDGET_RANGE_PATTERN.test(budget_range)) {
     return "Marketing request has an invalid budget range";
   }
 
-  if (!goals || goals.trim().length === 0) {
+  if (typeof goals === "string" && goals.trim().length === 0) {
     return "Marketing request requires marketing goals";
+  }
+
+  return null;
+}
+
+function validateAuthorWebsiteMetadata(metadata?: {
+  genre_vibe?: string;
+  design_notes?: string;
+  design_style?: string;
+  pages?: string[];
+  budget_range?: string;
+  details?: string;
+} | null): string | null {
+  if (!metadata || Object.keys(metadata).length === 0) {
+    return "Author Website request metadata is required";
+  }
+
+  // Backward compatibility for legacy payloads.
+  if (metadata.genre_vibe) {
+    const normalizedGenre = metadata.genre_vibe.trim().toLowerCase();
+    if (!AUTHOR_WEBSITE_ALLOWED_GENRES.has(normalizedGenre)) {
+      return "Author Website request has invalid genre metadata";
+    }
+  }
+
+  if (!metadata.genre_vibe && !metadata.design_style && !metadata.design_notes && !metadata.details) {
+    return "Author Website request metadata is required";
+  }
+
+  return null;
+}
+
+function validateSocialMediaMetadata(metadata?: {
+  platforms?: string[];
+  target_platforms?: string[];
+} | null): string | null {
+  if (!metadata) {
+    return "Social Media request requires platform metadata";
+  }
+
+  // Backward compatibility for legacy payloads.
+  const platforms = metadata.platforms ?? metadata.target_platforms ?? [];
+
+  if (!Array.isArray(platforms) || platforms.length === 0) {
+    return "Social Media request requires at least one platform";
+  }
+
+  if (platforms.some((platform) => !SOCIAL_MEDIA_ALLOWED_PLATFORMS.has(platform))) {
+    return "Social Media request has invalid platform selection";
   }
 
   return null;
@@ -263,6 +339,36 @@ export async function POST(request: NextRequest) {
       if (marketingError) {
         return NextResponse.json(
           { error: marketingError },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (serviceId === "author-website") {
+      const authorWebsiteError = validateAuthorWebsiteMetadata(clientMetadata as {
+        genre_vibe?: string;
+        design_notes?: string;
+        design_style?: string;
+        pages?: string[];
+        budget_range?: string;
+        details?: string;
+      } | null);
+      if (authorWebsiteError) {
+        return NextResponse.json(
+          { error: authorWebsiteError },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (serviceId === "social-media") {
+      const socialMediaError = validateSocialMediaMetadata(clientMetadata as {
+        platforms?: string[];
+        target_platforms?: string[];
+      } | null);
+      if (socialMediaError) {
+        return NextResponse.json(
+          { error: socialMediaError },
           { status: 400 }
         );
       }

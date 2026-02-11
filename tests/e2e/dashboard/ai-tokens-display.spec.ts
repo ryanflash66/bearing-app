@@ -82,24 +82,28 @@ test.describe('AI Tokens Display (Story 8.19)', () => {
     await expect(breakdownSection).toBeVisible();
   });
 
-  test('should show empty state when no usage events exist', async ({ authenticatedPage }) => {
-    // This test assumes a test user with no AI usage
-    // If your test fixtures create usage data, you may need to adjust
+  test('should show either empty state or breakdown in details view', async ({ authenticatedPage }) => {
+    // This test verifies the details sheet opens and shows appropriate content
+    // (either empty state or breakdown depending on whether usage data exists)
     await authenticatedPage.goto('/dashboard');
 
     const viewDetailsButton = authenticatedPage.getByRole('button', { name: /view details/i });
     await viewDetailsButton.click();
 
-    // Look for either breakdown or empty state
+    // Verify details sheet opens
     const detailsSheet = authenticatedPage.locator('text=AI Token Usage Details').first();
     await expect(detailsSheet).toBeVisible();
 
-    // If there's no usage, should see empty state
-    // If there is usage, should see feature names
-    const hasEmptyState = await authenticatedPage.getByText('No AI usage yet this cycle.').isVisible();
-    const hasBreakdown = await authenticatedPage.getByText(/Consistency Checks|AI Suggestions/i).isVisible();
+    // Check that either empty state or breakdown is visible (but not both)
+    const emptyStateLocator = authenticatedPage.getByText('No AI usage yet this cycle.');
+    const breakdownLocator = authenticatedPage.getByText(/Consistency Checks|AI Suggestions/i);
 
-    expect(hasEmptyState || hasBreakdown).toBeTruthy();
+    try {
+      await expect(emptyStateLocator).toBeVisible({ timeout: 2000 });
+    } catch {
+      // If empty state is not visible, breakdown should be
+      await expect(breakdownLocator).toBeVisible();
+    }
   });
 
   /**

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @deprecated This component is deprecated as of Story 8.7 and will be removed after a 2-week validation period.
+ * Use ConsistencyReportSidebar instead, which provides an integrated sidebar experience with enhanced features.
+ * Target removal date: After NEXT_PUBLIC_CONSISTENCY_SIDEBAR has been enabled in production for 2 weeks with zero P0/P1 bugs.
+ */
+
 import { useState, useMemo } from "react";
 import { ConsistencyReport, ConsistencyIssue } from "@/lib/gemini";
 

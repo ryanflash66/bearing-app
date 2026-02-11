@@ -27,6 +27,8 @@ export function AiTokensDetailsSheet({
   tokensUsed,
   trigger,
 }: AiTokensDetailsSheetProps) {
+  const percentage = Math.min((tokensUsed / MONTHLY_TOKEN_CAP) * 100, 100);
+
   return (
     <Sheet>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
@@ -45,13 +47,13 @@ export function AiTokensDetailsSheet({
               <div>
                 <p className="text-sm font-medium text-slate-500">Total Tokens Used</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {tokensUsed.toLocaleString("en-US")}
+                  {tokensUsed.toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-medium text-slate-500">Monthly Cap</p>
                 <p className="mt-1 text-2xl font-bold text-slate-900">
-                  {MONTHLY_TOKEN_CAP.toLocaleString("en-US")}
+                  {MONTHLY_TOKEN_CAP.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -59,13 +61,18 @@ export function AiTokensDetailsSheet({
               <div className="h-2 w-full rounded-full bg-slate-200">
                 <div
                   className="h-2 rounded-full bg-violet-600 transition-all"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(percentage)}
+                  aria-label="Monthly token usage"
                   style={{
-                    width: `${Math.min((tokensUsed / MONTHLY_TOKEN_CAP) * 100, 100)}%`,
+                    width: `${percentage}%`,
                   }}
                 />
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {Math.min((tokensUsed / MONTHLY_TOKEN_CAP) * 100, 100).toFixed(1)}% of monthly cap
+                {percentage.toFixed(1)}% of monthly cap
               </p>
             </div>
           </div>
@@ -95,7 +102,7 @@ export function AiTokensDetailsSheet({
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-slate-900">
-                          {item.tokens.toLocaleString("en-US")}
+                          {item.tokens.toLocaleString()}
                         </p>
                         <p className="text-xs text-slate-500">tokens</p>
                       </div>

@@ -40,10 +40,14 @@ development_status:
   5-3-service-request-management: done
   5-4-admin-fulfillment-dashboard: done
   5-5-cmdk-commander-pattern: done
-  5-6-integrate-custom-models: deferred
+  5-6-integrate-custom-models: split
+  5-6-1-vertex-ai-context-caching: deferred
+  5-6-2-modal-custom-llama: deferred
+  5-6-3-r2-manuscript-storage: deferred
+  5-6-4-ai-cost-dashboard: deferred
   5-7-voice-to-text: done
   5-8-mobile-responsive: done
-  5-9-ai-cover-generator: in-progress
+  5-9-ai-cover-generator: done
 
   # Epic 6: Blog & Content Platform (In Progress)
   epic-6: done
@@ -51,35 +55,42 @@ development_status:
   6-2-public-author-profile: done
   6-3-admin-blog-moderation: done
 
-  # Epic 7: Publication & Beta Distribution (Backlog)
-  epic-7: in-progress
+  # Epic 7: Publication & Beta Distribution (Done)
+  epic-7: done
   7-1-beta-reader-access: done
   7-2-wysiwyg-export-previewer: done
   7-3-publication-metadata: done
   7-4-coming-soon-pages: done
 
-  # Epic 8: Client Feedback & Bearing TODO (bearing-todo.md)
+  # Epic 8: Client Feedback & TODO - Core P0/P1 (Done)
   # QA rework 2026-02-06: 8.11, 8.12 — see docs/qa-action-items-8.11-8.12.md
-  epic-8: in-progress
+  # Board reconciled 2026-02-10: 8.4, 8.8, 8.9, 8.11, 8.12, 8.19 confirmed done via QA/fix batches
+  # Remaining backlog (8.14-8.18, 8.21-8.23) = admin expansion & polish, deferred to Epic 9
+  epic-8: done
   8-1-export-download-fix: done
   8-2-autosave-retry-recovery: done
   8-3-remove-broken-zen-mode: done
-  8-4-admin-login-maintenance-gating: review
+  8-4-admin-login-maintenance-gating: done
   8-5-move-2fa-to-settings: done
   8-6-publishing-service-request-popup: done
-  8-7-check-consistency-enhancement: backlog
-  8-8-image-upload-ai-manuscript: backlog
-  8-9-zen-fullscreen-view: in-progress
+  8-7-check-consistency-enhancement: done
+  8-8-image-upload-ai-manuscript: done
+  8-9-zen-fullscreen-view: done
   8-10-marketplace-redesign-subscription: done
-  8-11-isbn-registration-flow: in-progress
-  8-12-service-submission-forms: in-progress
+  8-11-isbn-registration-flow: done
+  8-12-service-submission-forms: done
   8-13-my-orders-service-tracking: done
-  8-14-admin-user-manuscript-viewing: backlog
-  8-15-admin-orders-service-requests: backlog
-  8-16-admin-blog-view: backlog
-  8-17-admin-notifications-bell: backlog
-  8-18-admin-user-crud: backlog
-  8-19-clarify-ai-tokens-display: ready-for-dev
+  8-19-clarify-ai-tokens-display: done
   8-20-sync-manuscript-service: done
-  8-21-login-ui-improvements: backlog
-  8-22-marketplace-subscription-messaging: backlog
+
+  # Epic 9: Admin Expansion & Platform Polish
+  # Carved from Epic 8 backlog (admin tooling, UX polish, ops dashboards)
+  epic-9: backlog
+  9-1-admin-user-manuscript-viewing: backlog    # was 8.14 — blocked by 5.6.3
+  9-2-admin-orders-service-requests: backlog    # was 8.15
+  9-3-admin-blog-view: backlog                  # was 8.16
+  9-4-admin-notifications-bell: backlog         # was 8.17
+  9-5-admin-user-crud: backlog                  # was 8.18
+  9-6-login-ui-improvements: backlog            # was 8.21
+  9-7-marketplace-subscription-messaging: backlog  # was 8.22
+  9-8-publishing-ops-review-dashboard: backlog  # was 8.23

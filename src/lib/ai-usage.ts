@@ -7,6 +7,8 @@ export const MONTHLY_TOKEN_CAP = 10_000_000;
 export const FEATURE_LABELS = {
   consistency_check: "Consistency Checks",
   suggestion: "AI Suggestions",
+  ai_generation: "Image Generation",
+  cover_generation: "Cover Generation",
 } as const;
 
 export type FeatureKey = keyof typeof FEATURE_LABELS;
@@ -291,14 +293,16 @@ export async function getFeatureBreakdown(
 /**
  * Format token count with 'k' suffix for compact display.
  * Shows "< 1k" for small positive values (under 1000) to avoid confusing "0k".
+ * Negative values are clamped to zero.
  * @example formatTokenCompact(0) => "0k"
+ * @example formatTokenCompact(-500) => "0k"
  * @example formatTokenCompact(500) => "< 1k"
  * @example formatTokenCompact(5234) => "5k"
  * @example formatTokenCompact(1500000) => "1,500k"
  */
 export function formatTokenCompact(tokens: number): string {
-  if (tokens === 0) return "0k";
+  if (tokens <= 0) return "0k";
   if (tokens < 1000) return "< 1k";
   const thousands = Math.round(tokens / 1000);
-  return `${thousands.toLocaleString("en-US")}k`;
+  return `${thousands.toLocaleString()}k`;
 }

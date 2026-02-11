@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import type { Manuscript } from "@/lib/manuscripts";
+import CoverGenerator from "@/components/marketing/CoverGenerator";
 
 interface Signup {
   id: string;
@@ -15,7 +16,16 @@ interface Signup {
 /** Subset of Manuscript fields needed by the marketing dashboard. */
 type MarketingManuscript = Pick<
   Manuscript,
-  "id" | "title" | "slug" | "is_public" | "subtitle" | "synopsis" | "theme_config" | "owner_user_id"
+  | "id"
+  | "title"
+  | "slug"
+  | "is_public"
+  | "subtitle"
+  | "synopsis"
+  | "theme_config"
+  | "owner_user_id"
+  | "cover_image_url"
+  | "metadata"
 >;
 
 interface MarketingDashboardProps {
@@ -38,6 +48,7 @@ export default function MarketingDashboard({
   const [synopsis, setSynopsis] = useState(manuscript.synopsis || "");
   const [theme, setTheme] = useState(manuscript.theme_config?.theme || "light");
   const [accentColor, setAccentColor] = useState(manuscript.theme_config?.accent_color || "#78716c");
+  const [activeTab, setActiveTab] = useState<"landing" | "cover-lab">("landing");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -123,6 +134,33 @@ export default function MarketingDashboard({
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 space-y-4">
+        <div className="border-b border-stone-200 pb-3">
+          <div className="inline-flex rounded-md border border-stone-300 p-1">
+            <button
+              onClick={() => setActiveTab("landing")}
+              className={`rounded px-3 py-2 text-sm font-medium ${
+                activeTab === "landing"
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-700 hover:bg-stone-100"
+              }`}
+            >
+              Landing Page
+            </button>
+            <button
+              onClick={() => setActiveTab("cover-lab")}
+              className={`rounded px-3 py-2 text-sm font-medium ${
+                activeTab === "cover-lab"
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-700 hover:bg-stone-100"
+              }`}
+            >
+              Cover Lab
+            </button>
+          </div>
+        </div>
+
+        {activeTab === "landing" && (
+          <>
         <h2 className="text-lg font-semibold">Landing Page Content</h2>
         
         <div className="space-y-4">
@@ -215,6 +253,28 @@ export default function MarketingDashboard({
                 </span>
             )}
         </div>
+          </>
+        )}
+
+        {activeTab === "cover-lab" && (
+          <CoverGenerator
+            manuscriptId={manuscript.id}
+            manuscriptTitle={manuscript.title}
+            authorName={
+              manuscript.metadata &&
+              typeof manuscript.metadata === "object" &&
+              "author_name" in manuscript.metadata
+                ? String((manuscript.metadata as Record<string, unknown>).author_name || userHandle)
+                : userHandle
+            }
+            currentCoverUrl={manuscript.cover_image_url}
+            manuscriptMetadata={
+              manuscript.metadata && typeof manuscript.metadata === "object"
+                ? (manuscript.metadata as Record<string, unknown>)
+                : null
+            }
+          />
+        )}
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">

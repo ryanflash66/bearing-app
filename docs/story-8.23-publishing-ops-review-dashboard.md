@@ -1,4 +1,4 @@
-# Story 8.7: Publishing Ops - Review Dashboard
+# Story 8.23: Publishing Ops - Review Dashboard
 
 Status: ready-for-dev
 
@@ -12,16 +12,16 @@ so that **I can verify manuscript metadata, check publishing requirements, and a
 
 ## Acceptance Criteria
 
-1. **Dedicated View**: Implement a new admin route at `/dashboard/admin/publishing` (or a tab within the Fulfillment dashboard). [AC 8.7.1]
+1. **Dedicated View**: Implement a new admin route at `/dashboard/admin/publishing` (or a tab within the Fulfillment dashboard). [AC 8.23.1]
 2. **Metadata Visibility**: The dashboard must display metadata for `publishing_help` requests:
-    - Target ISBN (if provided by author)
-    - Selected Categories (BISAC codes)
-    - Keywords
-    - Format preferences (Print/Ebook) [AC 8.7.2]
-3. **Manuscript Context**: Each request must link directly to the manuscript review page or provide a "View Manuscript" button. [AC 8.7.3]
-4. **Filtering**: Filter specifically for `service_type = 'publishing_help'`. [AC 8.7.4]
-5. **State Transitions**: Admins can mark as "In Progress" (acknowledging the request) or "Completed" (publishing successfully initiated). [AC 8.7.5]
-6. **Rejection with Reason**: Admins can reject a publishing request with a specific reason (e.g., "Missing front matter," "Cover requirements not met"). [AC 8.7.6]
+   - Target ISBN (if provided by author)
+   - Selected Categories (BISAC codes)
+   - Keywords
+   - Format preferences (Print/Ebook) [AC 8.23.2]
+3. **Manuscript Context**: Each request must link directly to the manuscript review page or provide a "View Manuscript" button. [AC 8.23.3]
+4. **Filtering**: Filter specifically for `service_type = 'publishing_help'`. [AC 8.23.4]
+5. **State Transitions**: Admins can mark as "In Progress" (acknowledging the request) or "Completed" (publishing successfully initiated). [AC 8.23.5]
+6. **Rejection with Reason**: Admins can reject a publishing request with a specific reason (e.g., "Missing front matter," "Cover requirements not met"). [AC 8.23.6]
 
 ## Tasks / Subtasks
 
@@ -62,9 +62,11 @@ so that **I can verify manuscript metadata, check publishing requirements, and a
 ## Dev Agent Record
 
 ### Agent Model Used
+
 Gemini 2.0 Flash (via BMad PM Agent)
 
 ### File List
+
 - `src/app/dashboard/admin/publishing/page.tsx`
 - `src/components/admin/PublishingReviewQueue.tsx`
 - `src/components/admin/PublishingMetadataCard.tsx`

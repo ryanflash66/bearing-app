@@ -13,9 +13,9 @@ import {
 } from "./openrouter";
 import { createClient } from "@supabase/supabase-js";
 
-// Types
+// Types - AC 8.7.2: Expanded types to include grammar and style
 export interface ConsistencyIssue {
-  type: "character" | "plot" | "timeline" | "tone";
+  type: "character" | "plot" | "timeline" | "tone" | "grammar" | "style";
   severity: "low" | "medium" | "high";
   location: {
     chapter?: number | null;
@@ -24,6 +24,7 @@ export interface ConsistencyIssue {
   };
   explanation: string;
   suggestion?: string;
+  documentPosition?: number; // AC 8.7.2: Character offset from document start for stable sorting
 }
 
 export interface ConsistencyReport {
@@ -258,9 +259,9 @@ export async function analyzeConsistencyWithGemini(
     throw new Error("OpenRouter API key not configured");
   }
 
-  // Zod schemas for validation
+  // Zod schemas for validation - AC 8.7.2: Expanded to include grammar and style
   const ConsistencyIssueSchema = z.object({
-    type: z.enum(["character", "plot", "timeline", "tone"]),
+    type: z.enum(["character", "plot", "timeline", "tone", "grammar", "style"]),
     severity: z.enum(["low", "medium", "high"]),
     location: z.object({
       chapter: z.number().optional().nullable(),
@@ -269,6 +270,7 @@ export async function analyzeConsistencyWithGemini(
     }),
     explanation: z.string(),
     suggestion: z.string().optional(),
+    documentPosition: z.number().optional(), // AC 8.7.2: For stable sorting
   });
 
   const ConsistencyReportSchema = z.object({
@@ -279,18 +281,28 @@ export async function analyzeConsistencyWithGemini(
   try {
     const chunkInfo = chunkIndex !== undefined ? `(chunk ${chunkIndex + 1} of ${totalChunks})` : "";
 
-    const systemPrompt = `You are a professional manuscript editor analyzing text for consistency issues.
+    const systemPrompt = `You are a professional manuscript editor analyzing text for consistency and quality issues.
 Look for:
-- Character inconsistencies (name changes, personality shifts, appearance contradictions)
-- Plot gaps or contradictions
-- Timeline issues (chronological inconsistencies)
-- Tone shifts (sudden changes in writing style or voice)
+- Grammar & Spelling: Check for grammatical errors, typos, punctuation issues, and spelling mistakes
+- Writing Style: Identify issues like passive voice, "telling" instead of "showing", repetitive phrasing, weak verbs
+- Tone Drift: Detect sudden shifts in narrative voice, inconsistent formality, or mood changes
+- Character Consistency: Find name changes, personality shifts, appearance contradictions
+- Plot Consistency: Identify plot gaps, contradictions, or logical inconsistencies
+
+For each issue, provide:
+- type: one of "grammar", "style", "tone", "character", or "plot"
+- severity: "high" for critical issues, "medium" for important issues, "low" for minor suggestions
+- location.quote: the exact problematic text
+- location.offset: character position from document start (if known, otherwise null)
+- explanation: clear explanation of the issue
+- suggestion: optional corrected text or improvement suggestion
+- documentPosition: character offset from document start for sorting (if offset is known)
 
 Return ONLY a valid JSON object with this exact structure (no markdown code blocks):
 {
   "issues": [
     {
-      "type": "character|plot|timeline|tone",
+      "type": "grammar|style|tone|character|plot",
       "severity": "low|medium|high",
       "location": {
         "chapter": <number or null>,
@@ -298,7 +310,8 @@ Return ONLY a valid JSON object with this exact structure (no markdown code bloc
         "offset": <character offset or null>
       },
       "explanation": "<detailed explanation>",
-      "suggestion": "<optional suggestion>"
+      "suggestion": "<optional suggestion>",
+      "documentPosition": <character offset or null>
     }
   ],
   "summary": "<optional overall summary>"
@@ -334,9 +347,16 @@ Return ONLY a valid JSON object with this exact structure (no markdown code bloc
     }
     jsonText = jsonText.trim();
 
-    const report = ConsistencyReportSchema.parse(JSON.parse(jsonText));
-
-    return report;
+    try {
+      const parsedJson = JSON.parse(jsonText);
+      const report = ConsistencyReportSchema.parse(parsedJson);
+      return report;
+    } catch (parseError) {
+      // AC 8.7.2 (Task 4.4): Log malformed response for debugging
+      console.error('[Gemini] Malformed response:', response);
+      console.error('[Gemini] Parse error:', parseError);
+      throw new Error("AI returned unexpected format. Try again.");
+    }
   } catch (error) {
     if (error instanceof OpenRouterError) {
       const detailedError = `OpenRouter API error (${error.statusCode}): ${error.message}`;
