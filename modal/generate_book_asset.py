@@ -370,7 +370,7 @@ def generate_book_asset(payload_dict: dict[str, Any]) -> dict[str, Any]:
         style=payload_dict["style"],
         wrapped_prompt=payload_dict["wrapped_prompt"],
         negative_prompt=payload_dict["negative_prompt"],
-        aspect_ratio=payload_dict.get("aspect_ratio", "2:3"),
+        aspect_ratio=payload_dict.get("aspect_ratio", "3:4"),
         variation_seeds=list(payload_dict.get("variation_seeds") or []),
     )
 

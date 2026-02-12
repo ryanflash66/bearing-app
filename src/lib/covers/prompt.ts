@@ -59,7 +59,7 @@ export function buildWrappedCoverPrompt(input: BuildCoverPromptInput): string {
     titleHint,
     authorHint,
     `Negative prompt: ${NEGATIVE_PROMPT}.`,
-    "Aspect ratio: portrait 2:3.",
+    "Aspect ratio: portrait 3:4.",
   ]
     .filter(Boolean)
     .join(" ");
@@ -68,12 +68,12 @@ export function buildWrappedCoverPrompt(input: BuildCoverPromptInput): string {
 export function buildCoverPromptPayload(input: BuildCoverPromptInput): {
   wrappedPrompt: string;
   negativePrompt: string;
-  aspectRatio: "2:3";
+  aspectRatio: "3:4";
 } {
   return {
     wrappedPrompt: buildWrappedCoverPrompt(input),
     negativePrompt: NEGATIVE_PROMPT,
-    aspectRatio: "2:3",
+    aspectRatio: "3:4",
   };
 }
 
