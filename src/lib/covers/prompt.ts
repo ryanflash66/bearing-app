@@ -88,15 +88,16 @@ export function createDeterministicSeed(base: string): number {
       (hash << 8) +
       (hash << 24);
   }
-  return Math.abs(hash >>> 0);
+  // Clamp to Vertex AI's valid seed range: 1–2147483647
+  return Math.max(1, (hash >>> 0) % 2147483647);
 }
 
 export function generateVariationSeeds(baseSeed: number, count = 4): number[] {
-  const safeBaseSeed = Math.max(1, Math.floor(baseSeed) || 1);
+  const safeBaseSeed = Math.max(1, Math.floor(baseSeed) % 2147483647 || 1);
   const seeds = new Set<number>();
 
   for (let index = 0; index < count * 4; index += 1) {
-    const candidate = safeBaseSeed + index * 7919;
+    const candidate = ((safeBaseSeed + index * 7919) % 2147483647) || 1;
     seeds.add(candidate);
     if (seeds.size === count) break;
   }

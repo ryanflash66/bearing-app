@@ -201,16 +201,19 @@ def _call_vertex_imagen(
             "error": f"Credential resolution failed: {exc}",
         }
 
+    # Clamp seed to Vertex's valid range: 1–2147483647
+    clamped_seed = max(1, seed % 2147483647)
+
     payload = {
         "instances": [{"prompt": wrapped_prompt}],
         "parameters": {
             "sampleCount": 1,
-            "seed": seed,
+            "seed": clamped_seed,
             "aspectRatio": aspect_ratio,
-            "negativePrompt": negative_prompt,
             "addWatermark": False,
-            "safetyFilterLevel": os.environ.get("VERTEX_SAFETY_FILTER_LEVEL", "BLOCK_ONLY_HIGH"),
-            "personGeneration": os.environ.get("VERTEX_PERSON_GENERATION", "ALLOW_ADULT"),
+            "enhancePrompt": False,
+            "safetySetting": os.environ.get("VERTEX_SAFETY_SETTING", "block_only_high"),
+            "personGeneration": os.environ.get("VERTEX_PERSON_GENERATION", "allow_adult"),
         },
     }
 
