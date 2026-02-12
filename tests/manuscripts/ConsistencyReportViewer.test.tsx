@@ -130,4 +130,31 @@ describe("ConsistencyReportViewer", () => {
     // Now showing Chapter 2 issue as well
     expect(screen.getByText('"Q2"')).toBeInTheDocument();
   });
+
+  it("shows token usage summary when token counts are provided", () => {
+    render(
+      <ConsistencyReportViewer
+        report={mockReport}
+        tokensEstimated={1200}
+        tokensActual={1500}
+        model="gemini-2.0-flash"
+        onClose={() => {}}
+      />,
+    );
+
+    const summary = screen.getByTestId("token-usage-summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("Input:");
+    expect(summary).toHaveTextContent("1,200");
+    expect(summary).toHaveTextContent("Output:");
+    expect(summary).toHaveTextContent("300");
+    expect(summary).toHaveTextContent("Total:");
+    expect(summary).toHaveTextContent("1,500");
+    expect(summary).toHaveTextContent("gemini-2.0-flash");
+  });
+
+  it("hides token usage summary when total tokens are missing", () => {
+    render(<ConsistencyReportViewer report={mockReport} onClose={() => {}} />);
+    expect(screen.queryByTestId("token-usage-summary")).not.toBeInTheDocument();
+  });
 });

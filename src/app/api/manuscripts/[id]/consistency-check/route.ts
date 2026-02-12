@@ -2,6 +2,29 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { initiateConsistencyCheck } from "@/lib/gemini";
 
+const DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 60;
+const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 3;
+
+function getConsistencyCheckRateLimitConfig() {
+  const windowSeconds = Number(
+    process.env.CONSISTENCY_CHECK_RATE_LIMIT_WINDOW_SECONDS ??
+      DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+  );
+  const maxRequests = Number(
+    process.env.CONSISTENCY_CHECK_RATE_LIMIT_MAX_REQUESTS ??
+      DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+  );
+
+  return {
+    windowSeconds: Number.isFinite(windowSeconds) && windowSeconds > 0
+      ? Math.floor(windowSeconds)
+      : DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    maxRequests: Number.isFinite(maxRequests) && maxRequests > 0
+      ? Math.floor(maxRequests)
+      : DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+  };
+}
+
 /**
  * POST /api/manuscripts/:id/consistency-check
  * Initiate an async consistency check for a manuscript using Gemini
@@ -66,6 +89,40 @@ export async function POST(
       );
     }
 
+    const { windowSeconds, maxRequests } = getConsistencyCheckRateLimitConfig();
+    const rateLimitWindowStart = new Date(
+      Date.now() - windowSeconds * 1000,
+    ).toISOString();
+
+    const { count: recentCheckCount, error: rateLimitError } = await supabase
+      .from("consistency_checks")
+      .select("id", { count: "exact", head: true })
+      .eq("manuscript_id", manuscriptId)
+      .eq("created_by", profile.id)
+      .gte("created_at", rateLimitWindowStart);
+
+    if (rateLimitError) {
+      console.error("Consistency check rate-limit query failed:", rateLimitError);
+      return NextResponse.json(
+        { error: "Unable to verify rate limits" },
+        { status: 500 }
+      );
+    }
+
+    if ((recentCheckCount ?? 0) >= maxRequests) {
+      return NextResponse.json(
+        {
+          error: `Rate limit reached. Please wait ${windowSeconds} seconds before running another consistency check.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(windowSeconds),
+          },
+        }
+      );
+    }
+
     // Initiate consistency check (async, returns immediately)
     // Pass profile.id as userId (which becomes created_by)
     // Initiate consistency check (async, returns immediately)
@@ -93,7 +150,10 @@ export async function POST(
     console.error("Error initiating consistency check:", error);
     
     // Handle token cap errors specifically
-    if (error instanceof Error && error.message.includes("Token cap")) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("Token cap") || error.message.includes("Rate limit"))
+    ) {
       return NextResponse.json(
         { error: error.message },
         { status: 429 } // Too Many Requests

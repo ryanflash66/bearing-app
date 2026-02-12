@@ -11,6 +11,9 @@ import { ConsistencyReport, ConsistencyIssue } from "@/lib/gemini";
 
 interface ConsistencyReportViewerProps {
   report: ConsistencyReport;
+  tokensEstimated?: number;
+  tokensActual?: number;
+  model?: string;
   onClose: () => void;
   onApplyFix?: (issue: ConsistencyIssue) => void;
   onNavigate?: (location: { quote: string; chapter?: number | null }) => void;
@@ -23,6 +26,9 @@ type Severity = "low" | "medium" | "high";
 
 export default function ConsistencyReportViewer({
   report,
+  tokensEstimated,
+  tokensActual,
+  model,
   onClose,
   onApplyFix,
   onNavigate,
@@ -119,6 +125,31 @@ export default function ConsistencyReportViewer({
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
             <span className="font-semibold text-slate-900">Summary: </span>
             {report.summary}
+          </div>
+        )}
+
+        {tokensActual != null && tokensActual > 0 && (
+          <div
+            className="border-b border-slate-200 bg-slate-50 px-6 py-3 text-xs text-slate-600"
+            data-testid="token-usage-summary"
+          >
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {tokensEstimated != null && (
+                <span>
+                  Input: <strong>{tokensEstimated.toLocaleString()}</strong>
+                </span>
+              )}
+              <span>
+                Output:{" "}
+                <strong>
+                  {Math.max(tokensActual - (tokensEstimated ?? 0), 0).toLocaleString()}
+                </strong>
+              </span>
+              <span>
+                Total: <strong>{tokensActual.toLocaleString()}</strong>
+              </span>
+              {model && <span className="text-slate-400">{model}</span>}
+            </div>
           </div>
         )}
 

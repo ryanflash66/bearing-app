@@ -123,9 +123,19 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
       }),
     };
 
+    const mockRateLimitQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockResolvedValue({
+        count: 0,
+        error: null,
+      }),
+    };
+
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "manuscripts") return mockManuscriptsQuery;
       if (table === "users") return mockUsersQuery;
+      if (table === "consistency_checks") return mockRateLimitQuery;
       return {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
@@ -242,6 +252,64 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
 
     expect(response.status).toBe(429);
     expect(data.error).toContain("Token cap");
+  });
+
+  it("should return 429 when consistency checks exceed rate limit window", async () => {
+    const mockManuscriptsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id: "ms-id",
+          account_id: "account-id",
+          owner_user_id: "user-id",
+          content_text: "Sample manuscript content",
+        },
+        error: null,
+      }),
+    };
+
+    const mockUsersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: { id: "user-id" },
+        error: null,
+      }),
+    };
+
+    const mockRateLimitQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockResolvedValue({
+        count: 3,
+        error: null,
+      }),
+    };
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") return mockManuscriptsQuery;
+      if (table === "users") return mockUsersQuery;
+      if (table === "consistency_checks") return mockRateLimitQuery;
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    const request = {
+      json: async () => ({}),
+    } as any;
+
+    const response = await POST(request, { params: Promise.resolve({ id: "ms-id" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(data.error).toContain("Rate limit reached");
+    expect(initiateConsistencyCheck).not.toHaveBeenCalled();
   });
 
   it("should return 400 for empty manuscript content", async () => {
@@ -557,7 +625,31 @@ describe("Retry scenarios (AC 3.1.5)", () => {
         error: null,
       }),
     };
-    mockSupabaseClient.from.mockReturnValue(mockManuscriptsQuery);
+
+    const mockUsersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: { id: "user-id" },
+        error: null,
+      }),
+    };
+
+    const mockRateLimitQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      gte: jest.fn().mockResolvedValue({
+        count: 0,
+        error: null,
+      }),
+    };
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") return mockManuscriptsQuery;
+      if (table === "users") return mockUsersQuery;
+      if (table === "consistency_checks") return mockRateLimitQuery;
+      return mockManuscriptsQuery;
+    });
 
     // First attempt fails
     initiateConsistencyCheck.mockRejectedValueOnce(

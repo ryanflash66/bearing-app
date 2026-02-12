@@ -127,6 +127,11 @@ so that **consistency checks are faster, more cost-effective (up to 75% savings 
   - Fixed HIGH issue: Updated `getCachedContent` to return `null` on validation errors, preventing stale cache usage.
   - Fixed MEDIUM issue: Synchronized `File List` with actual git changes (docs/sprint-status.yaml, docs/story5.9.md).
 - 2026-02-12: ISS-1 fix (Manual QA): Added token count display (input/output/total + model) to ConsistencyReportSidebar. Task 4.4 completed.
+- 2026-02-12: ISS-2/ISS-3/ISS-4 fixes (Manual QA):
+  - Added token count display (input/output/total + model) to deprecated `ConsistencyReportViewer` modal so reports show usage even when sidebar flag is disabled.
+  - Restored visible "Get Suggestions" CTA when editor text is selected.
+  - Added server-side consistency-check rate limiting (`3` checks / `60s` default per user+manuscript) with configurable env vars and `429` response.
+  - Added regression tests for viewer token summary, suggestions CTA visibility, and API rate limiting.
 
 ## Dev Agent Record
 
@@ -151,3 +156,9 @@ Gemini 2.0 Flash (implementation), Claude Opus 4.6 (initial review), Gemini 2.0 
 - `src/components/manuscripts/ConsistencyReportSidebar.tsx` (updated: token usage display — AC 5.6.1.5)
 - `src/components/manuscripts/ConsistencyReportSidebar.test.tsx` (updated: 4 token usage tests)
 - `src/components/manuscripts/ManuscriptEditor.tsx` (updated: pass token counts to sidebar)
+- `src/components/manuscripts/ConsistencyReportViewer.tsx` (updated: token usage display in legacy report modal)
+- `src/app/api/manuscripts/[id]/consistency-check/route.ts` (updated: consistency-check request rate limiting)
+- `.env.example` (updated: added consistency-check rate-limit env vars)
+- `tests/manuscripts/ConsistencyReportViewer.test.tsx` (updated: token usage display tests)
+- `tests/components/manuscripts/ManuscriptEditor.suggestions.test.tsx` (new: selection-triggered suggestions CTA regression test)
+- `tests/api/consistency-check.test.ts` (updated: rate limiting behavior coverage)
