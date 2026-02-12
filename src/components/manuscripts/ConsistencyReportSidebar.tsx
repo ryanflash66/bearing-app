@@ -32,6 +32,9 @@ interface ConsistencyReportSidebarProps {
   onSaveNow: () => Promise<boolean>;
   onCancel?: () => void;
   editor: Editor | null;
+  tokensEstimated?: number;
+  tokensActual?: number;
+  model?: string;
 }
 
 // Extended issue type to include documentPosition and unique ID
@@ -54,6 +57,9 @@ export default function ConsistencyReportSidebar({
   onSaveNow,
   onCancel,
   editor,
+  tokensEstimated,
+  tokensActual,
+  model,
 }: ConsistencyReportSidebarProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const searchParams = useSearchParams();
@@ -580,6 +586,20 @@ export default function ConsistencyReportSidebar({
         <SheetHeader className="border-b pb-4">
           <SheetTitle className="text-lg font-semibold">Consistency Check</SheetTitle>
         </SheetHeader>
+
+        {/* AC 5.6.1.5: Token usage summary */}
+        {!isRunning && report && tokensActual != null && tokensActual > 0 && (
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" data-testid="token-usage-summary">
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {tokensEstimated != null && (
+                <span>Input: <strong>{tokensEstimated.toLocaleString()}</strong></span>
+              )}
+              <span>Output: <strong>{(tokensActual - (tokensEstimated ?? 0)).toLocaleString()}</strong></span>
+              <span>Total: <strong>{tokensActual.toLocaleString()}</strong></span>
+              {model && <span className="text-slate-400">{model}</span>}
+            </div>
+          </div>
+        )}
 
         {notice && (
           <div className="mt-4 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">

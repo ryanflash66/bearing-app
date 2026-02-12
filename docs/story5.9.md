@@ -29,8 +29,8 @@ UI (description + style)
 
 Modal Worker (async, long-running):
   → Receives job_id + cover inputs
-  → Prompt wrapping ("Professional book cover illustration...")
-  → Vertex AI Imagen 4.0 (portrait 2:3 aspect ratio, 4 variations)
+  → Prompt wrapping (flat 2D illustration/poster background artwork — see Prompt Engineering below)
+  → Vertex AI Imagen 4.0 (portrait 3:4 aspect ratio, 4 variations)
   → Upload each image to R2 as WebP as completed
   → Progressively update cover_jobs.images[] in Supabase
   → Mark job completed or failed
@@ -88,7 +88,7 @@ RLS: Users can only access rows matching their `account_id`.
 - **No SDXL for covers.** Imagen 4.0 is highly capable out-of-the-box. Modal handles prompt engineering wrappers. SDXL remains for inline manuscript images (Story 8.8) - see Finding #8 justification below.
 - **No background jobs in Next.js.** Vercel serverless functions have 10-60s timeout limits. All long-running work happens in Modal. Next.js only creates the job record and triggers Modal (Finding #4).
 - **Textless art only** - AI generates artwork without text. Title/author overlaid by the UI (Finding #2).
-- **Portrait 2:3 aspect ratio** (standard book cover proportions, Finding #3).
+- **Portrait 3:4 aspect ratio** (closest Imagen 4.0 supported ratio to standard book cover proportions; 2:3 is not supported — Finding #3, updated in Round 5).
 - **Independent of Story 5.6.x.** This story does not depend on the Gemini/Llama infrastructure refactor. Can be completed before custom model migration.
 
 ## Non-Goals (Scope Boundaries)
@@ -105,14 +105,14 @@ RLS: Users can only access rows matching their `account_id`.
 - [x] New "Cover Lab" tab in Manuscript settings. [AC 5.9.1]
 - [x] Input form for: Genre (Dropdown), Mood (Dropdown), Art Style (Cinematic, Illustrated, Minimalist), and Visual Description. [AC 5.9.2]
 - [x] Auto-fills Title and Author Name from manuscript metadata. Title and author are rendered as **UI text overlay** on the generated artwork, NOT baked into the AI image. Overlay uses customizable font/position controls. Overlay configuration (font, position, color/opacity) is **persisted per manuscript** in manuscript metadata so settings survive page reload and are applied to future generations (Finding #17). [AC 5.9.3]
-- [x] Generated images use **portrait 2:3 aspect ratio** (e.g., 832x1248 or Imagen's nearest supported portrait size) matching standard book cover proportions. [AC 5.9.4]
+- [x] Generated images use **portrait 3:4 aspect ratio** (Imagen 4.0's nearest supported portrait size). Note: 2:3 is not supported by Imagen 4.0; 3:4 is the closest available. [AC 5.9.4]
 - [x] **Mobile responsive**: On viewports < 768px, image grid switches to a single-column stacked layout or horizontal carousel. Form fields stack vertically. Preview modal is full-screen on mobile (Finding #13). [AC 5.9.24]
 - [x] **Accessibility**: Generated images include `alt` text auto-populated from the user's visual description input. Preview modal is keyboard-navigable and supports screen readers (Finding #22). [AC 5.9.25]
 
 ### 2. Generation Pipeline (Async)
 - [x] "Generate" button creates an async job record in Supabase and returns immediately (HTTP 202). **Generate button is disabled while a job is already in progress** for the same manuscript to prevent concurrent generation conflicts (Finding #23). [AC 5.9.5]
 - [x] UI polls job status endpoint with **exponential backoff** (start 2s, cap at 10s, max 60 polls ~5 min before timing out client-side). Poll response returns a `completed_images` array (initially empty, grows as images complete) to support true progressive rendering (Finding #24). Shows skeleton placeholders for pending slots. [AC 5.9.6]
-- [x] Modal wraps user description in a "Professional book cover illustration, no text, no words, no letters" prompt with style modifiers. Explicit negative prompt to suppress text rendering. [AC 5.9.7]
+- [x] Prompt is built **server-side in Next.js** (`src/lib/covers/prompt.ts`), not in Modal. The wrapped prompt uses a structured "flat 2D illustration/poster background artwork" framing with comprehensive MUST-NOT exclusion list for text, typography, and book mockups. **No negative prompt** (Imagen 4.0 does not support `negativePrompt`). Prompt changes only require Vercel redeploy, not Modal redeploy. [AC 5.9.7]
 - [x] Modal calls Vertex AI Imagen 4.0 for generation (no fine-tuning, prompt-engineering only). [AC 5.9.8]
 - [x] Returns up to 4 variations. Partial results are acceptable - if safety filters block some variations, return whatever succeeded (minimum 1). If all 4 are blocked, mark job as failed with user-friendly safety message. [AC 5.9.9]
 - [x] Generated images are uploaded to Cloudflare R2 from Modal as **WebP format** (lossy, quality 85) for optimal file size. Each image uploaded individually as it completes (Finding #14). [AC 5.9.10]
@@ -159,13 +159,13 @@ RLS: Users can only access rows matching their `account_id`.
 
 - [x] **Task 2: Modal Worker Endpoint**
   - [x] 2.1: Create Modal function `generate_book_asset` that accepts `job_id` + cover inputs (description, style, genre, mood). New endpoint URL: `MODAL_COVER_URL`
-  - [x] 2.2: Implement prompt wrapping logic. Inject "Professional book cover illustration, no text, no words, no letters" prefix + style modifiers + negative prompts
+  - [x] 2.2: Implement prompt wrapping logic. Prompt is built server-side in Next.js (`src/lib/covers/prompt.ts`) — uses structured "flat 2D illustration/poster background artwork" template with comprehensive MUST-NOT exclusion list. Modal receives the pre-built `wrapped_prompt`
   - [x] 2.3: Call Vertex AI Imagen 4.0 API from Modal. Configure Vertex AI credentials in Modal secrets
   - [x] 2.4: Generate 4 variations per request. Handle partial failures: return whatever succeeds (min 1). Include per-image safety status
   - [x] 2.5: Upload each generated image to R2 individually as it completes (progressive). Use path `tmp/covers/{manuscript_id}/{job_id}/{index}.webp`. Output format is **WebP** (lossy, quality 85)
   - [x] 2.6: **Progressively update `cover_jobs.images[]`** in Supabase after each image upload (using Supabase service role key)
   - [x] 2.7: Mark job `completed` or `failed` in `cover_jobs` table. Save wrapped prompt to `cover_jobs.wrapped_prompt`
-  - [x] 2.8: Set portrait aspect ratio (2:3) in Imagen API request parameters
+  - [x] 2.8: Set portrait aspect ratio (3:4) in Imagen API request parameters. Note: 2:3 is not supported by Imagen 4.0; supported ratios are 1:1, 3:4, 4:3, 9:16, 16:9
   - [x] 2.9: Handle Vertex AI 429 (quota exceeded): update job status to `queued` with `retry_after` timestamp. Retry up to 3 times before marking as failed
 
 - [x] **Task 3: Selection & Persistence**
@@ -191,11 +191,11 @@ RLS: Users can only access rows matching their `account_id`.
   - [x] 4.13: Auto-populate `alt` attribute on generated images from user's visual description input. Ensure preview modal is screen-reader accessible
 
 - [x] **Task 5: Prompt Engineering**
-  - [x] 5.1: Create prompt template library in Modal function (style-specific wrappers)
-  - [x] 5.2: Map genre + mood + style to Imagen-optimized prompt modifiers
-  - [x] 5.3: Add explicit negative prompts to suppress text/letter rendering in all templates
-  - [x] 5.4: Test prompt quality across different genres and styles at 2:3 portrait ratio
-  - [x] 5.5: Add variation seed logic to ensure 4 distinct outputs
+  - [x] 5.1: Create prompt template library in `src/lib/covers/prompt.ts` (style-specific wrappers: Cinematic, Illustrated, Minimalist)
+  - [x] 5.2: Map genre + mood + style to Imagen-optimized prompt modifiers. Genre/mood conveyed through imagery and palette only — never as text in the prompt that Imagen might render
+  - [x] 5.3: Comprehensive MUST-NOT exclusion list replaces negative prompts (Imagen 4.0 does not support `negativePrompt`). Exclusions cover: text/typography/letters, book mockups/3D renders, frames/borders, garbled glyphs, signage, labels
+  - [x] 5.4: Test prompt quality across different genres and styles at 3:4 portrait ratio. Production QA confirmed clean textless artwork after prompt engineer rework
+  - [x] 5.5: Add variation seed logic (`createDeterministicSeed`, `generateVariationSeeds`) to ensure 4 distinct outputs. Seeds require `addWatermark: false` and `enhancePrompt: false` to be deterministic
 
 - [x] **Task 6: R2 Lifecycle & Job Cleanup**
   - [x] 6.1: Configure R2 bucket lifecycle rule: auto-delete objects with prefix `tmp/covers/` after 48 hours
@@ -242,9 +242,11 @@ RLS: Users can only access rows matching their `account_id`.
 ### Architecture
 - **Modal.com as Async Worker**: Modal is the long-running worker that: (1) wraps prompts, (2) calls Vertex AI Imagen, (3) converts output to WebP, (4) uploads to R2, (5) progressively updates `cover_jobs.images[]` in Supabase via service role key. **Justification for Modal hop (Finding #12)**: Modal provides image post-processing capabilities (format conversion), centralized prompt management, and R2 streaming without routing large image binaries through the Next.js serverless function. The cold-start cost is acceptable given the async job pattern.
 - **Modal Endpoint**: New `MODAL_COVER_URL` env var (separate from `MODAL_SDXL_URL`). Reuses existing `MODAL_API_KEY`. Modal needs Supabase service role key (`SUPABASE_SERVICE_ROLE_KEY`) to update `cover_jobs` directly.
-- **Imagen 4.0**: No fine-tuning needed. Quality controlled via prompt engineering on Modal side.
-- **Aspect Ratio**: Portrait 2:3 (832x1248 or nearest Imagen-supported size). This matches standard 6x9 book cover proportions.
-- **Text Rendering Strategy**: AI generates textless artwork only. Title/author text is overlaid by the frontend UI using customizable font/position controls. This avoids AI text hallucination issues.
+- **Imagen 4.0**: No fine-tuning needed. Quality controlled via prompt engineering in `src/lib/covers/prompt.ts`. Key Imagen 4.0 API gotchas: no `negativePrompt` param, must set `addWatermark: false` for seeds, `enhancePrompt: false` for deterministic seeds, param names are lowercase (`safetySetting` not `safetyFilterLevel`, `block_only_high` not `BLOCK_ONLY_HIGH`).
+- **Aspect Ratio**: Portrait 3:4 (Imagen 4.0 does not support 2:3; supported ratios: 1:1, 3:4, 4:3, 9:16, 16:9). 3:4 is the closest match to standard book cover proportions.
+- **Text Rendering Strategy**: AI generates textless artwork only. Title/author text is overlaid by the frontend UI using customizable font/position controls. This avoids AI text hallucination issues. **Critical**: Title and author name must NEVER appear in the AI prompt — Imagen interprets quoted text and genre labels as visual text to render on the image.
+- **Prompt Architecture**: Prompt is built **server-side** in `src/lib/covers/prompt.ts` (Next.js), NOT in Modal. Modal receives the pre-built `wrapped_prompt` from the API. This means prompt changes only require a Vercel redeploy, not a Modal redeploy. The prompt uses a structured format with: (1) flat 2D illustration framing, (2) scene/visual brief from user description, (3) genre/mood conveyed through imagery only, (4) style modifiers, (5) breathing room guidance for text overlay, (6) comprehensive MUST-NOT exclusion list.
+- **R2 Public URL Configuration**: R2 `.r2.dev` URLs use format `https://pub-HASH.r2.dev`, NOT `https://bucket-name.r2.dev`. The `R2_PUBLIC_URL` env var **must** be set on Vercel to the actual `.r2.dev` URL from the Cloudflare dashboard. The fallback in `storage.ts` produces broken URLs.
 - **Async Job Pattern**: No background jobs in Next.js (Vercel timeout limits). Next.js creates `cover_jobs` record in Supabase, fires POST to Modal endpoint, returns 202 immediately. Modal does all heavy lifting and updates job state directly. UI polls `GET /api/covers/jobs/:job_id` for results.
 - **R2 Storage**: Temporary images go to `tmp/covers/{manuscript_id}/{job_id}/`. Permanent covers go to `covers/{account_id}/{manuscript_id}/`. Gallery saves go to `gallery/{account_id}/{image_id}/`. R2 lifecycle policy handles temp cleanup (48h TTL) - no application-level cleanup code.
 - **Rate Limiting**: 5 generations/day/user. Each generation = up to 4 images = 1 rate limit event. Tracked via `ai_usage_events` with feature `cover_generation`.
@@ -298,6 +300,8 @@ RLS: Users can only access rows matching their `account_id`.
 - 2026-02-11: Re-ran Story 5.9 focused tests, full `npm test`, and `npm run lint` (warnings only).
 - 2026-02-11: Addressed all 3 Round 4 findings by adding fetch error guards for save/select actions, removing duplicate prompt/author derivation in create-job route, and adding a `tokens_actual` usage test. Re-ran targeted tests for updated API and component files.
 
+- 2026-02-11: Production QA testing revealed 7 bugs (Round 5). Fixed RLS policy violations (auth UUID vs profile PK), R2 URL format (`pub-HASH.r2.dev`), Vertex API parameter mismatches (`safetySetting`, `addWatermark`, `enhancePrompt`, aspect ratio 3:4), and complete prompt rewrite to eliminate 3D book mockups and text artifacts. All fixes verified in production.
+
 ### Completion Notes
 
 - Implemented the full Cover Lab feature set: schema + RLS migrations, async cover job APIs, cover selection/gallery persistence, Cover Lab UI, prompt engineering utilities, and operations runbook/cleanup artifacts.
@@ -306,6 +310,7 @@ RLS: Users can only access rows matching their `account_id`.
 - Resolved all Round 4 follow-up findings (1 medium, 2 low) with regression tests covering the newly-added network-error handling and `tokens_actual` parsing path.
 - Full regression passed: `Test Suites: 107 passed, 107 total` and `Tests: 773 passed, 5 skipped, 778 total`.
 - Lint passed with existing repository warnings only (`0` errors).
+- Production QA (Round 5): 7 bugs found and fixed during live end-to-end testing on Vercel. All findings required real Vertex AI calls, R2 uploads, and Supabase RLS enforcement — not catchable by mocked unit tests. Prompt rework by external prompt engineer resolved persistent text/book artifact issues.
 
 ## File List
 
@@ -419,10 +424,35 @@ RLS: Users can only access rows matching their `account_id`.
 | 2 | `buildCoverPromptPayload` called twice with identical args, `authorName` extraction duplicated | Low | Resolved |
 | 3 | No test exercises `parseModalActualTokens()` returning a real value — function always returns `null` in tests | Low | Resolved |
 
+### Round 5 (Production QA Testing)
+
+**Reviewer:** Manual QA (Ryan + Claude Agent)
+**Date:** 2026-02-11
+**Findings:** 7 | **All resolved**
+
+End-to-end production testing on Vercel revealed 7 bugs not caught by code review or unit tests. These required live Vertex AI calls, real R2 uploads, and actual Supabase RLS enforcement.
+
+| # | Finding | Severity | Resolution |
+|---|---------|----------|------------|
+| 1 | **RLS policy violation on `cover_jobs` INSERT** — API routes inserted `user.id` (auth UUID) into `user_id`, but RLS uses `get_current_user_id()` which returns `users.id` (profile PK integer) | Critical | All 4 cover API routes now resolve `profile.id` via `users` table lookup before queries/inserts |
+| 2 | **GCP billing not enabled** — Vertex AI returned 403 "This API method requires billing to be enabled" | Critical (config) | Enabled billing on GCP project. Cost ~$0.03-0.04/image |
+| 3 | **Watermark/seed conflict** — Vertex returned "Seed is not supported when watermark is enabled" | High | Added `addWatermark: false` to Vertex API payload in `modal/generate_book_asset.py` |
+| 4 | **Invalid aspect ratio 2:3** — Vertex returned "Invalid aspect ratio, 2:3" | High | Changed to `3:4` in both `src/lib/covers/prompt.ts` and `modal/generate_book_asset.py`. Imagen 4.0 only supports: 1:1, 3:4, 4:3, 9:16, 16:9 |
+| 5 | **Vertex API parameter mismatches** — Wrong param names and casing | High | Fixed in `modal/generate_book_asset.py`: `safetyFilterLevel` → `safetySetting`, `BLOCK_ONLY_HIGH` → `block_only_high`, `ALLOW_ADULT` → `allow_adult`, removed unsupported `negativePrompt`, added `enhancePrompt: false`, added seed clamping 1–2147483647 |
+| 6 | **R2 images return 500** — URLs using `https://bearing-uploads.r2.dev/...` returned 500 | Critical | R2 `.r2.dev` URLs use format `https://pub-HASH.r2.dev`, NOT `https://bucket-name.r2.dev`. Set `R2_PUBLIC_URL` env var on Vercel. Enabled `.r2.dev` public access on bucket |
+| 7 | **3D book renders and text artifacts in generated images** — Imagen rendered literal 3D book mockups and garbled/incorrect text (genre words, "THRILLER", etc.) on images | High | Complete prompt rewrite by prompt engineer. New prompt uses: structured "flat 2D illustration/poster background artwork" framing, comprehensive MUST-NOT exclusion list, breathing room guidance for text overlay, title/author completely removed from prompt |
+
+**Key lessons learned:**
+- Auth UUID vs profile PK mismatch is a systemic issue — `supabase.auth.getUser().user.id` ≠ `users.id`. All tables use profile PK.
+- Imagen 4.0 API documentation is incomplete/misleading — parameter names and supported values differ from docs. Always test with real API calls.
+- Prompt engineering for Imagen requires explicit, comprehensive exclusion lists — "do not" instructions alone are insufficient. Imagen interprets any quoted text or label-like words as visual content to render.
+
 ---
 
 ### Change Log
 
+- 2026-02-12: Manual QA ISS-3 follow-up — Fixed 4 broken cover job API test suites. Root cause: Round 5 auth fix added `users` table profile lookup to all cover routes, but test mocks were not updated. Also corrected stale 202→502 assertion in Modal failure test.
+- 2026-02-11: Production QA Round 5 — 7 bugs found and fixed during live end-to-end testing. Critical fixes: auth UUID→profile PK in all cover API routes, R2 public URL configuration, Vertex API parameter corrections (aspect ratio 3:4, watermark, enhancePrompt, safetySetting casing). Complete prompt rewrite by prompt engineer to eliminate 3D book renders and text artifacts. All findings resolved and verified in production.
 - 2026-02-11: Completed Round 4 follow-ups. Added `try/catch` guards for gallery-save and cover-select fetch flows, refactored prompt/author derivation to compute once in create-job route, and added `tokens_actual` usage logging test coverage (`{ tokens_actual: 150000 }`).
 - 2026-02-11: Code review round 4 (re-review) — verified all 10 Round 3 fixes resolved. 3 new findings (1 medium, 2 low). Action items added to Review Follow-ups.
 - 2026-02-11: Completed Round 3 follow-up implementation. Fixed R2 URL construction with `R2_PUBLIC_URL` + `storage_path` alignment, moved usage logging behind successful/queued Modal trigger, removed phantom `in_progress` state, added fetch error handling in CoverGenerator, documented/parsed actual token usage fallback, removed dead Modal helper, optimized poll RLS policy, and updated Story File List artifacts.

@@ -36,6 +36,18 @@ describe("POST /api/covers/jobs/[jobId]/select", () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
+      from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
+        return {};
+      }),
     });
 
     const response = await POST(
@@ -87,6 +99,15 @@ describe("POST /api/covers/jobs/[jobId]/select", () => {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "cover_jobs") {
           return {
             select: jest.fn().mockReturnValue({

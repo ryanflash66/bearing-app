@@ -105,6 +105,96 @@ describe('XSS Sanitization', () => {
   });
 });
 
+// AC 5.6.1.5: Token usage display tests
+describe("Token usage summary (Story 5.6.1)", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    searchParams.delete("severity");
+    searchParams.delete("type");
+  });
+
+  const baseProps = {
+    open: true,
+    onOpenChange: jest.fn(),
+    isRunning: false,
+    onCancel: jest.fn(),
+    editor: null,
+    onNavigateToIssue: jest.fn().mockResolvedValue({ found: true }),
+    onApplyFix: jest.fn().mockResolvedValue(undefined),
+    onSaveNow: jest.fn().mockResolvedValue(true),
+  };
+
+  const report = {
+    issues: [
+      {
+        type: "grammar" as const,
+        severity: "high" as const,
+        location: { quote: "test", offset: 0 },
+        explanation: "Test issue.",
+      },
+    ],
+  };
+
+  it("displays token counts when report is complete and tokens are available", () => {
+    render(
+      <ConsistencyReportSidebar
+        {...baseProps}
+        report={report as any}
+        tokensEstimated={1200}
+        tokensActual={1500}
+        model="gemini-2.0-flash"
+      />,
+    );
+
+    const summary = screen.getByTestId("token-usage-summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary).toHaveTextContent("1,200");
+    expect(summary).toHaveTextContent("1,500");
+    expect(summary).toHaveTextContent("300");
+    expect(summary).toHaveTextContent("gemini-2.0-flash");
+  });
+
+  it("does not display token summary when still running", () => {
+    render(
+      <ConsistencyReportSidebar
+        {...baseProps}
+        isRunning={true}
+        report={report as any}
+        tokensEstimated={1200}
+        tokensActual={1500}
+      />,
+    );
+
+    expect(screen.queryByTestId("token-usage-summary")).not.toBeInTheDocument();
+  });
+
+  it("does not display token summary when tokensActual is 0", () => {
+    render(
+      <ConsistencyReportSidebar
+        {...baseProps}
+        report={report as any}
+        tokensEstimated={1200}
+        tokensActual={0}
+      />,
+    );
+
+    expect(screen.queryByTestId("token-usage-summary")).not.toBeInTheDocument();
+  });
+
+  it("does not display token summary when no report", () => {
+    render(
+      <ConsistencyReportSidebar
+        {...baseProps}
+        report={null}
+        tokensEstimated={1200}
+        tokensActual={1500}
+      />,
+    );
+
+    expect(screen.queryByTestId("token-usage-summary")).not.toBeInTheDocument();
+  });
+});
+
 describe("Apply Fix behavior (Story 8.7)", () => {
   beforeEach(() => {
     jest.clearAllMocks();

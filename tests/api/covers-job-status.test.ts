@@ -32,28 +32,39 @@ describe("GET /api/covers/jobs/[jobId]", () => {
       auth: {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
-      from: jest.fn(() => ({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
+      from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  id: "job-1",
-                  status: "running",
-                  images: [
-                    { storage_path: "tmp/covers/m/1.webp", safety_status: "ok", seed: 1 },
-                    { error: "blocked" },
-                  ],
-                  retry_after: null,
-                  error_message: null,
-                  selected_url: null,
-                },
-                error: null,
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: "job-1",
+                    status: "running",
+                    images: [
+                      { storage_path: "tmp/covers/m/1.webp", safety_status: "ok", seed: 1 },
+                      { error: "blocked" },
+                    ],
+                    retry_after: null,
+                    error_message: null,
+                    selected_url: null,
+                  },
+                  error: null,
+                }),
               }),
             }),
           }),
-        }),
-      })),
+        };
+      }),
     };
 
     (createClient as jest.Mock).mockResolvedValue(mockSupabase);

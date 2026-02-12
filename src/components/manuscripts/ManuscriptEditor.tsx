@@ -346,6 +346,9 @@ export default function ManuscriptEditor({
     jobId?: string;
     error?: string;
     report?: ConsistencyReport;
+    tokensEstimated?: number;
+    tokensActual?: number;
+    model?: string;
   }>({ status: "idle" });
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
 
@@ -1342,6 +1345,9 @@ export default function ManuscriptEditor({
               jobId: job.id,
               error: job.error_message || undefined,
               report: job.report_json || undefined,
+              tokensEstimated: job.tokens_estimated || undefined,
+              tokensActual: job.tokens_actual || undefined,
+              model: job.model || undefined,
             });
 
             // Continue polling if still in progress
@@ -2023,6 +2029,9 @@ export default function ManuscriptEditor({
           onSaveNow={saveConsistencyEditNow}
           onCancel={handleCancelCheck}
           editor={editor}
+          tokensEstimated={consistencyCheckStatus.tokensEstimated}
+          tokensActual={consistencyCheckStatus.tokensActual}
+          model={consistencyCheckStatus.model}
         />
       )}
 

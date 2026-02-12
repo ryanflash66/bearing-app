@@ -60,6 +60,15 @@ describe("POST /api/manuscripts/[id]/covers/jobs", () => {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "manuscripts") {
           return {
             select: jest.fn().mockReturnValue({
@@ -120,6 +129,15 @@ describe("POST /api/manuscripts/[id]/covers/jobs", () => {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "manuscripts") {
           return {
             select: jest.fn().mockReturnValue({
@@ -214,6 +232,15 @@ describe("POST /api/manuscripts/[id]/covers/jobs", () => {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "manuscripts") {
           return {
             select: jest.fn().mockReturnValue({
@@ -297,6 +324,15 @@ describe("POST /api/manuscripts/[id]/covers/jobs", () => {
         getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "manuscripts") {
           return {
             select: jest.fn().mockReturnValue({
@@ -363,7 +399,8 @@ describe("POST /api/manuscripts/[id]/covers/jobs", () => {
       { params }
     );
 
-    expect(response.status).toBe(202);
+    // Route returns 502 when Modal trigger fails (non-429 error)
+    expect(response.status).toBe(502);
     expect(logUsageEvent).not.toHaveBeenCalled();
   });
 });

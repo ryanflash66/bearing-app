@@ -38,6 +38,15 @@ describe("POST /api/covers/jobs/[jobId]/save-to-gallery", () => {
         }),
       },
       from: jest.fn((table: string) => {
+        if (table === "users") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: "user-1" }, error: null }),
+              }),
+            }),
+          };
+        }
         if (table === "cover_jobs") {
           return {
             select: jest.fn().mockReturnValue({
