@@ -1,12 +1,25 @@
 /**
  * AI Model Configuration
  * Central source of truth for all AI models used in the application.
- * Defines explicit model IDs for OpenRouter to avoid hardcoding strings.
+ * Defines explicit model IDs for OpenRouter and Vertex AI.
+ *
+ * Story 5.6.1: Added Vertex AI model constants (Task 3.2)
  */
 
+// ─── Vertex AI Models (Direct, no proxy) ────────────────────────────────────
+export const VERTEX_AI_MODELS = {
+  // Gemini models via Vertex AI (for consistency checks)
+  gemini: {
+    flash: "gemini-2.0-flash",
+    pro: "gemini-1.5-pro-001",
+  },
+} as const;
+
+// ─── OpenRouter Models (Proxied) ────────────────────────────────────────────
 export const AI_MODELS = {
   // Gemini models (Google) via OpenRouter
-  // Used for: Consistency checks, large context analysis
+  // NOTE: Consistency checks now use Vertex AI directly (Story 5.6.1)
+  // These are kept for backward compatibility and potential fallback
   gemini: {
     pro: "google/gemini-pro-1.5",
     // Using stable Flash 1.5. Previous code used "google/gemini-3-flash-preview"
@@ -30,7 +43,8 @@ export const AI_MODELS = {
 } as const;
 
 export const DEFAULT_MODELS = {
-  consistency: AI_MODELS.gemini.flash,
+  // Story 5.6.1: Consistency checks now use Vertex AI directly
+  consistency: VERTEX_AI_MODELS.gemini.flash,
   suggestion: AI_MODELS.llama["3.1_8b"],
   complex_suggestion: AI_MODELS.llama["3.1_70b"],
 } as const;
@@ -43,4 +57,6 @@ export type AiModelId =
   | typeof AI_MODELS.llama["3.1_70b"]
   | typeof AI_MODELS.llama["3.1_405b"]
   | typeof AI_MODELS.claude.sonnet
-  | typeof AI_MODELS.claude.haiku;
+  | typeof AI_MODELS.claude.haiku
+  | typeof VERTEX_AI_MODELS.gemini.flash
+  | typeof VERTEX_AI_MODELS.gemini.pro;

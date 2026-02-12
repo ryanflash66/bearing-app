@@ -30,6 +30,7 @@ export interface UsageEvent {
   tokens_estimated: number;
   tokens_actual: number;
   created_at: string;
+  metadata?: Record<string, any>; // AC 5.6.1.5: Cache cost tracking metadata
 }
 
 /**
@@ -156,21 +157,23 @@ export async function checkUsageLimit(
 
 /**
  * Log an immutable usage event after AI execution.
+ * AC 5.6.1.5: Supports optional metadata for cache cost tracking.
  */
 export async function logUsageEvent(
   supabase: SupabaseClient,
   accountId: string,
   userId: string,
   feature: string, // e.g., 'consistency_check'
-  model: string,   // e.g., 'gemini-pro'
+  model: string,   // e.g., 'gemini-2.0-flash' (Vertex AI model name)
   estimatedTokens: number,
   actualTokens: number,
-  latencyMs: number = 0
+  latencyMs: number = 0,
+  metadata?: Record<string, any> // AC 5.6.1.5: cache_creation_tokens, cache_hit_tokens, etc.
 ): Promise<void> {
   try {
     const cycle = await getOrCreateOpenBillingCycle(supabase, accountId);
 
-    const { error } = await supabase.from("ai_usage_events").insert({
+    const insertData: Record<string, any> = {
       account_id: accountId,
       user_id: userId,
       cycle_id: cycle.id,
@@ -179,7 +182,14 @@ export async function logUsageEvent(
       tokens_estimated: estimatedTokens,
       tokens_actual: actualTokens,
       latency_ms: latencyMs,
-    });
+    };
+
+    // Merge metadata if provided (AC 5.6.1.5)
+    if (metadata && Object.keys(metadata).length > 0) {
+      insertData.metadata = metadata;
+    }
+
+    const { error } = await supabase.from("ai_usage_events").insert(insertData);
 
     if (error) {
       console.error("Failed to log AI usage event:", error);

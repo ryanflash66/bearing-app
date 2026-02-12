@@ -41,7 +41,7 @@ development_status:
   5-4-admin-fulfillment-dashboard: done
   5-5-cmdk-commander-pattern: done
   5-6-integrate-custom-models: split
-  5-6-1-vertex-ai-context-caching: deferred
+  5-6-1-vertex-ai-context-caching: in-progress
   5-6-2-modal-custom-llama: deferred
   5-6-3-r2-manuscript-storage: deferred
   5-6-4-ai-cost-dashboard: deferred
