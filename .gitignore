@@ -35,3 +35,4 @@ _bmad-output/
 
 # Windows reserved device names (created accidentally)
 nul
+.vercel
