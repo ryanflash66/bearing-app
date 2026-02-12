@@ -14,9 +14,6 @@ interface CoverPromptTemplate {
   compositionHint: string;
 }
 
-const NEGATIVE_PROMPT =
-  "no text, no words, no letters, no typography, no logo, no watermark, no signature, no caption";
-
 const STYLE_TEMPLATES: Record<CoverStyle, CoverPromptTemplate> = {
   Cinematic: {
     styleHint:
@@ -42,26 +39,18 @@ export function buildWrappedCoverPrompt(input: BuildCoverPromptInput): string {
   const trimmedGenre = input.genre.trim();
   const trimmedMood = input.mood.trim();
 
-  const titleHint = input.title?.trim()
-    ? `Reference title context: "${input.title.trim()}".`
-    : "";
-  const authorHint = input.authorName?.trim()
-    ? `Reference author context: "${input.authorName.trim()}".`
-    : "";
-
   return [
-    "Professional book cover illustration for a modern publishing concept.",
-    "Generate artwork only; final title/author text will be overlaid by UI.",
+    "Flat artwork illustration for use as a book cover background.",
+    "Do NOT render a 3D book, book spine, book mockup, or any book object.",
+    "Do NOT include any text, letters, words, titles, logos, watermarks, or typography anywhere in the image.",
+    "The image must be purely visual artwork with absolutely zero written characters.",
     `Genre: ${trimmedGenre}. Mood: ${trimmedMood}. Style: ${input.style}.`,
     template.styleHint + ".",
     template.compositionHint + ".",
     `Visual brief: ${trimmedDescription}.`,
-    titleHint,
-    authorHint,
-    `Negative prompt: ${NEGATIVE_PROMPT}.`,
+    "Leave space for title and author text to be added as an overlay later.",
     "Aspect ratio: portrait 3:4.",
   ]
-    .filter(Boolean)
     .join(" ");
 }
 
@@ -72,7 +61,7 @@ export function buildCoverPromptPayload(input: BuildCoverPromptInput): {
 } {
   return {
     wrappedPrompt: buildWrappedCoverPrompt(input),
-    negativePrompt: NEGATIVE_PROMPT,
+    negativePrompt: "",
     aspectRatio: "3:4",
   };
 }

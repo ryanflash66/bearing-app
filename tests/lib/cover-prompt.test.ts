@@ -6,7 +6,7 @@ import {
 } from "@/lib/covers/prompt";
 
 describe("cover prompt helpers", () => {
-  it("builds wrapped prompt with style modifiers and negative prompt", () => {
+  it("builds wrapped prompt with style modifiers and no-text guardrails", () => {
     const prompt = buildWrappedCoverPrompt({
       description: "A lone knight facing a dragon above a frozen valley",
       genre: "Fantasy",
@@ -16,12 +16,16 @@ describe("cover prompt helpers", () => {
       authorName: "A. Writer",
     });
 
-    expect(prompt).toMatch(/Professional book cover illustration/i);
+    expect(prompt).toMatch(/flat artwork/i);
+    expect(prompt).toMatch(/do NOT render a 3D book/i);
+    expect(prompt).toMatch(/do NOT include any text/i);
     expect(prompt).toMatch(/Genre: Fantasy/i);
     expect(prompt).toMatch(/Mood: Epic/i);
     expect(prompt).toMatch(/Style: Cinematic/i);
-    expect(prompt).toMatch(/no text, no words, no letters/i);
-    expect(prompt).toMatch(/Aspect ratio: portrait 2:3/i);
+    expect(prompt).toMatch(/Aspect ratio: portrait 3:4/i);
+    // Title and author should NOT appear in the prompt (prevents text rendering)
+    expect(prompt).not.toMatch(/Ash and Ice/);
+    expect(prompt).not.toMatch(/A\. Writer/);
   });
 
   it("returns consistent prompt payload metadata", () => {
@@ -32,8 +36,8 @@ describe("cover prompt helpers", () => {
       style: "Illustrated",
     });
 
-    expect(payload.aspectRatio).toBe("2:3");
-    expect(payload.negativePrompt).toMatch(/no text/i);
+    expect(payload.aspectRatio).toBe("3:4");
+    expect(payload.negativePrompt).toBe("");
     expect(payload.wrappedPrompt).toMatch(/Style: Illustrated/i);
   });
 
@@ -46,4 +50,3 @@ describe("cover prompt helpers", () => {
     expect(seeds.every((seed) => Number.isInteger(seed) && seed > 0)).toBe(true);
   });
 });
-
