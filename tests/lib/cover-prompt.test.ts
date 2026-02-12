@@ -16,13 +16,14 @@ describe("cover prompt helpers", () => {
       authorName: "A. Writer",
     });
 
-    expect(prompt).toMatch(/flat artwork/i);
-    expect(prompt).toMatch(/do NOT render a 3D book/i);
-    expect(prompt).toMatch(/do NOT include any text/i);
-    expect(prompt).toMatch(/Genre: Fantasy/i);
-    expect(prompt).toMatch(/Mood: Epic/i);
-    expect(prompt).toMatch(/Style: Cinematic/i);
-    expect(prompt).toMatch(/Aspect ratio: portrait 3:4/i);
+    expect(prompt).toMatch(/flat 2D illustration/i);
+    expect(prompt).toMatch(/background art/i);
+    expect(prompt).toMatch(/MUST-NOT INCLUDE/);
+    expect(prompt).toMatch(/ANY text\/typography\/letters/);
+    expect(prompt).toMatch(/ANY book-related objects/);
+    expect(prompt).toMatch(/feel of Fantasy and Epic/);
+    expect(prompt).toMatch(/Style target: Cinematic/);
+    expect(prompt).toMatch(/PORTRAIT 3:4/);
     // Title and author should NOT appear in the prompt (prevents text rendering)
     expect(prompt).not.toMatch(/Ash and Ice/);
     expect(prompt).not.toMatch(/A\. Writer/);
@@ -38,7 +39,7 @@ describe("cover prompt helpers", () => {
 
     expect(payload.aspectRatio).toBe("3:4");
     expect(payload.negativePrompt).toBe("");
-    expect(payload.wrappedPrompt).toMatch(/Style: Illustrated/i);
+    expect(payload.wrappedPrompt).toMatch(/Style target: Illustrated/i);
   });
 
   it("generates deterministic and distinct variation seeds", () => {

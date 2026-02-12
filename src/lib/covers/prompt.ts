@@ -40,18 +40,22 @@ export function buildWrappedCoverPrompt(input: BuildCoverPromptInput): string {
   const trimmedMood = input.mood.trim();
 
   return [
-    "Flat artwork illustration for use as a book cover background.",
-    "Do NOT render a 3D book, book spine, book mockup, or any book object.",
-    "Do NOT include any text, letters, words, titles, logos, watermarks, or typography anywhere in the image.",
-    "The image must be purely visual artwork with absolutely zero written characters.",
-    `Genre: ${trimmedGenre}. Mood: ${trimmedMood}. Style: ${input.style}.`,
-    template.styleHint + ".",
-    template.compositionHint + ".",
-    `Visual brief: ${trimmedDescription}.`,
-    "Leave space for title and author text to be added as an overlay later.",
-    "Aspect ratio: portrait 3:4.",
+    "Generate ONE full-bleed PORTRAIT 3:4 flat 2D illustration/poster background artwork (a single image on a flat plane).",
+    "This is ONLY background art for later title/author overlay.",
+    "",
+    `Scene/visual brief: ${trimmedDescription}.`,
+    `Convey the feel of ${trimmedGenre} and ${trimmedMood} ONLY through imagery, color palette, lighting, atmosphere, and motifs — NEVER by writing any words.`,
+    "",
+    `Style target: ${input.style}. Apply: ${template.styleHint}. Composition: ${template.compositionHint}.`,
+    "Leave clean \"breathing room\" for overlay text: keep the top ~20% and bottom ~15% simpler/less detailed; place the main focal point away from extreme top/bottom.",
+    "",
+    "ABSOLUTE MUST-NOT INCLUDE (if any appear, the image is wrong):",
+    "- ANY text/typography/letters/words/numbers/characters of any kind (including garbled/faux text, rune-like glyphs, signatures, watermarks, logos, labels, signage, UI, stamps, emblems with letters).",
+    "- ANY book-related objects or mockups (no book, spine, cover, open book, pages, stacks of books, product render, box/mockup, \"cover layout\", title blocks, author placeholders, banners).",
+    "",
+    "Output: clean, print-ready flat artwork only, no borders/frames/insets, no mockup presentation.",
   ]
-    .join(" ");
+    .join("\n");
 }
 
 export function buildCoverPromptPayload(input: BuildCoverPromptInput): {
