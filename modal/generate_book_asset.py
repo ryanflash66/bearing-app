@@ -208,6 +208,7 @@ def _call_vertex_imagen(
             "seed": seed,
             "aspectRatio": aspect_ratio,
             "negativePrompt": negative_prompt,
+            "addWatermark": False,
             "safetyFilterLevel": os.environ.get("VERTEX_SAFETY_FILTER_LEVEL", "BLOCK_ONLY_HIGH"),
             "personGeneration": os.environ.get("VERTEX_PERSON_GENERATION", "ALLOW_ADULT"),
         },
