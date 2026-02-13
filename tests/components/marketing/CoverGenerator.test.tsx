@@ -248,6 +248,65 @@ describe("CoverGenerator", () => {
     });
   });
 
+  it("confirms cover replacement when pressing Enter in the confirmation dialog", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 202,
+        json: async () => ({ job_id: "job-11" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          job_id: "job-11",
+          status: "completed",
+          images: [{ url: "https://cdn.example.com/tmp/covers/m/1.webp", seed: 1, safety_status: "ok" }],
+          completed_images: [{ url: "https://cdn.example.com/tmp/covers/m/1.webp", seed: 1, safety_status: "ok" }],
+          retry_after: null,
+          error_message: null,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          cover_url: "https://cdn.example.com/permanent/covers/m/1.webp",
+        }),
+      }) as unknown as typeof fetch;
+
+    render(
+      <CoverGenerator
+        manuscriptId="manu-1"
+        manuscriptTitle="Test Manuscript"
+        authorName="Author Name"
+        manuscriptMetadata={{}}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Visual Description"), {
+      target: { value: "A bright sunrise above a city skyline and river" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+    await waitFor(() => {
+      expect(screen.getByAltText("A bright sunrise above a city skyline and river")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Select as Book Cover" }));
+    fireEvent.keyDown(window, { key: "Enter" });
+
+    await waitFor(() => {
+      expect(screen.getByText("Book cover updated.")).toBeInTheDocument();
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/covers/jobs/job-11/select",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
   it("uses mobile-first responsive grid classes for generated image layout", () => {
     const { container } = render(
       <CoverGenerator

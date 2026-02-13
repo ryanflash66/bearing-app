@@ -65,6 +65,35 @@ interface BetaComment {
   status: string;
 }
 
+function getApiErrorMessage(payload: unknown, fallback: string): string {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "error" in payload &&
+    typeof payload.error === "string" &&
+    payload.error.trim().length > 0
+  ) {
+    return payload.error;
+  }
+  return fallback;
+}
+
+function getApiTraceId(payload: unknown, response: Response): string | undefined {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "traceId" in payload &&
+    typeof payload.traceId === "string" &&
+    payload.traceId.trim().length > 0
+  ) {
+    return payload.traceId;
+  }
+  const headerTraceId = response.headers.get("X-Trace-Id");
+  return headerTraceId && headerTraceId.trim().length > 0
+    ? headerTraceId
+    : undefined;
+}
+
 // Status indicator component with manual save button (AC: 8.2.2, 8.2.3, 8.2.6)
 function AutosaveIndicator({
   state,
@@ -345,6 +374,7 @@ export default function ManuscriptEditor({
     status: "idle" | "queued" | "running" | "completed" | "failed";
     jobId?: string;
     error?: string;
+    traceId?: string;
     report?: ConsistencyReport;
     tokensEstimated?: number;
     tokensActual?: number;
@@ -1256,16 +1286,22 @@ export default function ManuscriptEditor({
       );
 
       if (!response.ok) {
-        const errorData = await response
+        const errorPayload = await response
           .json()
           .catch(() => ({ error: "Failed to start consistency check" }));
-        throw new Error(errorData.error || "Failed to start consistency check");
+        setConsistencyCheckStatus({
+          status: "failed",
+          error: getApiErrorMessage(errorPayload, "Failed to start consistency check"),
+          traceId: getApiTraceId(errorPayload, response),
+        });
+        return;
       }
 
       const data = await response.json();
       setConsistencyCheckStatus({
         status: data.cached ? "completed" : data.status,
         jobId: data.jobId,
+        traceId: typeof data.traceId === "string" ? data.traceId : undefined,
       });
 
       // If cached, fetch the report
@@ -1335,11 +1371,26 @@ export default function ManuscriptEditor({
           );
 
           if (!response.ok) {
-            throw new Error("Failed to fetch consistency check status");
+            const errorPayload = await response
+              .json()
+              .catch(() => ({ error: "Failed to fetch consistency check status" }));
+            setConsistencyCheckStatus({
+              status: "failed",
+              error: getApiErrorMessage(
+                errorPayload,
+                "Failed to fetch consistency check status",
+              ),
+              traceId: getApiTraceId(errorPayload, response),
+            });
+            return;
           }
 
           const data = await response.json();
           const job = data.job;
+          const traceId =
+            typeof data.traceId === "string" && data.traceId.trim().length > 0
+              ? data.traceId
+              : undefined;
 
           if (job) {
             if (controller.signal.aborted) return;
@@ -1353,6 +1404,7 @@ export default function ManuscriptEditor({
               tokensEstimated: job.tokens_estimated || undefined,
               tokensActual: job.tokens_actual || undefined,
               model: job.model || undefined,
+              traceId,
             });
 
             // Continue polling if still in progress
@@ -1365,6 +1417,7 @@ export default function ManuscriptEditor({
             setConsistencyCheckStatus({
               status: "failed",
               error: "Consistency check job not found",
+              traceId,
             });
           }
         } catch (error) {
@@ -1766,6 +1819,21 @@ export default function ManuscriptEditor({
           />
         </div>
       </div>
+
+      {consistencyCheckStatus.status === "failed" && consistencyCheckStatus.error && (
+        <div
+          className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 md:mx-6"
+          role="alert"
+          data-testid="consistency-check-error-banner"
+        >
+          <p className="font-medium">Consistency check failed: {consistencyCheckStatus.error}</p>
+          {consistencyCheckStatus.traceId && (
+            <p className="mt-1 font-mono text-xs text-red-700">
+              Trace ID: {consistencyCheckStatus.traceId}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Main content area with Binder sidebar and Editor */}
       <div className="flex flex-1 overflow-hidden">

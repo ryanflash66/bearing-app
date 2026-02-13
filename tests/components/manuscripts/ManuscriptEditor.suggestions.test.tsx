@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ManuscriptEditor from "@/components/manuscripts/ManuscriptEditor";
 
@@ -161,6 +161,8 @@ jest.mock("@/components/ui/sheet", () => ({
 }));
 
 describe("ManuscriptEditor suggestions trigger", () => {
+  const originalFetch = global.fetch;
+
   const defaultProps = {
     manuscriptId: "test-id",
     initialContent: "Initial content",
@@ -172,6 +174,10 @@ describe("ManuscriptEditor suggestions trigger", () => {
     jest.clearAllMocks();
     selectedText = "";
     mockEditorInstance.state.selection = { from: 1, to: 1 };
+  });
+
+  afterAll(() => {
+    global.fetch = originalFetch;
   });
 
   it("shows Get Suggestions button after text selection", async () => {
@@ -186,5 +192,37 @@ describe("ManuscriptEditor suggestions trigger", () => {
     expect(screen.getByTestId("get-suggestions-button")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Get Suggestions/i })).toBeInTheDocument();
     expect(mockDismissGhostText).toHaveBeenCalled();
+  });
+
+  it("shows consistency check API errors with trace ID", async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "Rate limit reached. Please wait 60 seconds before running another consistency check.",
+          traceId: "trace-cc-123",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Trace-Id": "trace-cc-123",
+          },
+        },
+      ),
+    ) as unknown as typeof fetch;
+
+    await act(async () => {
+      render(<ManuscriptEditor {...defaultProps} />);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Check Consistency/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("consistency-check-error-banner")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText(/Rate limit reached\. Please wait 60 seconds before running another consistency check\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Trace ID: trace-cc-123/i)).toBeInTheDocument();
   });
 });

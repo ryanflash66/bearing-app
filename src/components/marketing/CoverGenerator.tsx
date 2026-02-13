@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   COVER_POLL_MAX_ATTEMPTS,
@@ -438,7 +438,7 @@ export default function CoverGenerator({
     }
   }
 
-  async function selectAsBookCover(): Promise<void> {
+  const selectAsBookCover = useCallback(async (): Promise<void> => {
     if (!pendingSelectionUrl || !displayJobId) {
       setPendingSelectionUrl(null);
       return;
@@ -474,7 +474,33 @@ export default function CoverGenerator({
       setPendingSelectionUrl(null);
       setActioningImageUrl(null);
     }
-  }
+  }, [displayJobId, pendingSelectionUrl]);
+
+  useEffect(() => {
+    if (!pendingSelectionUrl || !displayJobId) return;
+
+    const handleConfirmKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setPendingSelectionUrl(null);
+        return;
+      }
+
+      if (event.key !== "Enter") return;
+
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (tagName === "textarea" || tagName === "input" || tagName === "select") {
+        return;
+      }
+
+      event.preventDefault();
+      void selectAsBookCover();
+    };
+
+    window.addEventListener("keydown", handleConfirmKeydown);
+    return () => window.removeEventListener("keydown", handleConfirmKeydown);
+  }, [displayJobId, pendingSelectionUrl, selectAsBookCover]);
 
   return (
     <div className="space-y-6">
@@ -731,7 +757,10 @@ export default function CoverGenerator({
                       Save to Gallery
                     </button>
                     <button
-                      onClick={() => setPendingSelectionUrl(imageUrl)}
+                      onClick={() => {
+                        setPreviewIndex(null);
+                        setPendingSelectionUrl(imageUrl);
+                      }}
                       disabled={actioningImageUrl === imageUrl}
                       className="rounded-md bg-stone-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                     >
@@ -752,10 +781,15 @@ export default function CoverGenerator({
       </section>
 
       {pendingSelectionUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setPendingSelectionUrl(null)}
+        >
           <div
             role="dialog"
             aria-label="Confirm cover replacement"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
             className="w-full max-w-3xl rounded-lg bg-white p-6"
           >
             <h4 className="text-lg font-semibold text-stone-900">Replace current cover?</h4>
@@ -795,6 +829,8 @@ export default function CoverGenerator({
               </button>
               <button
                 onClick={() => void selectAsBookCover()}
+                autoFocus
+                data-testid="confirm-cover-replacement"
                 className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white"
               >
                 Continue
@@ -805,7 +841,7 @@ export default function CoverGenerator({
       )}
 
       {selectedPreviewImage && typeof selectedPreviewImage.url === "string" && (
-        <div className="fixed inset-0 z-50 bg-black/80">
+        <div className="fixed inset-0 z-[60] bg-black/80">
           <div
             role="dialog"
             aria-label="Generated cover preview"

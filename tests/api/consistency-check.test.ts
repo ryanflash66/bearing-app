@@ -118,16 +118,28 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({
-        data: { id: "user-id" },
+        data: { id: "user-id", role: "user" },
         error: null,
       }),
     };
 
-    const mockRateLimitQuery = {
+    const mockAccountMembersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { account_role: "author" },
+        error: null,
+      }),
+    };
+
+    const mockAuditLogsQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       gte: jest.fn().mockResolvedValue({
         count: 0,
+        error: null,
+      }),
+      insert: jest.fn().mockResolvedValue({
         error: null,
       }),
     };
@@ -135,7 +147,8 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "manuscripts") return mockManuscriptsQuery;
       if (table === "users") return mockUsersQuery;
-      if (table === "consistency_checks") return mockRateLimitQuery;
+      if (table === "account_members") return mockAccountMembersQuery;
+      if (table === "audit_logs") return mockAuditLogsQuery;
       return {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
@@ -274,16 +287,28 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({
-        data: { id: "user-id" },
+        data: { id: "user-id", role: "user" },
         error: null,
       }),
     };
 
-    const mockRateLimitQuery = {
+    const mockAccountMembersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { account_role: "author" },
+        error: null,
+      }),
+    };
+
+    const mockAuditLogsQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       gte: jest.fn().mockResolvedValue({
         count: 3,
+        error: null,
+      }),
+      insert: jest.fn().mockResolvedValue({
         error: null,
       }),
     };
@@ -291,7 +316,8 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "manuscripts") return mockManuscriptsQuery;
       if (table === "users") return mockUsersQuery;
-      if (table === "consistency_checks") return mockRateLimitQuery;
+      if (table === "account_members") return mockAccountMembersQuery;
+      if (table === "audit_logs") return mockAuditLogsQuery;
       return {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
@@ -326,6 +352,80 @@ describe("POST /api/manuscripts/:id/consistency-check", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("empty");
+  });
+
+  it("should return 403 for non-owner non-admin users", async () => {
+    const mockManuscriptsQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      is: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id: "ms-id",
+          account_id: "account-id",
+          owner_user_id: "owner-user-id",
+          content_text: "Sample manuscript content",
+        },
+        error: null,
+      }),
+    };
+
+    const mockUsersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: { id: "user-id", role: "user" },
+        error: null,
+      }),
+    };
+
+    const mockAccountMembersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { account_role: "author" },
+        error: null,
+      }),
+    };
+
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table === "manuscripts") return mockManuscriptsQuery;
+      if (table === "users") return mockUsersQuery;
+      if (table === "account_members") return mockAccountMembersQuery;
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockResolvedValue({ count: 0, error: null }),
+        insert: jest.fn().mockResolvedValue({ error: null }),
+      };
+    });
+
+    const request = {
+      json: async () => ({}),
+    } as any;
+
+    const response = await POST(request, { params: Promise.resolve({ id: "ms-id" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toContain("Only the manuscript owner or an account admin");
+    expect(initiateConsistencyCheck).not.toHaveBeenCalled();
+  });
+
+  it("should return traceId metadata on server errors", async () => {
+    initiateConsistencyCheck.mockRejectedValue(new Error("Unexpected downstream failure"));
+
+    const request = {
+      json: async () => ({}),
+    } as any;
+
+    const response = await POST(request, { params: Promise.resolve({ id: "ms-id" }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof data.traceId).toBe("string");
+    expect(data.traceId.length).toBeGreaterThan(0);
+    expect(response.headers.get("X-Trace-Id")).toBe(data.traceId);
   });
 });
 
@@ -630,16 +730,28 @@ describe("Retry scenarios (AC 3.1.5)", () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       single: jest.fn().mockResolvedValue({
-        data: { id: "user-id" },
+        data: { id: "user-id", role: "user" },
         error: null,
       }),
     };
 
-    const mockRateLimitQuery = {
+    const mockAccountMembersQuery = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: { account_role: "author" },
+        error: null,
+      }),
+    };
+
+    const mockAuditLogsQuery = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       gte: jest.fn().mockResolvedValue({
         count: 0,
+        error: null,
+      }),
+      insert: jest.fn().mockResolvedValue({
         error: null,
       }),
     };
@@ -647,7 +759,8 @@ describe("Retry scenarios (AC 3.1.5)", () => {
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === "manuscripts") return mockManuscriptsQuery;
       if (table === "users") return mockUsersQuery;
-      if (table === "consistency_checks") return mockRateLimitQuery;
+      if (table === "account_members") return mockAccountMembersQuery;
+      if (table === "audit_logs") return mockAuditLogsQuery;
       return mockManuscriptsQuery;
     });
 
